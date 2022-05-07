@@ -12,10 +12,10 @@ const routes: Array<RouteConfig> = [
     component: Index,
   },
   {
-    path: '/about',
-    name: 'About',
+    path: '/imagetool',
+    name: 'ImageTool',
     component: () =>
-      import(/* webpackChunkName: "about" */ '../views/About.vue'),
+      import(/* webpackChunkName: "imagetool" */ '../views/ImageTool.vue'),
   },
 ]
 export default routes
