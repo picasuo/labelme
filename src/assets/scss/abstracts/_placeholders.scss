@@ -1,0 +1,19 @@
+%text-small {
+  @include text(normal, $sml-size, $text-color);
+}
+
+%text-medium {
+  @include text(normal, $sml-size, $text-color, normal, $medium-font-family);
+}
+
+%centering {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+%chart-box {
+  background-color: $chart-bg;
+  box-shadow: $chart-shadow;
+  border-radius: $chart-radius;
+}

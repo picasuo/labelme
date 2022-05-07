@@ -1,0 +1,18 @@
+.el-date-editor.el-input,
+.el-date-editor.el-input__inner {
+  width: unset !important;
+}
+.el-cascader-panel {
+  max-height: 300px;
+  font-family: PingFangSC-Medium;
+  font-size: 12px;
+  color: #515a6e;
+}
+.el-cascader--mini {
+  line-height: 30px;
+  width: 230px;
+}
+.el-cascader__tags {
+  flex-wrap: nowrap;
+  margin-left: 0px;
+}

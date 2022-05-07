@@ -1,0 +1,177 @@
+<template>
+  <div class="index">
+    <sx-header title="标图任务列表">
+      <sx-button @click="createTask">创建新任务</sx-button>
+    </sx-header>
+    <sx-table
+      :columns="tableColumns"
+      :data="tableData"
+      :loading="tableLoading"
+    />
+    <sx-modal
+      v-model="isShow"
+      title="创建任务"
+      ok-text="确定"
+      cancel-text="取消"
+      error-text="error"
+      @on-ok="onConfirm"
+      @on-cancel="onCancel"
+    >
+      <div class="upload">
+        <div class="upload_type">
+          <span>任务类型：</span>
+          <i-select
+            v-model="currentType"
+            class="upload_selecttag"
+            placeholder="选择任务类型"
+          >
+            <i-option
+              v-for="item in typeOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </i-select>
+        </div>
+        <div class="upload_img">
+          <span>上传文件：</span>
+          <div class="upload_img_content">
+            <div class="upload_img_box">
+              <sx-icon type="icon-import" color="#d5d7da" size="large" />
+              <p>jpg/批量上传jpg/文件夹</p>
+            </div>
+            <a class="upload_img_tool">上传文件</a>
+          </div>
+        </div>
+      </div>
+    </sx-modal>
+  </div>
+</template>
+
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator'
+
+@Component({
+  components: {},
+})
+export default class Home extends Vue {
+  isShow = false
+  currentType = 0
+  typeOptions = [
+    {
+      label: '检测任务',
+      value: 0,
+    },
+    {
+      label: '语义分割',
+      value: 1,
+    },
+    {
+      label: '分类',
+      value: 2,
+    },
+  ]
+  tableLoading = false
+  tableData = []
+  tableColumns = [
+    {
+      title: '编号',
+      align: 'center',
+      key: 'no',
+    },
+    {
+      title: '标图任务量',
+      align: 'center',
+      key: 'num',
+    },
+    {
+      title: '创建时间',
+      align: 'center',
+      key: 'create_time',
+    },
+    {
+      title: '任务类型',
+      align: 'center',
+      key: 'type',
+    },
+    {
+      title: '使用标签',
+      align: 'center',
+      key: 'lable',
+    },
+    {
+      title: '任务状态',
+      align: 'center',
+      key: 'state',
+    },
+    {
+      title: '操作',
+      align: 'center',
+      key: 'action',
+    },
+  ]
+  createTask() {
+    this.isShow = true
+  }
+  onConfirm() {
+    this.isShow = false
+  }
+  onCancel() {
+    this.isShow = false
+  }
+  onFileChange() {}
+}
+</script>
+
+<style lang="scss" scoped>
+.index {
+  .upload {
+    padding: 0 get-vw(80px);
+    span {
+      font-size: 14px;
+      font-family: PingFangSC-Regular, PingFang SC;
+      font-weight: 400;
+      color: #4a4a4a;
+      line-height: 32px;
+      letter-spacing: 1px;
+    }
+    &_type {
+      display: flex;
+      margin-bottom: get-vh(30px);
+    }
+    &_selecttag {
+      width: 330px;
+    }
+    &_img {
+      display: flex;
+      &_content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      &_box {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 330px;
+        height: 219px;
+        border-radius: 2px;
+        border: 1px solid #dcdee2;
+        p {
+          font-size: 12px;
+          font-family: PingFangSC-Regular, PingFang SC;
+          font-weight: 400;
+          color: #7d7d7d;
+          line-height: 17px;
+          letter-spacing: 1px;
+        }
+      }
+      &_tool {
+        margin-top: get-vh(15px);
+        border-bottom: 1px dashed #4883fb;
+      }
+    }
+  }
+}
+</style>

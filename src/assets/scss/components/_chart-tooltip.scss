@@ -1,0 +1,103 @@
+.line-tooltip {
+  &__title {
+    @extend %font-sm;
+    color: #4a4a4a;
+    letter-spacing: 0.98px;
+  }
+
+  &__content {
+    padding: 15px;
+    margin-top: 8px;
+    background: #f0f4fa;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    // align-items: center;
+  }
+
+  .item {
+    display: flex;
+    justify-content: space-between;
+    @extend %font-sm;
+    color: #7d7d7d;
+
+    @include all-but(1) {
+      margin-top: 10px;
+    }
+
+    &__label {
+      display: flex;
+      align-items: center;
+    }
+
+    &__bg {
+      width: 12px;
+      height: 12px;
+      border-radius: 1px;
+    }
+
+    &__name {
+      margin-left: 10px;
+    }
+
+    &__content {
+      flex: 1;
+      @extend %centering;
+      letter-spacing: 0.75px;
+      margin-left: 10px;
+      text-align: right;
+    }
+
+    &__value {
+      // min-width: 30px;
+      min-width: auto;
+      text-align: center;
+      margin-left: auto;
+    }
+
+    &__unit {
+    }
+  }
+}
+
+.echart__tooltip {
+  &-title {
+    @extend %font-sm;
+    color: #4a4a4a;
+    letter-spacing: 0.98px;
+  }
+
+  &-content {
+    margin-top: 10px;
+    height: 44px;
+    line-height: 44px;
+    background: #f0f4fa;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+  }
+
+  &-content-bg {
+    width: 12px;
+    height: 12px;
+    margin-left: 15px;
+    background: #4883fb;
+    border-radius: 1px;
+  }
+
+  &-label {
+    margin-left: 10px;
+    @extend %font-sm;
+    color: #666666;
+    letter-spacing: 0.75px;
+  }
+
+  &-value {
+    margin-left: auto;
+    padding-left: 2rem;
+    margin-right: 15px;
+    @extend %font-sm;
+    color: #666666;
+    letter-spacing: 0.75px;
+  }
+}

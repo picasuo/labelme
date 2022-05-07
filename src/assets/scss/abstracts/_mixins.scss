@@ -1,0 +1,52 @@
+@mixin absCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@mixin flex($flex: flex, $dir: row, $x: center, $y: center, $wrap: wrap) {
+  display: $flex;
+  flex-direction: $dir;
+  justify-content: $x;
+  align-items: $y;
+  flex-wrap: $wrap;
+}
+
+@mixin text(
+  $font-weight: normal,
+  $font-size: $sml-size,
+  $color: inherit,
+  $line-height: normal,
+  $font-family: $regular-font-family
+) {
+  font-weight: $font-weight;
+  font-size: $font-size;
+  color: $color;
+  line-height: $line-height;
+  font-family: $font-family;
+}
+
+@mixin text-overflow($w: 100%, $line: 1) {
+  width: $w;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @if $line==1 {
+    white-space: nowrap;
+  } @else if $line>1 {
+    // Not for IE & Firefox
+    -webkit-line-clamp: $line;
+    -webkit-box-orient: vertical;
+  }
+}
+
+// btn mixin
+@mixin build-btn-shape($btn-width) {
+  width: $btn-width;
+}
+
+@mixin build-btn-style($bgColor, $ftColor) {
+  background-color: $bgColor;
+  color: $ftColor;
+}

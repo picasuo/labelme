@@ -1,0 +1,24 @@
+.btn {
+    height: 32px;
+    line-height: 32px;
+    border: none;
+    border-radius: 2px;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.btn--small {
+    @include build-btn-shape($small-btn-width);
+}
+
+.btn--pos {
+    @include build-btn-style($color-blue-light-2, $color-white);
+
+    &:hover {
+        background: $color-blue-light-3;
+    }
+}

@@ -1,0 +1,5 @@
+// 变量、函数等会在多个样式中使用,通过 scss-loader append 方式在每个 scss 使用前引入这些变量, 因此不用在手动引入到其他文件 (变量等不会被打包只存在于 scss)
+@import 'variables';
+@import 'functions';
+@import 'mixins';
+@import 'placeholders';

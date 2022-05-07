@@ -1,0 +1,52 @@
+.search {
+  @include flex($x: flex-start);
+  position: relative;
+  background-color: $color-white;
+  padding: 0 35px;
+  height: 50px;
+  border-bottom: 1px solid $lighter-border-color;
+
+  &-input,
+  &-select {
+    width: 120px;
+  }
+
+  &-input,
+  &-select,
+  &-picker {
+    margin-right: 40px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+  &-input,
+  &-picker {
+    ::placeholder {
+      /* Chrome, Firefox, Opera, Safari 10.1+ */
+      color: $text-color-grey;
+      opacity: 1;
+      /* Firefox */
+    }
+
+    :-ms-input-placeholder {
+      /* Internet Explorer 10-11 */
+      color: $text-color-grey;
+    }
+
+    ::-ms-input-placeholder {
+      /* Microsoft Edge */
+      color: $text-color-grey;
+    }
+  }
+
+  &-picker {
+    width: 214px;
+  }
+
+  &-btn {
+    position: absolute;
+    right: 40px;
+  }
+}

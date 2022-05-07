@@ -1,0 +1,23 @@
+@function get-vw($object) {
+  @if (unit($object) == 'px') {
+    $vw: (1920 * 0.01) * 1px;
+    @return ($object / $vw) * 1vw;
+  }
+
+  @if (unit($object) == 'rem') {
+    $vw: (192 * 0.01) * 1rem;
+    @return ($object / $vw) * 1vw;
+  }
+}
+
+@function get-vh($object) {
+  @if (unit($object) == 'px') {
+    $vh: (1080 * 0.01) * 1px;
+    @return ($object / $vh) * 1vh;
+  }
+
+  @if (unit($object) == 'rem') {
+    $vh: (108 * 0.01) * 1rem;
+    @return ($object / $vh) * 1vh;
+  }
+}
