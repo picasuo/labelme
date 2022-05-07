@@ -72,7 +72,16 @@ export default class Home extends Vue {
     },
   ]
   tableLoading = false
-  tableData = []
+  tableData = [
+    {
+      no: 1,
+      num: 20,
+      create_time: '2022.05.05 15:32:06',
+      type: '检测任务',
+      label: '表格 文字',
+      state: '16/20',
+    },
+  ]
   tableColumns = [
     {
       title: '编号',
@@ -97,7 +106,7 @@ export default class Home extends Vue {
     {
       title: '使用标签',
       align: 'center',
-      key: 'lable',
+      key: 'label',
     },
     {
       title: '任务状态',
@@ -108,6 +117,59 @@ export default class Home extends Vue {
       title: '操作',
       align: 'center',
       key: 'action',
+      render: (h, params) => {
+        return h(
+          'p',
+          {
+            style: { display: 'flex', justifyContent: 'center' },
+          },
+          [
+            h(
+              'span',
+              {
+                props: {
+                  type: 'primary',
+                  size: 'small',
+                },
+                style: {
+                  color: '#4883FB',
+                  cursor: 'pointer',
+                  display: 'inline-block',
+                  marginRight: '5%',
+                },
+                on: {
+                  click: () => {
+                    this.$router.push({
+                      path: '/imagetool',
+                      query: {
+                        id: '1',
+                      },
+                    })
+                  },
+                },
+              },
+              '查看详情'
+            ),
+            h(
+              'span',
+              {
+                props: {
+                  type: 'primary',
+                  size: 'small',
+                },
+                style: {
+                  color: '#ED5555',
+                  cursor: 'pointer',
+                },
+                on: {
+                  click: () => {},
+                },
+              },
+              '删除'
+            ),
+          ]
+        )
+      },
     },
   ]
   createTask() {

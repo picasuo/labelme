@@ -4,6 +4,7 @@ import router from './router'
 import 'scss/main'
 import SUI from 'sx-sui-design'
 import '@/config/ivewConfig'
+import '@/config/elementConfig'
 
 Vue.use(SUI)
 

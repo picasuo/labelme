@@ -9,6 +9,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "core-js": "^3.6.5",
+    "element-ui": "^2.15.8",
     "hard-source-webpack-plugin": "^0.13.1",
     "iview": "^3.5.4",
     "moment": "^2.29.3",
