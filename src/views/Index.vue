@@ -199,7 +199,7 @@ export default class Home extends Vue {
     }
     &_type {
       display: flex;
-      margin-bottom: get-vh(30px);
+      margin-bottom: get-vw(30px);
     }
     &_selecttag {
       width: 330px;
@@ -230,7 +230,7 @@ export default class Home extends Vue {
         }
       }
       &_tool {
-        margin-top: get-vh(15px);
+        margin-top: get-vw(15px);
         border-bottom: 1px dashed #4883fb;
       }
     }
