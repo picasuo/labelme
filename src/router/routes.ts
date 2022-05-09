@@ -15,7 +15,7 @@ const routes: Array<RouteConfig> = [
     path: '/imagetool',
     name: 'ImageTool',
     component: () =>
-      import(/* webpackChunkName: "imagetool" */ '../views/ImageTool.vue'),
+      import(/* webpackChunkName: "imagetool" */ '../views/Index.vue'),
   },
 ]
 export default routes
