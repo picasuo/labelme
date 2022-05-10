@@ -81,6 +81,7 @@ export default class Home extends Vue {
       .title {
         font-family: PingFangSC-Medium, PingFang SC;
         font-weight: 500;
+        cursor: default;
       }
     }
   }
