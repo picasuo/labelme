@@ -11,11 +11,11 @@ const routes: Array<RouteConfig> = [
     name: 'Index',
     component: Index,
   },
-  {
-    path: '/imagetool',
-    name: 'ImageTool',
-    component: () =>
-      import(/* webpackChunkName: "imagetool" */ '../views/Index.vue'),
-  },
+  //   {
+  //     path: '/imagetool',
+  //     name: 'ImageTool',
+  //     component: () =>
+  //       import(/* webpackChunkName: "imagetool" */ '../views/Index.vue'),
+  //   },
 ]
 export default routes

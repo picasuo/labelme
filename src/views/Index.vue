@@ -1,6 +1,13 @@
 <template>
   <div class="tool">
-    <div class="tool_bar"></div>
+    <div class="tool_bar">
+      <div
+        class="icon"
+        :class="index === 0 ? 'checked' : ''"
+        v-for="(item, index) in icons"
+        :key="index"
+      ></div>
+    </div>
     <div class="tool_content"></div>
     <div class="tool_manage">
       <div class="label">
@@ -26,7 +33,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import SxMask from './SxMask.vue'
+import SxMask from 'components/SxMask.vue'
 
 @Component({
   components: {
@@ -34,6 +41,7 @@ import SxMask from './SxMask.vue'
   },
 })
 export default class Index extends Vue {
+  icons = [1, 2, 3, 4]
   isShown = true
   picUrlList = [] as Array<any>
 
@@ -62,7 +70,7 @@ export default class Index extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void,
+        reject: (value: string) => void
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -80,7 +88,7 @@ export default class Index extends Vue {
             }
           }
         })
-      },
+      }
     )
   }
 
@@ -99,34 +107,45 @@ export default class Index extends Vue {
   display: grid;
   grid-template-columns: get-vw(60px) 1fr get-vw(360px);
   background: #535353;
-  position: relative;
+  &_bar {
+    .icon {
+      width: get-vw(60px);
+      height: get-vw(60px);
+    }
+    .checked {
+      background: #488feb;
+    }
+  }
   &_content {
     background: #282828;
   }
-  .label {
-    height: get-vh(450px);
-  }
-  .img {
-    height: get-vh(630px);
-  }
-  .nav {
-    height: get-vh(50px);
-    background: #424242;
-    padding: 0 get-vw(20px);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    span {
-      font-size: 14px;
-      font-family: PingFangSC-Regular, PingFang SC;
-      font-weight: 400;
-      color: #dddddd;
-      line-height: 20px;
-      letter-spacing: 1px;
+  &_manage {
+    .label {
+      height: get-vh(450px);
     }
-    .title {
-      font-family: PingFangSC-Medium, PingFang SC;
-      font-weight: 500;
+    .img {
+      height: get-vh(630px);
+    }
+    .nav {
+      height: get-vw(50px);
+      background: #424242;
+      padding: 0 get-vw(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      span {
+        font-size: 14px;
+        font-family: PingFangSC-Regular, PingFang SC;
+        font-weight: 400;
+        color: #dddddd;
+        line-height: 20px;
+        letter-spacing: 1px;
+      }
+      .title {
+        font-family: PingFangSC-Medium, PingFang SC;
+        font-weight: 500;
+        cursor: default;
+      }
     }
   }
 }
