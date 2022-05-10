@@ -12,7 +12,7 @@
           @change="uploadImg"
         />
       </div>
-      <div class="btn">
+      <div class="btn" :class="loadContext ? 'btn-active' : ''">
         <span @click="enterEdit(0)">图片分类</span>
         <span @click="enterEdit(1)">对象检测</span>
       </div>
@@ -118,7 +118,6 @@ export default class SXMask extends Vue {
   color: #888888;
   line-height: 30px;
   letter-spacing: 2px;
-
   > span {
     display: flex;
     justify-content: center;
@@ -127,6 +126,14 @@ export default class SXMask extends Vue {
     height: get-vh(80px);
     border-radius: 5px;
     border: 2px solid #7d7d7d;
+    cursor: no-drop;
+  }
+  &-active {
+    color: #fff;
+    > span {
+      border-color: #fff;
+      cursor: pointer;
+    }
   }
 }
 </style>
