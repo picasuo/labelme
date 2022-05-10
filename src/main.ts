@@ -1,10 +1,12 @@
+import '@/config/elementConfig'
+import '@/config/ivewConfig'
+import 'assets/icons/iconfont'
+import 'assets/icons/iconfont.css'
+import 'scss/main'
+import SUI from 'sx-sui-design'
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import 'scss/main'
-import SUI from 'sx-sui-design'
-import '@/config/ivewConfig'
-import '@/config/elementConfig'
 
 Vue.use(SUI)
 

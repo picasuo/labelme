@@ -1,0 +1,51 @@
+{
+  "id": "3387682",
+  "name": "yili- OCR",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "10294638",
+      "name": "盒子标签",
+      "font_class": "boxtag-fill",
+      "unicode": "e653",
+      "unicode_decimal": 58963
+    },
+    {
+      "icon_id": "445237",
+      "name": "退出",
+      "font_class": "tuichu",
+      "unicode": "e67b",
+      "unicode_decimal": 59003
+    },
+    {
+      "icon_id": "3427881",
+      "name": "移动",
+      "font_class": "icon-",
+      "unicode": "e62c",
+      "unicode_decimal": 58924
+    },
+    {
+      "icon_id": "4922626",
+      "name": "导出",
+      "font_class": "export",
+      "unicode": "e677",
+      "unicode_decimal": 58999
+    },
+    {
+      "icon_id": "20009259",
+      "name": "pentool钢笔工具",
+      "font_class": "pentoolgangbigongju",
+      "unicode": "e6dc",
+      "unicode_decimal": 59100
+    },
+    {
+      "icon_id": "26696884",
+      "name": "画矩形_0",
+      "font_class": "huajuxing_0",
+      "unicode": "e765",
+      "unicode_decimal": 59237
+    }
+  ]
+}
