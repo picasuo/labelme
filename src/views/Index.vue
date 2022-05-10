@@ -53,13 +53,10 @@ import SxMask from 'components/SxMask.vue'
   },
 })
 export default class Index extends Vue {
-  icons = [
-    'icon-export',
-    'icon-icon-',
-    'icon-pentoolgangbigongju',
-    'icon-huajuxing_0',
-  ]
+  icons = ['icon-export'] as any
   checkedTab = 0
+  // 区分分类以及对象识别
+  iconShow = false
   isShown = true
   picUrlList = [] as Array<any>
 
@@ -113,6 +110,15 @@ export default class Index extends Vue {
   // 0-分类 1-检测
   enterEdit(type) {
     this.isShown = false
+    this.icons =
+      type === 0
+        ? ['icon-export']
+        : [
+            'icon-export',
+            'icon-icon-',
+            'icon-pentoolgangbigongju',
+            'icon-huajuxing_0',
+          ]
     // todo
     console.log('type', type)
   }
@@ -123,6 +129,7 @@ export default class Index extends Vue {
   // 退出
   exit() {
     this.isShown = true
+    this.picUrlList = []
   }
 }
 </script>
