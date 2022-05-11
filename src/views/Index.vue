@@ -2,8 +2,8 @@
   <div class="index">
     <div class="header">
       <p>
-        正在进行的任务<span>{{ 20 }}</span
-        >{{ '/100' }}
+        正在进行的任务<span>{{ 0 }}</span
+        >{{ `/${picUrlList.length && !isShown ? picUrlList.length : 0}` }}
       </p>
       <sx-icon class="exit" type="icon-tuichu" @click="exit" />
     </div>
@@ -99,7 +99,6 @@ export default class Index extends Vue {
   redo = [] as any
   x = ''
   y = ''
-  rect = [] as any
 
   mouseFrom = {} as any
   mouseTo = {} as any
@@ -183,7 +182,7 @@ export default class Index extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void,
+        reject: (value: string) => void
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -202,7 +201,7 @@ export default class Index extends Vue {
             }
           }
         })
-      },
+      }
     )
   }
 
@@ -223,9 +222,9 @@ export default class Index extends Vue {
   tabClick(tab) {
     this.checkedTab = tab
     //整个画板元素可被选中
-    this.canvas.skipTargetFind = false
-    // 取消自由绘制
-    this.canvas.isDrawingMode = false
+    this.canvas.skipTargetFind = this.checkedTab === 3
+    // 多边形特殊处理
+    if (this.checkedTab === 2) this.drawPolygon()
   }
   // 退出
   exit() {
@@ -247,10 +246,10 @@ export default class Index extends Vue {
       // command+z 删除最近添加的元素
       if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
         this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
         this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
       }
       // 还原
@@ -364,7 +363,6 @@ export default class Index extends Vue {
 
   // 绘制多边形开始，绘制多边形和其他图形不一样，需要单独处理
   drawPolygon() {
-    this.checkedTab = 2
     this.polygonMode = true
     //这里画的多边形，由顶点与线组成
     this.pointArray = new Array() // 顶点集合
@@ -372,9 +370,9 @@ export default class Index extends Vue {
     this.canvas.isDrawingMode = false
   }
   addPoint(e) {
-    var random = Math.floor(Math.random() * 10000)
-    var id = new Date().getTime() + random
-    var circle = new fabric.Circle({
+    const random = Math.floor(Math.random() * 10000)
+    const id = new Date().getTime() + random
+    const circle = new fabric.Circle({
       radius: 5,
       fill: '#ffffff',
       stroke: '#333333',
@@ -412,7 +410,6 @@ export default class Index extends Vue {
       hasBorders: false,
       // hasControls: false,
       evented: false,
-
       objectCaching: false,
     })
     if (this.activeShape) {
@@ -427,7 +424,6 @@ export default class Index extends Vue {
         strokeWidth: 1,
         fill: '#cccccc',
         opacity: 0.3,
-
         selectable: false,
         hasBorders: false,
         // hasControls: false,
@@ -489,7 +485,6 @@ export default class Index extends Vue {
       name: 'polygon',
     })
     this.canvas.add(polygon)
-
     this.activeLine = null
     this.activeShape = null
     this.polygonMode = false
@@ -525,13 +520,11 @@ export default class Index extends Vue {
       strokeWidth: this.drawWidth,
       //填充
       fill: 'rgba(10, 120, 0, 0.4)',
-      // hasControls: false,
       name: 'rectangle',
     })
 
     if (canvasObject) {
-      // canvasObject.index = getCanvasObjectIndex();\
-      this.canvas.add(canvasObject) //.setActiveObject(canvasObject)
+      this.canvas.add(canvasObject)
       this.drawingObject = canvasObject
     }
   }
@@ -549,13 +542,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix(),
-            ),
+              fabricObject.calcTransformMatrix()
+            )
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler,
+          this.actionHandler
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -566,7 +559,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -576,7 +569,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center',
+      'center'
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -599,7 +592,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix(),
+        fabricObject.calcTransformMatrix()
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})
@@ -662,6 +655,9 @@ export default class Index extends Vue {
       }
     }
     &_content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
       background: #282828;
       position: relative;
       display: flex;
