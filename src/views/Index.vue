@@ -36,7 +36,7 @@
           </div>
 
           <div class="label__main">
-            <div class="label__option"></div>
+            <!-- <input class="label__enter" type="text" placeholder="添加标签" /> -->
             <div class="label__list"></div>
           </div>
         </div>
@@ -142,6 +142,7 @@ export default class Index extends Vue {
     //   opacity: 0.85,
     //   // zIndex:-99,
     // })
+    this.canvas.clear()
     this.currentPicUrl = url
     const _this = this
 
@@ -149,7 +150,7 @@ export default class Index extends Vue {
       if (oImg.width > oImg.height) {
         oImg.scaleToWidth(_this.width)
         const currentHeight = (_this.width * oImg.height) / oImg.width
-        oImg.scaleToWidth(currentHeight)
+        oImg.scaleToHeight(currentHeight)
         oImg.set({ top: (_this.height - currentHeight) / 2, selectable: false })
       } else {
         oImg.scaleToHeight(_this.height)
@@ -676,6 +677,16 @@ export default class Index extends Vue {
     &_manage {
       .label {
         height: get-vh(450px);
+
+        &__enter {
+          //   background: rgba(255, 255, 255, 0);
+          //   border-radius: 2px;
+          //   border: 1px solid #ffffff;
+          //   width: 100px;
+          //   height: 20px;
+          //   margin: auto;
+          //   display: flex;
+        }
       }
       .img {
         height: get-vh(630px);
