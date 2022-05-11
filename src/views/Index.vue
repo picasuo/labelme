@@ -56,7 +56,7 @@
               v-for="(item, index) in picUrlList"
               :key="index"
               :class="currentPicUrl === item.url ? 'img-active' : ''"
-              @click="loadExpImg(item.url)"
+              @click="loadExpImg(item)"
             >
               <div
                 class="img__background"
@@ -132,25 +132,41 @@ export default class Index extends Vue {
 
   handlePicName = handlePicName
 
-  loadExpImg(url) {
+  objMap = {} as any
+
+  lastName = ''
+
+  loadExpImg(item) {
+    const { url, name } = item
+    this.objMap[this.lastName] = this.canvas.getObjects()
     this.canvas.clear()
     this.currentPicUrl = url
-    fabric.Image.fromURL(this.currentPicUrl, oImg => {
-      if (oImg.width > oImg.height) {
-        oImg.scaleToWidth(this.width)
-        const currentHeight = (this.width * oImg.height) / oImg.width
-        oImg.scaleToHeight(currentHeight)
-        oImg.set({ top: (this.height - currentHeight) / 2, selectable: false })
-      } else {
-        oImg.scaleToHeight(this.height)
-        // todo
-        const currentWidth = (this.height * oImg.width) / oImg.height
-        oImg.scaleToWidth(currentWidth)
-        oImg.set({ left: (this.width - currentWidth) / 2, selectable: false })
-      }
-      console.log(oImg)
-      this.canvas.add(oImg)
-    })
+    if (this.objMap[name]?.length > 0) {
+      console.log(this.objMap, name, this.objMap[name])
+      this.objMap[name].forEach(v => {
+        this.canvas.add(v)
+      })
+    } else {
+      fabric.Image.fromURL(this.currentPicUrl, oImg => {
+        if (oImg.width > oImg.height) {
+          oImg.scaleToWidth(this.width)
+          const currentHeight = (this.width * oImg.height) / oImg.width
+          oImg.scaleToHeight(currentHeight)
+          oImg.set({
+            top: (this.height - currentHeight) / 2,
+            selectable: false,
+          })
+        } else {
+          oImg.scaleToHeight(this.height)
+          // todo
+          const currentWidth = (this.height * oImg.width) / oImg.height
+          oImg.scaleToWidth(currentWidth)
+          oImg.set({ left: (this.width - currentWidth) / 2, selectable: false })
+        }
+        this.canvas.add(oImg)
+      })
+    }
+    this.lastName = name
   }
 
   uploadImg(list) {
@@ -168,7 +184,7 @@ export default class Index extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void,
+        reject: (value: string) => void
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -187,7 +203,7 @@ export default class Index extends Vue {
             }
           }
         })
-      },
+      }
     )
   }
 
@@ -203,6 +219,7 @@ export default class Index extends Vue {
             'icon-pentoolgangbigongju',
             'icon-huajuxing_0',
           ]
+    this.loadExpImg(this.picUrlList[0])
   }
   // 0-导出 1-移动 2-钢笔 3-矩形
   tabClick(tab) {
@@ -232,10 +249,10 @@ export default class Index extends Vue {
       // command+z 删除最近添加的元素
       if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
         this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
         this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
       }
       // 还原
@@ -528,13 +545,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix(),
-            ),
+              fabricObject.calcTransformMatrix()
+            )
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler,
+          this.actionHandler
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -545,7 +562,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -555,7 +572,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center',
+      'center'
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -578,7 +595,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix(),
+        fabricObject.calcTransformMatrix()
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})
