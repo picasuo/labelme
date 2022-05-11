@@ -145,15 +145,22 @@ export default class Index extends Vue {
     // })
     this.currentPicUrl = url
     const _this = this
+    
     fabric.Image.fromURL(this.currentPicUrl, function (oImg) {
       if (oImg.width > oImg.height) {
+        oImg.scaleToWidth(_this.width)
+        const currentHeight = (_this.width * oImg.height) / oImg.width
+        oImg.scaleToWidth(currentHeight)
+        oImg.set({ top: (_this.height - currentHeight) / 2 })
+      } else {
+        oImg.scaleToHeight(_this.height)
+        // todo
+        console.log('width', _this.height)
+        const currentWidth = (_this.height * oImg.width) / oImg.height
+        oImg.scaleToWidth(currentWidth)
+        oImg.set({ left: (_this.width - currentWidth) / 2 })
       }
-      oImg.scaleToHeight(_this.height)
-      // todo
-      console.log('width', _this.height)
-      const currentWidth = (_this.height * oImg.width) / oImg.height
-      oImg.scaleToWidth(currentWidth)
-      oImg.set({ left: (_this.width - currentWidth) / 2 })
+
       _this.canvas.add(oImg)
     })
     // this.canvas.add(imgInstance)
