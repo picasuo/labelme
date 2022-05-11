@@ -41,9 +41,6 @@ export default class SXMask extends Vue {
   }
 
   enterEdit(type) {
-    // todo
-    console.log('==', this.fileList.length)
-
     if (this.fileList.length > 0) {
       this.$emit('enterEdit', type)
     } else {
