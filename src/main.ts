@@ -7,7 +7,6 @@ import SUI from 'sx-sui-design'
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-
 Vue.use(SUI)
 
 Vue.config.productionTip = false

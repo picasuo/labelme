@@ -67,6 +67,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import fabric from 'fabric'
+
 import SxMask from 'components/SxMask.vue'
 
 @Component({
@@ -81,6 +83,30 @@ export default class Index extends Vue {
   iconShow = false
   isShown = true
   picUrlList = [] as Array<any>
+  canvas = {} as any
+  // 回退
+  redo = [] as any
+  x = ''
+  y = ''
+  rect = [] as any
+
+  mouseFrom = {} as any
+  mouseTo = {} as any
+  canvasObjectIndex = 0
+  rectangleLabel = 'warning'
+  drawWidth = 2 //笔触宽度
+  color = '#e2e2e2' //画笔颜色
+  drawingObject = null //当前绘制对象
+  moveCount = 1 //绘制移动计数器
+  doDrawing = false // 绘制状态
+
+  //polygon 相关参数
+  polygonMode = false
+  pointArray = [] as any
+  lineArray = [] as any
+  activeShape = false as any
+  activeLine = '' as any
+  line = {} as any
 
   get loadContext() {
     const str =
@@ -144,11 +170,397 @@ export default class Index extends Vue {
   // 0-导出 1-移动 2-钢笔 3-矩形
   tabClick(tab) {
     this.checkedTab = tab
+    //整个画板元素可被选中
+    this.canvas.skipTargetFind = false
+    // 取消自由绘制
+    this.canvas.isDrawingMode = false
   }
   // 退出
   exit() {
     this.isShown = true
     this.picUrlList = []
+  }
+
+  mounted() {
+    this.canvas = new fabric.Canvas('canvas', {})
+    this.canvas.selectionColor = 'rgba(0,0,0,0.05)'
+    this.canvas.on('mouse:down', this.mousedown)
+    this.canvas.on('mouse:move', this.mousemove)
+    this.canvas.on('mouse:up', this.mouseup)
+    document.onkeydown = e => {
+      // 键盘 delete删除所选元素
+      if (e.keyCode === 8) {
+        this.deleteObj()
+      }
+      // command+z 删除最近添加的元素
+      if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
+        this.redo.push(
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+        )
+        this.canvas.remove(
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+        )
+      }
+      // 还原
+      if (e.keyCode === 90 && e.metaKey && e.shiftKey) {
+        if (this.redo.length > 0) this.canvas.add(this.redo.pop())
+      }
+    }
+  }
+
+  deleteObj() {
+    this.canvas.getActiveObjects().map(item => {
+      this.canvas.remove(item)
+    })
+  }
+
+  // 鼠标按下时触发
+  mousedown(e) {
+    // 记录鼠标按下时的坐标
+    var xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    this.mouseFrom.x = xy.x
+    this.mouseFrom.y = xy.y
+    this.doDrawing = true
+    const activeObj = this.canvas.getActiveObjects()
+    if (activeObj.length !== 0) {
+      let points = [] as any
+      switch (activeObj[0].name) {
+        case 'rectangle':
+          // 按顺序
+          points.push([activeObj[0].aCoords.tl.x, activeObj[0].aCoords.tl.y])
+          points.push([activeObj[0].aCoords.tr.x, activeObj[0].aCoords.tr.y])
+          points.push([activeObj[0].aCoords.br.x, activeObj[0].aCoords.br.y])
+          points.push([activeObj[0].aCoords.bl.x, activeObj[0].aCoords.bl.y])
+          break
+        case 'polygon':
+          // 选中时
+          if (this.checkedTab === 1) this.polygonEdit(activeObj[0])
+          activeObj[0].points.map(item => {
+            points.push([item.x, item.y])
+          })
+          break
+      }
+      console.log('点位坐标', points)
+    }
+    // 绘制多边形
+    if (this.checkedTab === 2) {
+      this.canvas.skipTargetFind = false
+      try {
+        // 此段为判断是否闭合多边形，点击红点时闭合多边形
+        if (this.pointArray.length > 1) {
+          // e.target.id == this.pointArray[0].id 表示点击了初始红点
+          if (e.target && e.target.id == this.pointArray[0].id) {
+            this.generatePolygon()
+          }
+        }
+        //未点击红点则继续作画
+        if (this.polygonMode) {
+          this.addPoint(e)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+  }
+  // 鼠标松开执行
+  mouseup(e) {
+    var xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    this.mouseTo.x = xy.x
+    this.mouseTo.y = xy.y
+    this.drawingObject = null
+    this.moveCount = 1
+    if (this.checkedTab !== 2) {
+      this.doDrawing = false
+    }
+  }
+  //鼠标移动过程中已经完成了绘制
+  mousemove(e) {
+    if (this.moveCount % 2 && !this.doDrawing) {
+      //减少绘制频率
+      return
+    }
+    this.moveCount++
+    var xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    this.mouseTo.x = xy.x
+    this.mouseTo.y = xy.y
+    // 矩形
+    if (this.checkedTab === 3) {
+      this.drawing(e)
+    }
+    if (this.checkedTab === 2) {
+      if (this.activeLine && this.activeLine.class == 'line') {
+        var pointer = this.canvas.getPointer(e.e)
+        this.activeLine.set({ x2: pointer.x, y2: pointer.y })
+
+        var points = this.activeShape.get('points')
+        points[this.pointArray.length] = {
+          x: pointer.x,
+          y: pointer.y,
+          zIndex: 1,
+        }
+        this.activeShape.set({
+          points: points,
+        })
+        this.canvas.renderAll()
+      }
+      this.canvas.renderAll()
+    }
+  }
+  transformMouse(mouseX, mouseY) {
+    return { x: mouseX / 1, y: mouseY / 1 }
+  }
+
+  // 绘制多边形开始，绘制多边形和其他图形不一样，需要单独处理
+  drawPolygon() {
+    this.checkedTab = 2
+    this.polygonMode = true
+    //这里画的多边形，由顶点与线组成
+    this.pointArray = new Array() // 顶点集合
+    this.lineArray = new Array() //线集合
+    this.canvas.isDrawingMode = false
+  }
+  addPoint(e) {
+    var random = Math.floor(Math.random() * 10000)
+    var id = new Date().getTime() + random
+    var circle = new fabric.Circle({
+      radius: 5,
+      fill: '#ffffff',
+      stroke: '#333333',
+      strokeWidth: 0.5,
+      left: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
+      top: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+      selectable: false,
+      hasBorders: false,
+      // hasControls: false,
+      originX: 'center',
+      originY: 'center',
+      id: id,
+      objectCaching: false,
+    })
+    if (this.pointArray.length == 0) {
+      circle.set({
+        fill: 'green',
+      })
+    }
+    var points = [
+      (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
+      (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+      (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
+      (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+    ]
+
+    this.line = new fabric.Line(points, {
+      strokeWidth: 2,
+      fill: '#999999',
+      stroke: '#999999',
+      class: 'line',
+      originX: 'center',
+      originY: 'center',
+      selectable: false,
+      hasBorders: false,
+      // hasControls: false,
+      evented: false,
+
+      objectCaching: false,
+    })
+    if (this.activeShape) {
+      const pos = this.canvas.getPointer(e.e)
+      const points: any = this.activeShape.get('points')
+      points.push({
+        x: pos.x,
+        y: pos.y,
+      })
+      const polygon = new fabric.Polygon(points, {
+        stroke: '#333333',
+        strokeWidth: 1,
+        fill: '#cccccc',
+        opacity: 0.3,
+
+        selectable: false,
+        hasBorders: false,
+        // hasControls: false,
+        evented: false,
+        objectCaching: false,
+      })
+      this.canvas.remove(this.activeShape)
+      this.canvas.add(polygon)
+      this.activeShape = polygon
+      this.canvas.renderAll()
+    } else {
+      var polyPoint = [
+        {
+          x: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
+          y: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+        },
+      ]
+      var polygon = new fabric.Polygon(polyPoint, {
+        stroke: '#333333',
+        strokeWidth: 1,
+        fill: '#cccccc',
+        opacity: 0.3,
+
+        selectable: false,
+        hasBorders: false,
+        // hasControls: false,
+        evented: false,
+        objectCaching: false,
+      })
+      this.activeShape = polygon
+      this.canvas.add(polygon)
+    }
+    this.activeLine = this.line
+
+    this.pointArray.push(circle)
+    this.lineArray.push(this.line)
+    this.canvas.add(this.line)
+    this.canvas.add(circle)
+  }
+  generatePolygon() {
+    var points = new Array()
+    this.pointArray.map((point, index) => {
+      points.push({
+        x: point.left,
+        y: point.top,
+      })
+      this.canvas.remove(point)
+    })
+    this.lineArray.map((line, index) => {
+      this.canvas.remove(line)
+    })
+    this.canvas.remove(this.activeShape).remove(this.activeLine)
+    var polygon = new fabric.Polygon(points, {
+      stroke: this.color,
+      strokeWidth: this.drawWidth,
+      fill: 'rgba(255, 200, 255, 0.4)',
+      objectCaching: false,
+      transparentCorners: false,
+      name: 'polygon',
+    })
+    this.canvas.add(polygon)
+
+    this.activeLine = null
+    this.activeShape = null
+    this.polygonMode = false
+    this.doDrawing = false
+    this.checkedTab = 1
+  }
+  //绘制矩形
+  drawing(e) {
+    if (this.drawingObject) {
+      this.canvas.remove(this.drawingObject)
+    }
+    let canvasObject = null,
+      left = this.mouseFrom.x,
+      top = this.mouseFrom.y,
+      mouseFrom = this.mouseFrom,
+      mouseTo = this.mouseTo
+    //框选方向
+    top = Math.min(mouseFrom.y, mouseTo.y)
+    left = Math.min(mouseFrom.x, mouseTo.x)
+    let width = Math.abs(mouseFrom.x - mouseTo.x)
+    let height = Math.abs(mouseFrom.y - mouseTo.y)
+    // 按shift时画正方型
+    if (e.e.shiftKey) {
+      width > height ? (height = width) : (width = height)
+    }
+    canvasObject = new fabric.Rect({
+      top,
+      left,
+      width,
+      height,
+      //边框
+      stroke: this.color,
+      strokeWidth: this.drawWidth,
+      //填充
+      fill: 'rgba(10, 120, 0, 0.4)',
+      // hasControls: false,
+      name: 'rectangle',
+    })
+
+    if (canvasObject) {
+      // canvasObject.index = getCanvasObjectIndex();\
+      this.canvas.add(canvasObject) //.setActiveObject(canvasObject)
+      this.drawingObject = canvasObject
+    }
+  }
+
+  polygonEdit(poly) {
+    const lastControl = poly.points.length - 1
+    poly.cornerStyle = 'circle'
+    poly.cornerColor = 'rgba(0,0,255,0.5)'
+    poly.controls = poly.points.reduce((acc, point, index) => {
+      acc['p' + index] = new fabric.Control({
+        positionHandler: (dim, finalMatrix, fabricObject) => {
+          const x = fabricObject.points[index].x - fabricObject.pathOffset.x
+          const y = fabricObject.points[index].y - fabricObject.pathOffset.y
+          return fabric.util.transformPoint(
+            { x: x, y: y },
+            fabric.util.multiplyTransformMatrices(
+              fabricObject.canvas.viewportTransform,
+              fabricObject.calcTransformMatrix()
+            )
+          )
+        },
+        actionHandler: this.anchorWrapper(
+          index > 0 ? index - 1 : lastControl,
+          this.actionHandler
+        ),
+        actionName: 'modifyPolygon',
+        pointIndex: index,
+      })
+      return acc
+    }, {})
+  }
+  getObjectSizeWithStroke(object) {
+    const stroke = new fabric.Point(
+      object.strokeUniform ? 1 / object.scaleX : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1
+    ).multiply(object.strokeWidth)
+    return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
+  }
+  actionHandler(eventData, transform, x, y) {
+    const polygon = transform.target
+    const currentControl = polygon.controls[polygon.__corner]
+    const mouseLocalPosition = polygon.toLocalPoint(
+      new fabric.Point(x, y),
+      'center',
+      'center'
+    )
+    const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
+    const size = polygon._getTransformedDimensions(0, 0)
+    const finalPointPosition = {
+      x:
+        (mouseLocalPosition.x * polygonBaseSize.x) / size.x +
+        polygon.pathOffset.x,
+      y:
+        (mouseLocalPosition.y * polygonBaseSize.y) / size.y +
+        polygon.pathOffset.y,
+    }
+    polygon.points[currentControl.pointIndex] = finalPointPosition
+    return true
+  }
+  anchorWrapper(anchorIndex, fn) {
+    return (eventData, transform, x, y) => {
+      const fabricObject = transform.target
+      const absolutePoint = fabric.util.transformPoint(
+        {
+          x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
+          y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
+        },
+        fabricObject.calcTransformMatrix()
+      )
+      const actionPerformed = fn(eventData, transform, x, y)
+      const newDim = fabricObject._setPositionDimensions({})
+      const polygonBaseSize = this.getObjectSizeWithStroke(fabricObject)
+      const newX =
+        (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) /
+        polygonBaseSize.x
+      const newY =
+        (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) /
+        polygonBaseSize.y
+      fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5)
+      return actionPerformed
+    }
   }
 }
 </script>
