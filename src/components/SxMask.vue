@@ -1,9 +1,10 @@
 <template>
   <div class="mask">
     <div class="mask__main">
-      <div class="box">
+      <div id="box" class="box">
         <sx-icon type="icon-boxtag-fill" />
         <p>{{ loadContext || '点击上传本次标图任务所需的图片' }}</p>
+
         <input
           ref="fileInput"
           type="file"
@@ -32,15 +33,17 @@ export default class SXMask extends Vue {
   })
   loadContext
 
-  get fileList() {
-    return this!.$refs!.fileInput!['files']
-  }
+  fileList = [] as any
 
   uploadImg() {
+    this.fileList = this!.$refs!.fileInput!['files'] as any
     this.$emit('uploadImg', this.fileList)
   }
 
   enterEdit(type) {
+    // todo
+    console.log('==', this.fileList.length)
+
     if (this.fileList.length > 0) {
       this.$emit('enterEdit', type)
     } else {

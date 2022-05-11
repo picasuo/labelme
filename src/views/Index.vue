@@ -25,12 +25,34 @@
           <div class="nav">
             <span class="title">标签管理</span>
           </div>
+          
+          <div class="label__main">
+            <div class="label__option"></div>
+            <div class="label__list"></div>
+          </div>
         </div>
+
         <div class="img">
           <div class="nav">
             <span class="title">图片管理</span>
-            <span>{{ 20 }}</span>
+            <span>{{
+              picUrlList.length && !isShown ? picUrlList.length : 0
+            }}</span>
           </div>
+
+          <ul class="img__list" v-if="!isShown && picUrlList.length > 0">
+            <li
+              class="img__item"
+              v-for="(item, index) in picUrlList"
+              :key="index"
+            >
+              <div
+                class="img__background"
+                :style="{ backgroundImage: `url(${item.url})` }"
+              ></div>
+              <p class="img__name">{{ item.name }}</p>
+            </li>
+          </ul>
         </div>
       </div>
       <SxMask
@@ -69,11 +91,9 @@ export default class Index extends Vue {
   uploadImg(list) {
     this.getUrlList(list)
       .then(val => {
-        // todo
-        console.log('val', val)
-
-        // this.pic = val[0]
         this.picUrlList = val
+        // todo
+        console.log('picUrlList', this.picUrlList)
       })
       .catch(err => {
         // this.pic = ''
@@ -85,11 +105,12 @@ export default class Index extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void
+        reject: (value: string) => void,
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
-          if (!/image\/(png|jp(e)g)$/.test(file.type)) {
+          const { type, name } = file
+          if (!/image\/(png|jp(e)g)$/.test(type)) {
             reject('请上传正确格式的图片')
             return
           }
@@ -97,13 +118,13 @@ export default class Index extends Vue {
           const reader = new FileReader() as any
           reader.readAsDataURL(file)
           reader.onload = () => {
-            picUrlList.push(reader.result)
+            picUrlList.push({ name, url: reader.result })
             if (picUrlList.length === fileList.length) {
               resolve(picUrlList)
             }
           }
         })
-      }
+      },
     )
   }
 
@@ -119,8 +140,6 @@ export default class Index extends Vue {
             'icon-pentoolgangbigongju',
             'icon-huajuxing_0',
           ]
-    // todo
-    console.log('type', type)
   }
   // 0-导出 1-移动 2-钢笔 3-矩形
   tabClick(tab) {
@@ -187,6 +206,38 @@ export default class Index extends Vue {
       }
       .img {
         height: get-vh(630px);
+        display: flex;
+        flex-direction: column;
+
+        &__list {
+          flex: 1;
+        }
+
+        &__item {
+          height: 70px;
+          background: #535353;
+          border: 1px solid #454545;
+          padding: 8px;
+          display: flex;
+          align-items: center;
+        }
+
+        &__background {
+          width: 54px;
+          height: 54px;
+          background-repeat: no-repeat;
+          background-size: 100% 100%;
+          margin-right: 8px;
+        }
+
+        &__name {
+          font-size: 12px;
+          font-family: PingFangSC-Regular, PingFang SC;
+          font-weight: 400;
+          color: #ffffff;
+          line-height: 17px;
+          letter-spacing: 1px;
+        }
       }
       .nav {
         height: get-vw(50px);
