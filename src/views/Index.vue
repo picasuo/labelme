@@ -54,11 +54,11 @@
               class="img__item"
               v-for="(item, index) in picUrlList"
               :key="index"
+              :class="currentPicUrl === item.url ? 'img-active' : ''"
               @click="loadExpImg(item.url)"
             >
               <div
                 class="img__background"
-                :class="currentPicUrl === item.url ? 'img-active' : ''"
                 :style="{ backgroundImage: `url(${item.url})` }"
               ></div>
               <p class="img__name">{{ item.name }}</p>
@@ -149,17 +149,16 @@ export default class Index extends Vue {
       if (oImg.width > oImg.height) {
         oImg.scaleToWidth(_this.width)
         const currentHeight = (_this.width * oImg.height) / oImg.width
-        oImg.scaleToWidth(currentHeight)
+        oImg.scaleToHeight(currentHeight)
         oImg.set({ top: (_this.height - currentHeight) / 2, selectable: false })
       } else {
         oImg.scaleToHeight(_this.height)
         // todo
-        console.log('width', _this.height)
         const currentWidth = (_this.height * oImg.width) / oImg.height
         oImg.scaleToWidth(currentWidth)
         oImg.set({ left: (_this.width - currentWidth) / 2, selectable: false })
       }
-
+      console.log(oImg)
       _this.canvas.add(oImg)
     })
     // this.canvas.add(imgInstance)
@@ -182,7 +181,7 @@ export default class Index extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void,
+        reject: (value: string) => void
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -201,7 +200,7 @@ export default class Index extends Vue {
             }
           }
         })
-      },
+      }
     )
   }
 
@@ -246,10 +245,10 @@ export default class Index extends Vue {
       // command+z 删除最近添加的元素
       if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
         this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
         this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
       }
       // 还原
@@ -542,13 +541,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix(),
-            ),
+              fabricObject.calcTransformMatrix()
+            )
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler,
+          this.actionHandler
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -559,7 +558,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -569,7 +568,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center',
+      'center'
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -592,7 +591,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix(),
+        fabricObject.calcTransformMatrix()
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})
@@ -682,10 +681,6 @@ export default class Index extends Vue {
         display: flex;
         flex-direction: column;
 
-        &-active {
-          border: 2px solid cyan;
-        }
-
         &__list {
           flex: 1;
         }
@@ -699,11 +694,17 @@ export default class Index extends Vue {
           align-items: center;
         }
 
+        &-active {
+          background: #66656a;
+          border: 2px solid #488feb;
+        }
+
         &__background {
           width: 54px;
           height: 54px;
+          background: center;
           background-repeat: no-repeat;
-          background-size: 100% 100%;
+          background-size: contain;
           margin-right: 8px;
         }
 
