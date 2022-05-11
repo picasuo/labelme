@@ -19,7 +19,16 @@
           <sx-icon :type="item" />
         </div>
       </div>
-      <div class="tool_content"></div>
+      <div class="tool_content">
+        <canvas
+          class="tool__canvas"
+          id="canvas"
+          :width="width"
+          :height="height"
+        ></canvas>
+
+        <img id="img" :src="currentPicUrl" />
+      </div>
       <div class="tool_manage">
         <div class="label">
           <div class="nav">
@@ -45,9 +54,11 @@
               class="img__item"
               v-for="(item, index) in picUrlList"
               :key="index"
+              @click="loadExpImg(item.url)"
             >
               <div
                 class="img__background"
+                :class="currentPicUrl === item.url ? 'img-active' : ''"
                 :style="{ backgroundImage: `url(${item.url})` }"
               ></div>
               <p class="img__name">{{ item.name }}</p>
@@ -108,10 +119,44 @@ export default class Index extends Vue {
   activeLine = '' as any
   line = {} as any
 
+  width = 800
+  height = 600
+
+  currentPicUrl = ''
+
   get loadContext() {
     const str =
       this.picUrlList.length > 0 ? `已选择${this.picUrlList.length}张图片` : ''
     return str
+  }
+
+  loadExpImg(url) {
+    // var imgElement = document.getElementById('img')
+    // // todo
+    // console.log('width', this.width)
+    // //声明我们的图片
+    // const imgInstance = new fabric.Image(imgElement, {
+    //   //   selectable: false,
+    //   left: 300,
+    //   top: 300,
+    //   width: 600,
+    //   opacity: 0.85,
+    //   // zIndex:-99,
+    // })
+    this.currentPicUrl = url
+    const _this = this
+    fabric.Image.fromURL(this.currentPicUrl, function (oImg) {
+      if (oImg.width > oImg.height) {
+      }
+      oImg.scaleToHeight(_this.height)
+      // todo
+      console.log('width', _this.height)
+      const currentWidth = (_this.height * oImg.width) / oImg.height
+      oImg.scaleToWidth(currentWidth)
+      oImg.set({ left: (_this.width - currentWidth) / 2 })
+      _this.canvas.add(oImg)
+    })
+    // this.canvas.add(imgInstance)
   }
 
   uploadImg(list) {
@@ -611,6 +656,19 @@ export default class Index extends Vue {
     }
     &_content {
       background: #282828;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      > img {
+        display: none;
+        position: absolute;
+        z-index: 0;
+      }
+    }
+
+    &__canvas {
     }
     &_manage {
       .label {
@@ -620,6 +678,10 @@ export default class Index extends Vue {
         height: get-vh(630px);
         display: flex;
         flex-direction: column;
+
+        &-active {
+          border: 2px solid cyan;
+        }
 
         &__list {
           flex: 1;
