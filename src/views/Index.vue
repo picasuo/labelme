@@ -1,5 +1,5 @@
 <template>
-  <div class="index">
+  <div class="index" :class="inputModalVisiable ? 'indexmask' : ''">
     <div class="header">
       <p>
         正在进行的任务<span>{{ 0 }}</span
@@ -35,9 +35,20 @@
             <span class="title">标签管理</span>
           </div>
 
-          <div class="label__main">
-            <span class="label__btn">+添加标签</span>
-            <!-- <input class="label__enter" type="text" placeholder="添加标签" /> -->
+          <div class="label__main" :class="inputModalVisiable ? 'modal' : ''">
+            <span class="label__btn" @click="switchInputLabel">{{
+              inputModalVisiable ? '隐藏输入框' : '+添加标签'
+            }}</span>
+            <div class="modal" v-if="inputModalVisiable">
+              <sx-input
+                v-model="label"
+                level="fragment"
+                clearable
+                placeholder="输入标签名"
+              />
+              <sx-button @click="getLabel">确定</sx-button>
+            </div>
+
             <div class="label__list"></div>
           </div>
         </div>
@@ -89,11 +100,14 @@ import { handlePicName } from '../utils/tools'
   },
 })
 export default class Index extends Vue {
+  label = ''
+  //标签输入框是否可见
+  inputModalVisiable = false
   icons = ['icon-export'] as any
   checkedTab = 0
   // 区分分类以及对象识别
   iconShow = false
-  isShown = true
+  isShown = false
   picUrlList = [] as Array<any>
   canvas = {} as any
   // 回退
@@ -136,6 +150,11 @@ export default class Index extends Vue {
 
   lastName = ''
 
+  getLabel() {
+    // todo
+    console.log('label', this.label)
+  }
+
   loadExpImg(item) {
     const { url, name } = item
     this.objMap[this.lastName] = this.canvas.getObjects()
@@ -158,7 +177,6 @@ export default class Index extends Vue {
           })
         } else {
           oImg.scaleToHeight(this.height)
-          // todo
           const currentWidth = (this.height * oImg.width) / oImg.height
           oImg.scaleToWidth(currentWidth)
           oImg.set({ left: (this.width - currentWidth) / 2, selectable: false })
@@ -184,7 +202,7 @@ export default class Index extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void
+        reject: (value: string) => void,
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -203,7 +221,7 @@ export default class Index extends Vue {
             }
           }
         })
-      }
+      },
     )
   }
 
@@ -235,6 +253,11 @@ export default class Index extends Vue {
     this.picUrlList = []
   }
 
+  //切换标签录入的输入框展示
+  switchInputLabel() {
+    this.inputModalVisiable = !this.inputModalVisiable
+  }
+
   mounted() {
     this.canvas = new fabric.Canvas('canvas', {})
     this.canvas.selectionColor = 'rgba(0,0,0,0.05)'
@@ -249,10 +272,10 @@ export default class Index extends Vue {
       // command+z 删除最近添加的元素
       if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
         this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
         )
         this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
         )
       }
       // 还原
@@ -545,13 +568,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix()
-            )
+              fabricObject.calcTransformMatrix(),
+            ),
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler
+          this.actionHandler,
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -562,7 +585,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1
+      object.strokeUniform ? 1 / object.scaleY : 1,
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -572,7 +595,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center'
+      'center',
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -595,7 +618,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix()
+        fabricObject.calcTransformMatrix(),
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})
@@ -615,6 +638,20 @@ export default class Index extends Vue {
 
 <style lang="scss" scoped>
 .index {
+  position: relative;
+  height: 100vh;
+  &::before {
+    content: '';
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(34, 34, 34, 0.9);
+    z-index: 1;
+  }
+
   .header {
     height: 40px;
     background: #151515;
@@ -642,8 +679,9 @@ export default class Index extends Vue {
   }
   .tool {
     display: grid;
-    grid-template-columns: get-vw(60px) 1fr get-vw(360px);
+    grid-template-columns: get-vw(60px) 1fr get-vw(400px);
     background: #535353;
+
     &_bar {
       .icon {
         display: flex;
@@ -670,7 +708,6 @@ export default class Index extends Vue {
       > img {
         display: none;
         position: absolute;
-        z-index: 0;
       }
     }
 
@@ -685,25 +722,23 @@ export default class Index extends Vue {
         color: #ffffff;
         letter-spacing: 1px;
 
+        &__main {
+          display: flex;
+          align-items: center;
+          padding: 25px 0 0 25px;
+          justify-content: space-between;
+          position: relative;
+        }
+
         &__btn {
-          width: 100px;
-          height: 45px;
+          width: get-vw(100px);
+          height: 40px;
           background: rgba(255, 255, 255, 0);
           border-radius: 2px;
           border: 1px solid #ffffff;
           display: flex;
           justify-content: center;
           align-items: center;
-        }
-
-        &__enter {
-          //   background: rgba(255, 255, 255, 0);
-          //   border-radius: 2px;
-          //   border: 1px solid #ffffff;
-          //   width: 100px;
-          //   height: 20px;
-          //   margin: auto;
-          //   display: flex;
         }
       }
       .img {
@@ -774,6 +809,22 @@ export default class Index extends Vue {
   .sui-icon-normal {
     width: 25px;
     height: 25px;
+  }
+}
+
+.indexmask {
+  &::before {
+    display: block;
+  }
+}
+
+.modal {
+  display: flex;
+  z-index: 1;
+
+  .ivu-input-wrapper {
+    margin: 0 15px;
+    width: get-vw(100px);
   }
 }
 </style>
