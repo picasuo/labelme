@@ -36,6 +36,7 @@
           </div>
 
           <div class="label__main">
+            <span class="label__btn">+添加标签</span>
             <!-- <input class="label__enter" type="text" placeholder="添加标签" /> -->
             <div class="label__list"></div>
           </div>
@@ -661,6 +662,22 @@ export default class Index extends Vue {
     &_manage {
       .label {
         height: get-vh(450px);
+        font-size: 12px;
+        font-family: PingFangSC-Medium, PingFang SC;
+        font-weight: 500;
+        color: #ffffff;
+        letter-spacing: 1px;
+
+        &__btn {
+          width: 100px;
+          height: 45px;
+          background: rgba(255, 255, 255, 0);
+          border-radius: 2px;
+          border: 1px solid #ffffff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
 
         &__enter {
           //   background: rgba(255, 255, 255, 0);
