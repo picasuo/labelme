@@ -37,13 +37,15 @@
 
           <div class="label__main" :class="inputModalVisiable ? 'modal' : ''">
             <span class="label__btn" @click="switchInputLabel">{{
-              inputModalVisiable ? '隐藏输入框' : '+添加标签'
+              inputModalVisiable ? '!停止添加' : '+添加标签'
             }}</span>
             <div class="modal" v-if="inputModalVisiable">
               <sx-input
                 v-model="label"
                 level="fragment"
                 clearable
+                type="text"
+                @on-enter="getLabel"
                 placeholder="输入标签名"
               />
               <sx-button @click="getLabel">确定</sx-button>
@@ -151,6 +153,7 @@ export default class Index extends Vue {
   lastName = ''
 
   getLabel() {
+    if (!this.label) return
     // todo
     console.log('label', this.label)
   }
@@ -259,6 +262,17 @@ export default class Index extends Vue {
   }
 
   mounted() {
+    const message = '数据尚未保存，离开后可能会导致数据丢失\n\n您确定要离开吗？'
+    window.onbeforeunload = event => {
+      // todo
+      console.log('event', event)
+      //   event.preventDefault()
+
+      event = event || window.event
+      event.returnValue = message
+      return message
+    }
+
     this.canvas = new fabric.Canvas('canvas', {})
     this.canvas.selectionColor = 'rgba(0,0,0,0.05)'
     this.canvas.on('mouse:down', this.mousedown)
@@ -739,6 +753,7 @@ export default class Index extends Vue {
           display: flex;
           justify-content: center;
           align-items: center;
+          cursor: pointer;
         }
       }
       .img {
