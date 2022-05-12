@@ -65,7 +65,7 @@
         </div>
       </div>
       <SxMask
-        v-if="isShown"
+        v-if="false"
         @uploadImg="uploadImg"
         @enterEdit="enterEdit"
         :loadContext="loadContext"
@@ -87,7 +87,12 @@ import { handlePicName } from '../utils/tools'
   },
 })
 export default class Index extends Vue {
-  icons = ['icon-export'] as any
+  icons = [
+    'icon-export',
+    'icon-icon-',
+    'icon-pentoolgangbigongju',
+    'icon-huajuxing_0',
+  ] as any
   finishedWork = 1
   checkedTab = 0
   // 区分分类以及对象识别
@@ -116,8 +121,8 @@ export default class Index extends Vue {
   polygonMode = false
   pointArray = [] as any
   lineArray = [] as any
-  activeShape = false as any
-  activeLine = '' as any
+  activeShape = null as any
+  activeLine = null as any
   line = {} as any
 
   width = 800
@@ -143,7 +148,6 @@ export default class Index extends Vue {
     this.canvas.clear()
     this.currentPicUrl = url
     if (this.objMap[name]?.length > 0) {
-      console.log(this.objMap, name, this.objMap[name])
       this.objMap[name].forEach(v => {
         this.canvas.add(v)
       })
@@ -210,7 +214,6 @@ export default class Index extends Vue {
 
   // 0-分类 1-检测
   enterEdit(type) {
-    console.log(type)
     this.isShown = false
     this.icons =
       type === 0
@@ -227,8 +230,25 @@ export default class Index extends Vue {
     this.isShown = true
     this.isAdd = true
   }
+  // 重置多边形参数
+  initPolygonParams() {
+    this.pointArray.map(point => {
+      this.canvas.remove(point)
+    })
+    this.pointArray = []
+    this.lineArray.map(line => {
+      this.canvas.remove(line)
+    })
+    this.lineArray = []
+    this.canvas.remove(this.activeShape).remove(this.activeLine)
+    this.activeShape = null
+    this.activeLine = null
+    this.polygonMode = false
+    this.doDrawing = false
+  }
   // 0-导出 1-移动 2-钢笔 3-矩形
   tabClick(tab) {
+    this.initPolygonParams()
     this.checkedTab = tab
     //整个画板元素可被选中
     this.canvas.skipTargetFind = this.checkedTab === 3
@@ -237,6 +257,7 @@ export default class Index extends Vue {
   }
   // 退出
   exit() {
+    this.canvas.clear()
     this.isShown = true
     this.isAdd = false
     this.picUrlList = []
@@ -248,6 +269,10 @@ export default class Index extends Vue {
     this.canvas.on('mouse:down', this.mousedown)
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
+    this.quickCheck()
+  }
+
+  quickCheck() {
     document.onkeydown = e => {
       // 键盘 delete删除所选元素
       if (e.keyCode === 8) {
@@ -266,11 +291,23 @@ export default class Index extends Vue {
       if (e.keyCode === 90 && e.metaKey && e.shiftKey) {
         if (this.redo.length > 0) this.canvas.add(this.redo.pop())
       }
+      // command+s 导出
+      if (e.keyCode === 83 && e.metaKey) {
+      }
+      // P 钢笔工具
+      if (e.keyCode === 80) {
+        this.tabClick(2)
+      }
+      // R 矩形框选
+      if (e.keyCode === 82) {
+        this.tabClick(3)
+      }
     }
   }
 
   deleteObj() {
     this.canvas.getActiveObjects().map(item => {
+      this.redo.push(item)
       this.canvas.remove(item)
     })
   }
@@ -282,16 +319,18 @@ export default class Index extends Vue {
     this.mouseFrom.x = xy.x
     this.mouseFrom.y = xy.y
     this.doDrawing = true
-    const activeObj = this.canvas.getActiveObjects()
-    if (activeObj.length !== 0) {
+    const activeObj = this.canvas.getActiveObject()
+    if (activeObj) {
+      console.log('select', this.canvas.getActiveObject())
+      activeObj.fill = 'rgba(100, 120, 0, 0.4)'
       let points = [] as any
-      switch (activeObj[0].name) {
+      switch (activeObj.name) {
         case 'rectangle':
           // 按顺序
-          points.push([activeObj[0].aCoords.tl.x, activeObj[0].aCoords.tl.y])
-          points.push([activeObj[0].aCoords.tr.x, activeObj[0].aCoords.tr.y])
-          points.push([activeObj[0].aCoords.br.x, activeObj[0].aCoords.br.y])
-          points.push([activeObj[0].aCoords.bl.x, activeObj[0].aCoords.bl.y])
+          points.push([activeObj.aCoords.tl.x, activeObj.aCoords.tl.y])
+          points.push([activeObj.aCoords.tr.x, activeObj.aCoords.tr.y])
+          points.push([activeObj.aCoords.br.x, activeObj.aCoords.br.y])
+          points.push([activeObj.aCoords.bl.x, activeObj.aCoords.bl.y])
           break
         case 'polygon':
           // 选中时
@@ -393,7 +432,6 @@ export default class Index extends Vue {
       top: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
       selectable: false,
       hasBorders: false,
-      // hasControls: false,
       originX: 'center',
       originY: 'center',
       id: id,
@@ -420,7 +458,6 @@ export default class Index extends Vue {
       originY: 'center',
       selectable: false,
       hasBorders: false,
-      // hasControls: false,
       evented: false,
       objectCaching: false,
     })
@@ -438,7 +475,6 @@ export default class Index extends Vue {
         opacity: 0.3,
         selectable: false,
         hasBorders: false,
-        // hasControls: false,
         evented: false,
         objectCaching: false,
       })
@@ -461,7 +497,6 @@ export default class Index extends Vue {
 
         selectable: false,
         hasBorders: false,
-        // hasControls: false,
         evented: false,
         objectCaching: false,
       })
@@ -531,7 +566,7 @@ export default class Index extends Vue {
       stroke: this.color,
       strokeWidth: this.drawWidth,
       //填充
-      fill: 'rgba(10, 120, 0, 0.4)',
+      fill: 'rgba(100, 0, 0, 0.4)',
       name: 'rectangle',
     })
 
@@ -739,6 +774,7 @@ export default class Index extends Vue {
           color: #ffffff;
           line-height: 17px;
           letter-spacing: 1px;
+          cursor: default;
         }
       }
       .nav {
