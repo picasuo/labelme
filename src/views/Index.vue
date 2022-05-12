@@ -156,8 +156,8 @@ export default class Index extends Vue {
   activeLine = null as any
   line = {} as any
 
-  width = 1200
-  height = 800
+  width = 800
+  height = 600
 
   // 标识移动图片还是框
   moveFlag = false
@@ -263,7 +263,7 @@ export default class Index extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void,
+        reject: (value: string) => void
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -282,7 +282,7 @@ export default class Index extends Vue {
             }
           }
         })
-      },
+      }
     )
   }
 
@@ -346,6 +346,12 @@ export default class Index extends Vue {
   }
 
   mounted() {
+    const doc = document.getElementsByClassName('tool_content')[0]
+    const myCanvas: any = document.getElementById('canvas')
+    this.width = doc.clientWidth * 0.8
+    this.height = doc.clientHeight * 0.8
+    myCanvas.width = this.width
+    myCanvas.height = this.height
     window.onbeforeunload = event => {
       //适配fireFox
       event.preventDefault()
@@ -372,10 +378,10 @@ export default class Index extends Vue {
       // command+z 删除最近添加的元素
       if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
         this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
         this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
         )
       }
       // 还原
@@ -403,7 +409,7 @@ export default class Index extends Vue {
         } else {
           console.log(
             this.canvas.getObjects(),
-            this.canvas.getObjects()[0].getObjects(),
+            this.canvas.getObjects()[0].getObjects()
           )
           const objs = this.canvas.getObjects()[0].getObjects()
           this.canvas.clear().renderAll()
@@ -546,7 +552,7 @@ export default class Index extends Vue {
     const id = new Date().getTime() + random
     const circle = new fabric.Circle({
       radius: 5,
-      fill: '#ffffff',
+      fill: 'rgba(255,255,255,0.5)',
       stroke: '#333333',
       strokeWidth: 0.5,
       left: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
@@ -560,7 +566,7 @@ export default class Index extends Vue {
     })
     if (this.pointArray.length == 0) {
       circle.set({
-        fill: 'green',
+        fill: '#ffffff',
       })
     }
     const points = [
@@ -647,7 +653,7 @@ export default class Index extends Vue {
     const polygon = new fabric.Polygon(points, {
       stroke: this.color,
       strokeWidth: this.drawWidth,
-      fill: 'rgba(255, 200, 255, 0.4)',
+      fill: 'rgba(255, 255, 255, 0.2)',
       objectCaching: false,
       transparentCorners: false,
       name: 'polygon',
@@ -687,7 +693,7 @@ export default class Index extends Vue {
       stroke: this.color,
       strokeWidth: this.drawWidth,
       //填充
-      fill: 'rgba(100, 0, 0, 0.4)',
+      fill: 'rgba(255, 255, 255, 0.2)',
       name: 'rectangle',
     })
 
@@ -700,7 +706,7 @@ export default class Index extends Vue {
   polygonEdit(poly) {
     const lastControl = poly.points.length - 1
     poly.cornerStyle = 'circle'
-    poly.cornerColor = 'rgba(0,0,255,0.5)'
+    poly.cornerColor = 'rgba(255,255,255,1)'
     poly.controls = poly.points.reduce((acc, point, index) => {
       acc['p' + index] = new fabric.Control({
         positionHandler: (dim, finalMatrix, fabricObject) => {
@@ -710,13 +716,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix(),
-            ),
+              fabricObject.calcTransformMatrix()
+            )
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler,
+          this.actionHandler
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -727,7 +733,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -737,7 +743,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center',
+      'center'
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -760,7 +766,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix(),
+        fabricObject.calcTransformMatrix()
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})
