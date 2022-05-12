@@ -65,7 +65,7 @@
         </div>
       </div>
       <SxMask
-        v-if="false"
+        v-if="isShown"
         @uploadImg="uploadImg"
         @enterEdit="enterEdit"
         :loadContext="loadContext"
@@ -125,8 +125,11 @@ export default class Index extends Vue {
   activeLine = null as any
   line = {} as any
 
-  width = 800
-  height = 600
+  width = 1200
+  height = 800
+
+  // 标识移动图片还是框
+  moveFlag = false
 
   currentPicUrl = ''
 
@@ -160,13 +163,18 @@ export default class Index extends Vue {
           oImg.set({
             top: (this.height - currentHeight) / 2,
             selectable: false,
+            hasControls: false,
           })
         } else {
           oImg.scaleToHeight(this.height)
           // todo
           const currentWidth = (this.height * oImg.width) / oImg.height
           oImg.scaleToWidth(currentWidth)
-          oImg.set({ left: (this.width - currentWidth) / 2, selectable: false })
+          oImg.set({
+            left: (this.width - currentWidth) / 2,
+            selectable: false,
+            hasControls: false,
+          })
         }
         this.canvas.add(oImg)
       })
@@ -302,7 +310,38 @@ export default class Index extends Vue {
       if (e.keyCode === 82) {
         this.tabClick(3)
       }
+      // 按下ctrl切换移动图片,bug
+      if (e.ctrlKey) {
+        this.moveFlag = !this.moveFlag
+        if (this.moveFlag) {
+          const group = new fabric.Group(this.canvas.getObjects(), {})
+          this.canvas.clear().renderAll()
+          this.canvas.add(group)
+        } else {
+          console.log(
+            this.canvas.getObjects(),
+            this.canvas.getObjects()[0].getObjects()
+          )
+          const objs = this.canvas.getObjects()[0].getObjects()
+          this.canvas.clear().renderAll()
+          objs.forEach(item => {
+            this.canvas.add(item)
+          })
+        }
+      }
+      if (e.keyCode === 65) {
+        this.setZoom(0.1)
+      }
+      if (e.keyCode === 68) {
+        this.setZoom(-0.1)
+      }
     }
+  }
+
+  setZoom(zoom) {
+    const center = this.canvas.getCenter()
+    const newZoom = this.canvas.getZoom() + zoom
+    this.canvas.zoomToPoint({ x: center.left, y: center.top }, newZoom)
   }
 
   deleteObj() {
@@ -315,7 +354,7 @@ export default class Index extends Vue {
   // 鼠标按下时触发
   mousedown(e) {
     // 记录鼠标按下时的坐标
-    var xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
     this.mouseFrom.x = xy.x
     this.mouseFrom.y = xy.y
     this.doDrawing = true
@@ -364,7 +403,7 @@ export default class Index extends Vue {
   }
   // 鼠标松开执行
   mouseup(e) {
-    var xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
     this.drawingObject = null
@@ -382,7 +421,7 @@ export default class Index extends Vue {
       return
     }
     this.moveCount++
-    var xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
     // 矩形
@@ -391,10 +430,10 @@ export default class Index extends Vue {
     }
     if (this.checkedTab === 2) {
       if (this.activeLine && this.activeLine.class == 'line') {
-        var pointer = this.canvas.getPointer(e.e)
+        const pointer = this.canvas.getPointer(e.e)
         this.activeLine.set({ x2: pointer.x, y2: pointer.y })
 
-        var points = this.activeShape.get('points')
+        const points = this.activeShape.get('points')
         points[this.pointArray.length] = {
           x: pointer.x,
           y: pointer.y,
@@ -442,7 +481,7 @@ export default class Index extends Vue {
         fill: 'green',
       })
     }
-    var points = [
+    const points = [
       (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
       (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
       (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
@@ -483,13 +522,13 @@ export default class Index extends Vue {
       this.activeShape = polygon
       this.canvas.renderAll()
     } else {
-      var polyPoint = [
+      const polyPoint = [
         {
           x: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
           y: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
         },
       ]
-      var polygon = new fabric.Polygon(polyPoint, {
+      const polygon = new fabric.Polygon(polyPoint, {
         stroke: '#333333',
         strokeWidth: 1,
         fill: '#cccccc',
@@ -511,7 +550,7 @@ export default class Index extends Vue {
     this.canvas.add(circle)
   }
   generatePolygon() {
-    var points = new Array()
+    const points = new Array()
     this.pointArray.map((point, index) => {
       points.push({
         x: point.left,
@@ -523,7 +562,7 @@ export default class Index extends Vue {
       this.canvas.remove(line)
     })
     this.canvas.remove(this.activeShape).remove(this.activeLine)
-    var polygon = new fabric.Polygon(points, {
+    const polygon = new fabric.Polygon(points, {
       stroke: this.color,
       strokeWidth: this.drawWidth,
       fill: 'rgba(255, 200, 255, 0.4)',
