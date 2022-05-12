@@ -2,7 +2,7 @@
   <div class="index" :class="inputModalVisiable ? 'indexmask' : ''">
     <div class="header">
       <p>
-        正在进行的任务<span>{{ 0 }}</span
+        正在进行的任务<span>{{ !isShown ? finishedWork : '0' }}</span
         >{{ `/${picUrlList.length && !isShown ? picUrlList.length : 0}` }}
       </p>
       <sx-icon class="exit" type="icon-tuichu" @click="exit" />
@@ -32,7 +32,7 @@
       <div class="tool_manage">
         <div class="label">
           <div class="nav">
-            <span class="title">标签管理</span>
+            <span>标签管理</span>
           </div>
 
           <div class="label__main" :class="inputModalVisiable ? 'modal' : ''">
@@ -50,17 +50,26 @@
               />
               <sx-button @click="getLabel">确定</sx-button>
             </div>
-
-            <div class="label__list"></div>
+          </div>
+          <div class="label__list" v-if="labelList.length > 0">
+            <span
+              class="label__item"
+              v-for="item in labelList"
+              :style="{
+                backgroundColor: item.color,
+                border: `1px solid  ${item.color}`,
+              }"
+              :key="item.color"
+              @click="selectLabel(item)"
+              >{{ item.name }}</span
+            >
           </div>
         </div>
 
         <div class="img">
           <div class="nav">
-            <span class="title">图片管理</span>
-            <span>{{
-              picUrlList.length && !isShown ? picUrlList.length : 0
-            }}</span>
+            <span>图片管理</span>
+            <span class="addImg" @click="addImg">继续添加</span>
           </div>
 
           <ul class="img__list" v-if="!isShown && picUrlList.length > 0">
@@ -75,7 +84,12 @@
                 class="img__background"
                 :style="{ backgroundImage: `url(${item.url})` }"
               ></div>
-              <p class="img__name">{{ handlePicName(item.name, 10) }}</p>
+              <div class="img__info">
+                <p class="img__name" :title="item.name">
+                  {{ handlePicName(item.name, 5) }}
+                </p>
+                <p>分辨率：{{ getPicResolution(item.url) }}</p>
+              </div>
             </li>
           </ul>
         </div>
@@ -85,6 +99,7 @@
         @uploadImg="uploadImg"
         @enterEdit="enterEdit"
         :loadContext="loadContext"
+        :isAdd="isAdd"
       />
     </div>
   </div>
@@ -94,7 +109,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { fabric } from 'fabric'
 import SxMask from 'components/SxMask.vue'
-import { handlePicName } from '../utils/tools'
+import { handlePicName, getRandomColor, getPicResolution } from '../utils/tools'
 
 @Component({
   components: {
@@ -102,15 +117,16 @@ import { handlePicName } from '../utils/tools'
   },
 })
 export default class Index extends Vue {
-  label = ''
-  //标签输入框是否可见
-  inputModalVisiable = false
   icons = ['icon-export'] as any
+  finishedWork = 1
   checkedTab = 0
   // 区分分类以及对象识别
   iconShow = false
-  isShown = false
+  isShown = true
+  // 区分添加还是初始化
+  isAdd = false
   picUrlList = [] as Array<any>
+
   canvas = {} as any
   // 回退
   redo = [] as any
@@ -147,15 +163,45 @@ export default class Index extends Vue {
   }
 
   handlePicName = handlePicName
+  getPicResolution = getPicResolution
 
   objMap = {} as any
 
   lastName = ''
 
+  label = ''
+  //标签输入框是否可见
+  inputModalVisiable = false
+  labelList = [] as Array<any>
+
+  get canvasAllObjects() {
+    return this.canvas.getObjects()
+  }
+
   getLabel() {
     if (!this.label) return
-    // todo
-    console.log('label', this.label)
+    if (this.labelList.find(label => label.name === this.label)) {
+      this.$SxMessage.error('该标签已添加')
+      return
+    }
+    this.labelList.push({ name: this.label, color: getRandomColor() })
+    this.label = ''
+  }
+
+  selectLabel(label) {
+    const { name, color } = label
+
+    const activeObj = this.canvas.getActiveObject()
+
+    if (activeObj) {
+      activeObj.set({
+        fill: color,
+        labelName: name,
+        //   borderColor: color
+      })
+    }
+
+    this.canvas.renderAll()
   }
 
   loadExpImg(item) {
@@ -230,6 +276,7 @@ export default class Index extends Vue {
 
   // 0-分类 1-检测
   enterEdit(type) {
+    console.log(type)
     this.isShown = false
     this.icons =
       type === 0
@@ -242,6 +289,10 @@ export default class Index extends Vue {
           ]
     this.loadExpImg(this.picUrlList[0])
   }
+  addImg() {
+    this.isShown = true
+    this.isAdd = true
+  }
   // 0-导出 1-移动 2-钢笔 3-矩形
   tabClick(tab) {
     this.checkedTab = tab
@@ -253,24 +304,26 @@ export default class Index extends Vue {
   // 退出
   exit() {
     this.isShown = true
+    this.isAdd = false
     this.picUrlList = []
   }
 
   //切换标签录入的输入框展示
   switchInputLabel() {
+    // todo
+    console.log()
+
     this.inputModalVisiable = !this.inputModalVisiable
   }
 
   mounted() {
-    const message = '数据尚未保存，离开后可能会导致数据丢失\n\n您确定要离开吗？'
     window.onbeforeunload = event => {
-      // todo
-      console.log('event', event)
-      //   event.preventDefault()
+      //适配fireFox
+      event.preventDefault()
 
-      event = event || window.event
-      event.returnValue = message
-      return message
+      //适配chrome
+      event.returnValue = 'message'
+      return 'message'
     }
 
     this.canvas = new fabric.Canvas('canvas', {})
@@ -312,21 +365,26 @@ export default class Index extends Vue {
     this.mouseFrom.x = xy.x
     this.mouseFrom.y = xy.y
     this.doDrawing = true
-    const activeObj = this.canvas.getActiveObjects()
-    if (activeObj.length !== 0) {
+    const activeObj = this.canvas.getActiveObject()
+    // todo
+    console.log('activeObj', this.canvas.getActiveObject())
+    //todo
+    console.log('Objs', this.canvas.getObjects())
+
+    if (activeObj) {
       let points = [] as any
-      switch (activeObj[0].name) {
+      switch (activeObj.name) {
         case 'rectangle':
           // 按顺序
-          points.push([activeObj[0].aCoords.tl.x, activeObj[0].aCoords.tl.y])
-          points.push([activeObj[0].aCoords.tr.x, activeObj[0].aCoords.tr.y])
-          points.push([activeObj[0].aCoords.br.x, activeObj[0].aCoords.br.y])
-          points.push([activeObj[0].aCoords.bl.x, activeObj[0].aCoords.bl.y])
+          points.push([activeObj.aCoords.tl.x, activeObj.aCoords.tl.y])
+          points.push([activeObj.aCoords.tr.x, activeObj.aCoords.tr.y])
+          points.push([activeObj.aCoords.br.x, activeObj.aCoords.br.y])
+          points.push([activeObj.aCoords.bl.x, activeObj.aCoords.bl.y])
           break
         case 'polygon':
           // 选中时
-          if (this.checkedTab === 1) this.polygonEdit(activeObj[0])
-          activeObj[0].points.map(item => {
+          if (this.checkedTab === 1) this.polygonEdit(activeObj)
+          activeObj.points.map(item => {
             points.push([item.x, item.y])
           })
           break
@@ -362,6 +420,8 @@ export default class Index extends Vue {
     this.moveCount = 1
     if (this.checkedTab !== 2) {
       this.doDrawing = false
+      this.checkedTab = 1
+      this.canvas.skipTargetFind = false
     }
   }
   //鼠标移动过程中已经完成了绘制
@@ -662,7 +722,7 @@ export default class Index extends Vue {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(34, 34, 34, 0.9);
+    background: rgba(34, 34, 34, 0.6);
     z-index: 1;
   }
 
@@ -735,6 +795,8 @@ export default class Index extends Vue {
         font-weight: 500;
         color: #ffffff;
         letter-spacing: 1px;
+        display: flex;
+        flex-direction: column;
 
         &__main {
           display: flex;
@@ -755,11 +817,39 @@ export default class Index extends Vue {
           align-items: center;
           cursor: pointer;
         }
+
+        &__list {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          min-height: 30px;
+          justify-items: stretch;
+          align-items: stretch;
+          gap: 10px;
+          flex: 1;
+          padding: 20px 20px 0 20px;
+          overflow-y: auto;
+          margin-bottom: 10px;
+        }
+
+        &__item {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 47px;
+          border-radius: 2px;
+          cursor: pointer;
+        }
       }
       .img {
         height: get-vh(630px);
         display: flex;
         flex-direction: column;
+        font-size: 12px;
+        font-family: PingFangSC-Regular, PingFang SC;
+        font-weight: 400;
+        color: #ffffff;
+        line-height: 17px;
+        letter-spacing: 1px;
 
         &__list {
           flex: 1;
@@ -770,7 +860,7 @@ export default class Index extends Vue {
           height: 70px;
           background: #535353;
           border: 1px solid #454545;
-          padding: 8px;
+          padding: 8px 15px;
           display: flex;
           align-items: center;
         }
@@ -786,16 +876,13 @@ export default class Index extends Vue {
           background: center;
           background-repeat: no-repeat;
           background-size: contain;
-          margin-right: 8px;
+          margin-right: 10px;
         }
 
-        &__name {
-          font-size: 12px;
-          font-family: PingFangSC-Regular, PingFang SC;
-          font-weight: 400;
-          color: #ffffff;
-          line-height: 17px;
-          letter-spacing: 1px;
+        &__info {
+          flex: 1;
+          display: flex;
+          justify-content: space-between;
         }
       }
       .nav {
@@ -812,11 +899,13 @@ export default class Index extends Vue {
           color: #dddddd;
           line-height: 20px;
           letter-spacing: 1px;
-        }
-        .title {
           font-family: PingFangSC-Medium, PingFang SC;
           font-weight: 500;
           cursor: default;
+        }
+        .addImg {
+          color: #488feb;
+          cursor: pointer;
         }
       }
     }
