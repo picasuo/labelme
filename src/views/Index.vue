@@ -2,7 +2,7 @@
   <div class="index">
     <div class="header">
       <p>
-        正在进行的任务<span>{{ 0 }}</span
+        正在进行的任务<span>{{ !isShown ? finishedWork : '0' }}</span
         >{{ `/${picUrlList.length && !isShown ? picUrlList.length : 0}` }}
       </p>
       <sx-icon class="exit" type="icon-tuichu" @click="exit" />
@@ -32,7 +32,7 @@
       <div class="tool_manage">
         <div class="label">
           <div class="nav">
-            <span class="title">标签管理</span>
+            <span>标签管理</span>
           </div>
 
           <div class="label__main">
@@ -43,10 +43,8 @@
 
         <div class="img">
           <div class="nav">
-            <span class="title">图片管理</span>
-            <span>{{
-              picUrlList.length && !isShown ? picUrlList.length : 0
-            }}</span>
+            <span>图片管理</span>
+            <span class="addImg" @click="addImg">继续添加</span>
           </div>
 
           <ul class="img__list" v-if="!isShown && picUrlList.length > 0">
@@ -71,6 +69,7 @@
         @uploadImg="uploadImg"
         @enterEdit="enterEdit"
         :loadContext="loadContext"
+        :isAdd="isAdd"
       />
     </div>
   </div>
@@ -89,10 +88,13 @@ import { handlePicName } from '../utils/tools'
 })
 export default class Index extends Vue {
   icons = ['icon-export'] as any
+  finishedWork = 1
   checkedTab = 0
   // 区分分类以及对象识别
   iconShow = false
   isShown = true
+  // 区分添加还是初始化
+  isAdd = false
   picUrlList = [] as Array<any>
   canvas = {} as any
   // 回退
@@ -208,6 +210,7 @@ export default class Index extends Vue {
 
   // 0-分类 1-检测
   enterEdit(type) {
+    console.log(type)
     this.isShown = false
     this.icons =
       type === 0
@@ -220,6 +223,10 @@ export default class Index extends Vue {
           ]
     this.loadExpImg(this.picUrlList[0])
   }
+  addImg() {
+    this.isShown = true
+    this.isAdd = true
+  }
   // 0-导出 1-移动 2-钢笔 3-矩形
   tabClick(tab) {
     this.checkedTab = tab
@@ -231,6 +238,7 @@ export default class Index extends Vue {
   // 退出
   exit() {
     this.isShown = true
+    this.isAdd = false
     this.picUrlList = []
   }
 
@@ -324,6 +332,8 @@ export default class Index extends Vue {
     this.moveCount = 1
     if (this.checkedTab !== 2) {
       this.doDrawing = false
+      this.checkedTab = 1
+      this.canvas.skipTargetFind = false
     }
   }
   //鼠标移动过程中已经完成了绘制
@@ -745,11 +755,13 @@ export default class Index extends Vue {
           color: #dddddd;
           line-height: 20px;
           letter-spacing: 1px;
-        }
-        .title {
           font-family: PingFangSC-Medium, PingFang SC;
           font-weight: 500;
           cursor: default;
+        }
+        .addImg {
+          color: #488feb;
+          cursor: pointer;
         }
       }
     }

@@ -13,9 +13,13 @@
           @change="uploadImg"
         />
       </div>
-      <div class="btn" :class="loadContext ? 'btn-active' : ''">
+      <div v-if="!isAdd" class="btn" :class="loadContext ? 'btn-active' : ''">
         <span @click="enterEdit(0)">图片分类</span>
         <span @click="enterEdit(1)">对象检测</span>
+      </div>
+      <div v-else class="btn" :class="loadContext ? 'btn-active' : ''">
+        <span @click="enterEdit(2)">确定</span>
+        <span @click="enterEdit(3)" class="btn-cancel">取消</span>
       </div>
     </div>
   </div>
@@ -33,6 +37,11 @@ export default class SXMask extends Vue {
   })
   loadContext
 
+  @Prop({
+    type: Boolean,
+  })
+  isAdd: boolean
+
   fileList = [] as any
 
   uploadImg() {
@@ -41,7 +50,7 @@ export default class SXMask extends Vue {
   }
 
   enterEdit(type) {
-    if (this.fileList.length > 0) {
+    if (this.fileList.length > 0 || type === 3) {
       this.$emit('enterEdit', type)
     } else {
       return
@@ -129,11 +138,16 @@ export default class SXMask extends Vue {
     cursor: no-drop;
   }
   &-active {
-    color: #fff;
     > span {
+      color: #fff;
       border-color: #fff;
       cursor: pointer;
     }
+  }
+  &-cancel {
+    color: #fff;
+    border-color: #fff;
+    cursor: pointer;
   }
 }
 </style>
