@@ -322,6 +322,7 @@ export default class Index extends Vue {
     const activeObj = this.canvas.getActiveObject()
     if (activeObj) {
       activeObj.set('fill', 'rgba(100, 120, 0, 0.4)')
+      this.canvas.renderAll()
       let points = [] as any
       switch (activeObj.name) {
         case 'rectangle':
