@@ -321,8 +321,7 @@ export default class Index extends Vue {
     this.doDrawing = true
     const activeObj = this.canvas.getActiveObject()
     if (activeObj) {
-      console.log('select', this.canvas.getActiveObject())
-      activeObj.fill = 'rgba(100, 120, 0, 0.4)'
+      activeObj.set('fill', 'rgba(100, 120, 0, 0.4)')
       let points = [] as any
       switch (activeObj.name) {
         case 'rectangle':
@@ -334,8 +333,8 @@ export default class Index extends Vue {
           break
         case 'polygon':
           // 选中时
-          if (this.checkedTab === 1) this.polygonEdit(activeObj[0])
-          activeObj[0].points.map(item => {
+          if (this.checkedTab === 1) this.polygonEdit(activeObj)
+          activeObj.points.map(item => {
             points.push([item.x, item.y])
           })
           break
