@@ -91,7 +91,8 @@
                 <p>{{ getPicResolution(item.url) }}</p>
                 <sx-icon
                   v-if="objMap[item.name] && objMap[item.name].length > 1"
-                  type="icon-export"
+                  size="small"
+                  type="icon-yiwancheng"
                 />
               </div>
             </li>
@@ -206,6 +207,26 @@ export default class Index extends Vue {
     }
     this.labelList.push({ name: this.label, color: getRandomColor() })
     this.label = ''
+    this.labelList.forEach((item, index) => {
+      let codeNum = index + 1
+      hotkeys(
+        codeNum.toString(),
+        //   { element: document.getElementById('tool') },
+        (event, handler) => {
+          event.preventDefault()
+          const { name, color } = item
+          const activeObj = this.canvas.getActiveObject()
+          if (activeObj) {
+            activeObj.set({
+              fill: color,
+              labelName: name,
+              //   borderColor: color
+            })
+          }
+          this.canvas.renderAll()
+        },
+      )
+    })
   }
 
   selectLabel(label) {
@@ -367,12 +388,12 @@ export default class Index extends Vue {
   }
 
   mounted() {
-    const doc = document.getElementsByClassName('tool_content')[0]
-    const myCanvas: any = document.getElementById('canvas')
-    this.width = doc.clientWidth * 0.8
-    this.height = doc.clientHeight * 0.8
-    myCanvas.width = this.width
-    myCanvas.height = this.height
+    // const doc = document.getElementsByClassName('tool_content')[0]
+    // const myCanvas: any = document.getElementById('canvas')
+    // this.width = doc.clientWidth * 0.8
+    // this.height = doc.clientHeight * 0.8
+    // myCanvas.width = this.width
+    // myCanvas.height = this.height
     window.onbeforeunload = event => {
       //适配fireFox
       event.preventDefault()
