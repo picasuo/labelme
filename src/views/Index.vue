@@ -98,6 +98,7 @@
           </ul>
         </div>
       </div>
+      <SxExport v-show="isExport" @cancel="cancel" @exportData="submit" />
     </div>
     <SxMask
       v-if="isShown"
@@ -113,12 +114,15 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { fabric } from 'fabric'
 import SxMask from 'components/SxMask.vue'
+import SxExport from 'components/SxExport.vue'
 import { handlePicName, getRandomColor, getPicResolution } from '../utils/tools'
 import hotkeys from 'hotkeys-js'
+import { exportVGG } from 'utils/VGGExporter'
 
 @Component({
   components: {
     SxMask,
+    SxExport,
   },
 })
 export default class Index extends Vue {
@@ -133,6 +137,7 @@ export default class Index extends Vue {
   // 区分分类以及对象识别
   iconShow = false
   isShown = true
+  isExport = false
   // 区分添加还是初始化
   isAdd = false
   //存储编辑模式
@@ -329,9 +334,25 @@ export default class Index extends Vue {
     if (this.checkedTab === 2) this.drawPolygon()
     if (this.checkedTab === 0) this.exportData()
   }
-  // 导出
+  // 导出框
   exportData() {
-    console.log('1111')
+    this.isExport = true
+  }
+  // 取消导出
+  cancel() {
+    this.isExport = false
+  }
+  // 导出
+  submit(type) {
+    this.isExport = false
+    const deepObjMap = _.cloneDeep(this.objMap)
+    const keys = Object.keys(deepObjMap)
+    deepObjMap[this.lastName] = this.canvas.getObjects()
+    switch (type) {
+      case 'PoloVGG':
+        exportVGG(deepObjMap)
+        break
+    }
   }
   // 退出
   exit() {
@@ -342,9 +363,6 @@ export default class Index extends Vue {
 
   //切换标签录入的输入框展示
   switchInputLabel() {
-    // todo
-    console.log()
-
     this.inputModalVisiable = !this.inputModalVisiable
   }
 
@@ -898,9 +916,6 @@ export default class Index extends Vue {
         display: none;
         position: absolute;
       }
-    }
-
-    &__canvas {
     }
     &_manage {
       .label {
