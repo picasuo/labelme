@@ -42,6 +42,11 @@ export default class SXMask extends Vue {
   })
   isAdd: boolean
 
+  @Prop({
+    type: Number,
+  })
+  type: number
+
   get loadContext() {
     let picNum = this.picUrlList.length + this.loadPicNum
     // if (this.isAdd) {
@@ -54,8 +59,7 @@ export default class SXMask extends Vue {
       ? '点击上传本次标图任务所需的图片'
       : `已选择${picNum}张图片`
   }
-  //存储编辑模式
-  type = 0
+
   picUrlList = [] as Array<any>
 
   uploadImg() {
@@ -75,7 +79,7 @@ export default class SXMask extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void
+        reject: (value: string) => void,
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -94,12 +98,11 @@ export default class SXMask extends Vue {
             }
           }
         })
-      }
+      },
     )
   }
 
   enterEdit(type) {
-    this.type = type
     if (type !== 2) {
       this.$emit('enterEdit', type, this.picUrlList)
     } else {
