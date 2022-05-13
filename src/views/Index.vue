@@ -324,10 +324,15 @@ export default class Index extends Vue {
   tabClick(tab) {
     this.initPolygonParams()
     this.checkedTab = tab
-    //整个画板元素可被选中
+    //整个画板元素不可被选中
     this.canvas.skipTargetFind = this.checkedTab === 3
     // 多边形特殊处理
     if (this.checkedTab === 2) this.drawPolygon()
+    if (this.checkedTab === 0) this.exportData()
+  }
+  // 导出
+  exportData() {
+    console.log('1111')
   }
   // 退出
   exit() {
@@ -388,9 +393,6 @@ export default class Index extends Vue {
       if (e.keyCode === 90 && e.metaKey && e.shiftKey) {
         if (this.redo.length > 0) this.canvas.add(this.redo.pop())
       }
-      // command+s 导出
-      if (e.keyCode === 83 && e.metaKey) {
-      }
       // P 钢笔工具
       if (e.keyCode === 80) {
         this.tabClick(2)
@@ -425,6 +427,17 @@ export default class Index extends Vue {
         this.setZoom(-0.1)
       }
     }
+    window.addEventListener(
+      'keydown',
+      e => {
+        // command+s 导出
+        if (e.keyCode === 83 && e.metaKey) {
+          e.preventDefault()
+          this.tabClick(0)
+        }
+      },
+      false
+    )
   }
 
   setZoom(zoom) {
@@ -496,7 +509,7 @@ export default class Index extends Vue {
     this.mouseTo.y = xy.y
     this.drawingObject = null
     this.moveCount = 1
-    if (this.checkedTab !== 2) {
+    if (this.checkedTab !== 2 && this.checkedTab !== 0) {
       this.doDrawing = false
       this.checkedTab = 1
       this.canvas.skipTargetFind = false
