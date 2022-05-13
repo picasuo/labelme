@@ -54,7 +54,7 @@ export default class SXMask extends Vue {
       ? '点击上传本次标图任务所需的图片'
       : `已选择${picNum}张图片`
   }
-//存储编辑模式
+  //存储编辑模式
   type = 0
   picUrlList = [] as Array<any>
 
@@ -75,7 +75,7 @@ export default class SXMask extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void,
+        reject: (value: string) => void
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
@@ -94,7 +94,7 @@ export default class SXMask extends Vue {
             }
           }
         })
-      },
+      }
     )
   }
 
