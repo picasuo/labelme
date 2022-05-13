@@ -19,7 +19,7 @@
       </div>
       <div v-else class="btn" :class="loadContext ? 'btn-active' : ''">
         <span @click="enterEdit(type)">确定</span>
-        <span @click="enterEdit(2)" class="btn-cancel">取消</span>
+        <span @click="enterEdit(2)">取消</span>
       </div>
     </div>
   </div>
@@ -194,11 +194,6 @@ export default class SXMask extends Vue {
       border-color: #fff;
       cursor: pointer;
     }
-  }
-  &-cancel {
-    color: #fff;
-    border-color: #fff;
-    cursor: pointer;
   }
 }
 </style>
