@@ -88,7 +88,7 @@
                 <p class="img__name" :title="item.name">
                   {{ handlePicName(item.name, 5) }}
                 </p>
-                <p>分辨率：{{ getPicResolution(item.url) }}</p>
+                <p>{{ getPicResolution(item.url) }}</p>
               </div>
             </li>
           </ul>
@@ -96,9 +96,8 @@
       </div>
       <SxMask
         v-if="isShown"
-        @uploadImg="uploadImg"
         @enterEdit="enterEdit"
-        :loadContext="loadContext"
+        :loadPicNum="loadPicNum"
         :isAdd="isAdd"
       />
     </div>
@@ -130,6 +129,7 @@ export default class Index extends Vue {
   isShown = true
   // 区分添加还是初始化
   isAdd = false
+
   picUrlList = [] as Array<any>
 
   canvas = {} as any
@@ -164,10 +164,8 @@ export default class Index extends Vue {
 
   currentPicUrl = ''
 
-  get loadContext() {
-    const str =
-      this.picUrlList.length > 0 ? `已选择${this.picUrlList.length}张图片` : ''
-    return str
+  get loadPicNum() {
+    return this.picUrlList?.length || 0
   }
 
   handlePicName = handlePicName
@@ -248,56 +246,23 @@ export default class Index extends Vue {
     this.lastName = name
   }
 
-  uploadImg(list) {
-    this.getUrlList(list)
-      .then(val => {
-        this.picUrlList = val
-      })
-      .catch(err => {
-        // this.pic = ''
-        this.$SxMessage.error(err)
-      })
-  }
-
-  getUrlList(fileList) {
-    return new Promise(
-      (
-        resolve: (value: Array<string>) => void,
-        reject: (value: string) => void
-      ) => {
-        const picUrlList = [] as Array<any>
-        Array.prototype.forEach.call(fileList, (file, index) => {
-          const { type, name } = file
-          if (!/image\/(png|jp(e)g)$/.test(type)) {
-            reject('请上传正确格式的图片')
-            return
-          }
-
-          const reader = new FileReader() as any
-          reader.readAsDataURL(file)
-          reader.onload = () => {
-            picUrlList.push({ name, url: reader.result })
-            if (picUrlList.length === fileList.length) {
-              resolve(picUrlList)
-            }
-          }
-        })
-      }
-    )
-  }
-
   // 0-分类 1-检测
-  enterEdit(type) {
+  enterEdit(type, val) {
     this.isShown = false
-    this.icons =
-      type === 0
-        ? ['icon-export']
-        : [
-            'icon-export',
-            'icon-icon-',
-            'icon-pentoolgangbigongju',
-            'icon-huajuxing_0',
-          ]
+    this.isAdd = false
+    if (type !== 2) {
+      this.icons =
+        type === 0
+          ? ['icon-export']
+          : [
+              'icon-export',
+              'icon-icon-',
+              'icon-pentoolgangbigongju',
+              'icon-huajuxing_0',
+            ]
+    }
+    this.picUrlList = [...this.picUrlList, ...val]
+
     this.loadExpImg(this.picUrlList[0])
   }
   addImg() {
@@ -333,7 +298,7 @@ export default class Index extends Vue {
   exit() {
     this.canvas.clear()
     this.isShown = true
-    this.isAdd = false
+
     this.picUrlList = []
   }
 
@@ -378,10 +343,10 @@ export default class Index extends Vue {
       // command+z 删除最近添加的元素
       if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
         this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
         )
         this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
         )
       }
       // 还原
@@ -409,7 +374,7 @@ export default class Index extends Vue {
         } else {
           console.log(
             this.canvas.getObjects(),
-            this.canvas.getObjects()[0].getObjects()
+            this.canvas.getObjects()[0].getObjects(),
           )
           const objs = this.canvas.getObjects()[0].getObjects()
           this.canvas.clear().renderAll()
@@ -716,13 +681,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix()
-            )
+              fabricObject.calcTransformMatrix(),
+            ),
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler
+          this.actionHandler,
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -733,7 +698,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1
+      object.strokeUniform ? 1 / object.scaleY : 1,
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -743,7 +708,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center'
+      'center',
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -766,7 +731,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix()
+        fabricObject.calcTransformMatrix(),
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})
@@ -875,7 +840,7 @@ export default class Index extends Vue {
         &__main {
           display: flex;
           align-items: center;
-          padding: 25px 0 0 25px;
+          padding: 10px;
           justify-content: space-between;
           position: relative;
         }
@@ -915,7 +880,7 @@ export default class Index extends Vue {
         }
       }
       .img {
-        height: get-vh(630px);
+        height: get-vh(560px);
         display: flex;
         flex-direction: column;
         font-size: 12px;

@@ -3,7 +3,7 @@
     <div class="mask__main">
       <div id="box" class="box">
         <sx-icon type="icon-boxtag-fill" />
-        <p>{{ loadContext || '点击上传本次标图任务所需的图片' }}</p>
+        <p>{{ loadContext }}</p>
 
         <input
           ref="fileInput"
@@ -18,8 +18,8 @@
         <span @click="enterEdit(1)">对象检测</span>
       </div>
       <div v-else class="btn" :class="loadContext ? 'btn-active' : ''">
-        <span @click="enterEdit(2)">确定</span>
-        <span @click="enterEdit(3)" class="btn-cancel">取消</span>
+        <span @click="enterEdit(type)">确定</span>
+        <span @click="enterEdit(2)" class="btn-cancel">取消</span>
       </div>
     </div>
   </div>
@@ -33,28 +33,79 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 })
 export default class SXMask extends Vue {
   @Prop({
-    type: String,
+    type: Number,
   })
-  loadContext
+  loadPicNum
 
   @Prop({
     type: Boolean,
   })
   isAdd: boolean
 
-  fileList = [] as any
+  get loadContext() {
+    let picNum = this.picUrlList.length + this.loadPicNum
+    // if (this.isAdd) {
+
+    // } else {
+    //   picNum = this.loadPicNum
+    // }
+
+    return picNum === 0
+      ? '点击上传本次标图任务所需的图片'
+      : `已选择${picNum}张图片`
+  }
+//存储编辑模式
+  type = 0
+  picUrlList = [] as Array<any>
 
   uploadImg() {
-    this.fileList = this!.$refs!.fileInput!['files'] as any
-    this.$emit('uploadImg', this.fileList)
+    const fileList = this!.$refs!.fileInput!['files'] as any
+    this.getUrlList(fileList)
+      .then(val => {
+        this.picUrlList = val
+      })
+      .catch(err => {
+        this.$SxMessage.error(err)
+      })
+
+    // this.$emit('uploadImg', fileList)
+  }
+
+  getUrlList(fileList) {
+    return new Promise(
+      (
+        resolve: (value: Array<string>) => void,
+        reject: (value: string) => void,
+      ) => {
+        const picUrlList = [] as Array<any>
+        Array.prototype.forEach.call(fileList, (file, index) => {
+          const { type, name } = file
+          if (!/image\/(png|jp(e)g)$/.test(type)) {
+            reject('请上传正确格式的图片')
+            return
+          }
+
+          const reader = new FileReader() as any
+          reader.readAsDataURL(file)
+          reader.onload = () => {
+            picUrlList.push({ name, url: reader.result })
+            if (picUrlList.length === fileList.length) {
+              resolve(picUrlList)
+            }
+          }
+        })
+      },
+    )
   }
 
   enterEdit(type) {
-    if (type === 3 || this.loadContext) {
-      this.$emit('enterEdit', type)
+    this.type = type
+    if (type !== 2) {
+      this.$emit('enterEdit', type, this.picUrlList)
     } else {
-      return
+      this.$emit('enterEdit', type, [])
     }
+    this.picUrlList = []
   }
 }
 </script>
