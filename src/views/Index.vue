@@ -209,23 +209,22 @@ export default class Index extends Vue {
     this.label = ''
     this.labelList.forEach((item, index) => {
       let codeNum = index + 1
-      hotkeys(
-        codeNum.toString(),
-        //   { element: document.getElementById('tool') },
-        (event, handler) => {
-          event.preventDefault()
-          const { name, color } = item
-          const activeObj = this.canvas.getActiveObject()
-          if (activeObj) {
-            activeObj.set({
-              fill: color,
-              labelName: name,
-              //   borderColor: color
-            })
-          }
-          this.canvas.renderAll()
-        },
-      )
+      hotkeys(codeNum.toString(), (event, handler) => {
+        event.preventDefault()
+        const { name, color } = item
+        const activeObj = this.canvas.getActiveObject()
+        if (activeObj) {
+          activeObj.set({
+            fill: color,
+            labelName: name,
+            //   borderColor: color
+          })
+        }
+        // todo
+        console.log('codeNum', codeNum)
+
+        this.canvas.renderAll()
+      })
     })
   }
 
@@ -380,6 +379,11 @@ export default class Index extends Vue {
     this.canvas.clear()
     this.isShown = true
     this.picList = []
+    //解除快捷键绑定
+    this.labelList.forEach((item, index) => {
+      hotkeys.unbind((index + 1).toString())
+    })
+    this.labelList = []
   }
 
   //切换标签录入的输入框展示
