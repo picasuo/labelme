@@ -6,6 +6,13 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "16053381",
+      "name": "已完成",
+      "font_class": "yiwancheng",
+      "unicode": "e65c",
+      "unicode_decimal": 58972
+    },
+    {
       "icon_id": "10294638",
       "name": "盒子标签",
       "font_class": "boxtag-fill",

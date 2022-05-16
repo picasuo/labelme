@@ -13,6 +13,7 @@
     "fabric": "^5.2.1",
     "file-saver": "^2.0.5",
     "hard-source-webpack-plugin": "^0.13.1",
+    "hotkeys-js": "^3.9.3",
     "iview": "^3.5.4",
     "jszip": "^3.9.1",
     "moment": "^2.29.3",

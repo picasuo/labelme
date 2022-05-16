@@ -2,12 +2,12 @@
   <div class="index" :class="inputModalVisiable ? 'indexmask' : ''">
     <div class="header">
       <p>
-        正在进行的任务<span>{{ !isShown ? finishedWork : '0' }}</span
-        >{{ `/${picUrlList.length && !isShown ? picUrlList.length : 0}` }}
+        正在进行的任务<span>{{ hasEditedNum }}</span
+        >{{ `/${loadPicNum && !isShown ? loadPicNum : 0}` }}
       </p>
       <sx-icon class="exit" type="icon-tuichu" @click="exit" />
     </div>
-    <div class="tool">
+    <div id="tool" class="tool">
       <div class="tool_bar">
         <div
           class="icon"
@@ -72,10 +72,10 @@
             <span class="addImg" @click="addImg">继续添加</span>
           </div>
 
-          <ul class="img__list" v-if="!isShown && picUrlList.length > 0">
+          <ul class="img__list" v-if="!isShown && picList.length > 0">
             <li
               class="img__item"
-              v-for="(item, index) in picUrlList"
+              v-for="(item, index) in picList"
               :key="index"
               :class="currentPicUrl === item.url ? 'img-active' : ''"
               @click="loadExpImg(item)"
@@ -89,19 +89,25 @@
                   {{ handlePicName(item.name, 5) }}
                 </p>
                 <p>{{ getPicResolution(item.url) }}</p>
+                <sx-icon
+                  v-if="objMap[item.name] && objMap[item.name].length > 1"
+                  size="small"
+                  type="icon-yiwancheng"
+                />
               </div>
             </li>
           </ul>
         </div>
       </div>
-      <SxMask
-        v-if="isShown"
-        @enterEdit="enterEdit"
-        :loadPicNum="loadPicNum"
-        :isAdd="isAdd"
-      />
       <SxExport v-show="isExport" @cancel="cancel" @exportData="submit" />
     </div>
+    <SxMask
+      v-if="isShown"
+      @enterEdit="enterEdit"
+      :type="type"
+      :loadPicNum="loadPicNum"
+      :isAdd="isAdd"
+    />
   </div>
 </template>
 
@@ -111,6 +117,7 @@ import { fabric } from 'fabric'
 import SxMask from 'components/SxMask.vue'
 import SxExport from 'components/SxExport.vue'
 import { handlePicName, getRandomColor, getPicResolution } from '../utils/tools'
+import hotkeys from 'hotkeys-js'
 import { exportVGG } from 'utils/VGGExporter'
 import { exportCOCO } from 'utils/COCOExporter'
 import { exportVOC } from 'utils/VOCXMLExporter'
@@ -128,7 +135,7 @@ export default class Index extends Vue {
     'icon-pentoolgangbigongju',
     'icon-huajuxing_0',
   ] as any
-  finishedWork = 1
+
   checkedTab = 0
   // 区分分类以及对象识别
   iconShow = false
@@ -136,8 +143,10 @@ export default class Index extends Vue {
   isExport = false
   // 区分添加还是初始化
   isAdd = false
+  //存储编辑模式
+  type = 0
 
-  picUrlList = [] as Array<any>
+  picList = [] as Array<any>
 
   canvas = {} as any
   // 回退
@@ -172,7 +181,7 @@ export default class Index extends Vue {
   currentPicUrl = ''
 
   get loadPicNum() {
-    return this.picUrlList?.length || 0
+    return this.picList?.length || 0
   }
 
   handlePicName = handlePicName
@@ -186,6 +195,7 @@ export default class Index extends Vue {
   //标签输入框是否可见
   inputModalVisiable = false
   labelList = [] as Array<any>
+  hasEditedNum = 0
 
   get canvasAllObjects() {
     return this.canvas.getObjects()
@@ -199,6 +209,25 @@ export default class Index extends Vue {
     }
     this.labelList.push({ name: this.label, color: getRandomColor() })
     this.label = ''
+    this.labelList.forEach((item, index) => {
+      let codeNum = index + 1
+      hotkeys(codeNum.toString(), (event, handler) => {
+        event.preventDefault()
+        const { name, color } = item
+        const activeObj = this.canvas.getActiveObject()
+        if (activeObj) {
+          activeObj.set({
+            fill: color,
+            labelName: name,
+            //   borderColor: color
+          })
+        }
+        // todo
+        console.log('codeNum', codeNum)
+
+        this.canvas.renderAll()
+      })
+    })
   }
 
   selectLabel(label) {
@@ -219,7 +248,9 @@ export default class Index extends Vue {
 
   loadExpImg(item) {
     const { url, name } = item
-    this.objMap[this.lastName] = this.canvas.getObjects()
+    if (this.lastName) {
+      this.objMap[this.lastName] = this.canvas.getObjects()
+    }
     this.canvas.clear()
     this.currentPicUrl = url
     if (this.objMap[name]?.length > 0) {
@@ -251,12 +282,21 @@ export default class Index extends Vue {
       })
     }
     this.lastName = name
+    const editedNames = [] as Array<any>
+    for (let key in this.objMap) {
+      if (this.objMap[key].length > 1) {
+        editedNames.push(key)
+      }
+    }
+    this.hasEditedNum = editedNames.length
+
+    // todo
+    console.log('objMap', this.objMap)
   }
 
   // 0-分类 1-检测
   enterEdit(type, val) {
-    this.isShown = false
-    this.isAdd = false
+    this.type = type
     if (type !== 2) {
       this.icons =
         type === 0
@@ -268,9 +308,23 @@ export default class Index extends Vue {
               'icon-huajuxing_0',
             ]
     }
-    this.picUrlList = [...this.picUrlList, ...val]
+    const addPicList = [] as Array<any>
+    if (val.length > 0) {
+      val.forEach(pic => {
+        const { name } = pic
+        if (!this.picList.find(item => item.name === name)) {
+          addPicList.push(pic)
+        }
+      })
+    }
 
-    this.loadExpImg(this.picUrlList[0])
+    this.picList = [...this.picList, ...addPicList]
+
+    if (this.loadPicNum > 0) {
+      this.isShown = false
+      this.isAdd = false
+      this.loadExpImg(this.picList[0])
+    }
   }
   addImg() {
     this.isShown = true
@@ -332,8 +386,12 @@ export default class Index extends Vue {
   exit() {
     this.canvas.clear()
     this.isShown = true
-
-    this.picUrlList = []
+    this.picList = []
+    //解除快捷键绑定
+    this.labelList.forEach((item, index) => {
+      hotkeys.unbind((index + 1).toString())
+    })
+    this.labelList = []
   }
 
   //切换标签录入的输入框展示
@@ -342,12 +400,12 @@ export default class Index extends Vue {
   }
 
   mounted() {
-    const doc = document.getElementsByClassName('tool_content')[0]
-    const myCanvas: any = document.getElementById('canvas')
-    this.width = doc.clientWidth * 0.8
-    this.height = doc.clientHeight * 0.8
-    myCanvas.width = this.width
-    myCanvas.height = this.height
+    // const doc = document.getElementsByClassName('tool_content')[0]
+    // const myCanvas: any = document.getElementById('canvas')
+    // this.width = doc.clientWidth * 0.8
+    // this.height = doc.clientHeight * 0.8
+    // myCanvas.width = this.width
+    // myCanvas.height = this.height
     window.onbeforeunload = event => {
       //适配fireFox
       event.preventDefault()
@@ -363,6 +421,34 @@ export default class Index extends Vue {
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
     this.quickCheck()
+
+    hotkeys(
+      'left,right,up,down',
+      //   { element: document.getElementById('tool') },
+      (event, handler) => {
+        event.preventDefault()
+        if (this.currentPicUrl) {
+          let currentIndex = this.picList.findIndex(
+            item => item?.url === this.currentPicUrl,
+          )
+          switch (handler.key) {
+            case 'left':
+            case 'up':
+              currentIndex =
+                currentIndex === 0 ? this.loadPicNum - 1 : currentIndex - 1
+              break
+            case 'right':
+            case 'down':
+              currentIndex =
+                currentIndex === this.loadPicNum - 1 ? 0 : currentIndex + 1
+              break
+          }
+          this.loadExpImg(this.picList[currentIndex])
+        } else {
+          return
+        }
+      },
+    )
   }
 
   quickCheck() {
@@ -374,10 +460,10 @@ export default class Index extends Vue {
       // command+z 删除最近添加的元素
       if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
         this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
         )
         this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
         )
       }
       // 还原
@@ -402,7 +488,7 @@ export default class Index extends Vue {
         } else {
           console.log(
             this.canvas.getObjects(),
-            this.canvas.getObjects()[0].getObjects()
+            this.canvas.getObjects()[0].getObjects(),
           )
           const objs = this.canvas.getObjects()[0].getObjects()
           this.canvas.clear().renderAll()
@@ -427,7 +513,7 @@ export default class Index extends Vue {
           this.tabClick(0)
         }
       },
-      false
+      false,
     )
   }
 
@@ -704,13 +790,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix()
-            )
+              fabricObject.calcTransformMatrix(),
+            ),
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler
+          this.actionHandler,
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -721,7 +807,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1
+      object.strokeUniform ? 1 / object.scaleY : 1,
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -731,7 +817,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center'
+      'center',
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -754,7 +840,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix()
+        fabricObject.calcTransformMatrix(),
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})

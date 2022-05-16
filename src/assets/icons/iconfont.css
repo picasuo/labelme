@@ -1,8 +1,8 @@
 @font-face {
   font-family: "iconfont"; /* Project id 3387682 */
-  src: url('iconfont.woff2?t=1652088896153') format('woff2'),
-       url('iconfont.woff?t=1652088896153') format('woff'),
-       url('iconfont.ttf?t=1652088896153') format('truetype');
+  src: url('iconfont.woff2?t=1652432092854') format('woff2'),
+       url('iconfont.woff?t=1652432092854') format('woff'),
+       url('iconfont.ttf?t=1652432092854') format('truetype');
 }
 
 .iconfont {
@@ -11,6 +11,10 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-yiwancheng:before {
+  content: "\e65c";
 }
 
 .icon-boxtag-fill:before {
