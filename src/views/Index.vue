@@ -119,6 +119,8 @@ import SxExport from 'components/SxExport.vue'
 import { handlePicName, getRandomColor, getPicResolution } from '../utils/tools'
 import hotkeys from 'hotkeys-js'
 import { exportVGG } from 'utils/VGGExporter'
+import { exportCOCO } from 'utils/COCOExporter'
+import { exportVOC } from 'utils/VOCXMLExporter'
 
 @Component({
   components: {
@@ -366,8 +368,14 @@ export default class Index extends Vue {
     const keys = Object.keys(deepObjMap)
     deepObjMap[this.lastName] = this.canvas.getObjects()
     switch (type) {
-      case 'PoloVGG':
-        exportVGG(deepObjMap)
+      case 'RectVOC':
+        exportVOC(deepObjMap, this.width, this.height)
+        break
+      case 'PolyCOCO':
+        exportCOCO(deepObjMap, this.width, this.height)
+        break
+      case 'PolyVGG':
+        exportVGG(deepObjMap, this.width, this.height)
         break
     }
   }
@@ -550,26 +558,10 @@ export default class Index extends Vue {
     this.mouseFrom.y = xy.y
     this.doDrawing = true
     const activeObj = this.canvas.getActiveObject()
-
     if (activeObj) {
-      let points = [] as any
-      switch (activeObj.name) {
-        case 'rectangle':
-          // 按顺序
-          points.push([activeObj.aCoords.tl.x, activeObj.aCoords.tl.y])
-          points.push([activeObj.aCoords.tr.x, activeObj.aCoords.tr.y])
-          points.push([activeObj.aCoords.br.x, activeObj.aCoords.br.y])
-          points.push([activeObj.aCoords.bl.x, activeObj.aCoords.bl.y])
-          break
-        case 'polygon':
-          // 选中时
-          if (this.checkedTab === 1) this.polygonEdit(activeObj)
-          activeObj.points.map(item => {
-            points.push([item.x, item.y])
-          })
-          break
-      }
-      console.log('点位坐标', points)
+      // 选中时
+      if (this.checkedTab === 1 && activeObj.name === 'polygon')
+        this.polygonEdit(activeObj)
     }
     // 绘制多边形
     if (this.checkedTab === 2) {
