@@ -1,4 +1,4 @@
-import { ExporterUtil } from './ExporterUtil'
+import { ExporterUtil, calculatePoint } from './ExporterUtil'
 
 let filename = ''
 let widthRate = 0
@@ -7,9 +7,11 @@ let width = 0
 let height = 0
 let left = 0
 let top = 0
-export const exportVGG = (data, canvasWidth, canvasHeight) => {
+let picList = [] as any
+export const exportVGG = (data, pics, canvasWidth, canvasHeight) => {
+  console.log('data', data)
+  picList = pics
   let keys: any = Object.keys(data)
-  keys = keys.slice(1)
   let jsonData: any = {}
   keys.forEach(item => {
     filename = item
@@ -18,6 +20,7 @@ export const exportVGG = (data, canvasWidth, canvasHeight) => {
       canvasWidth,
       canvasHeight
     )
+    console.log('name', item)
     jsonData[filename] = fileData
   })
   const content = JSON.stringify(jsonData)
@@ -35,8 +38,8 @@ export const mapImagesDataToVGGObject = (
   height = imgData[0].height
   left = Math.round(imgData[0].aCoords.tl.x)
   top = Math.round(imgData[0].aCoords.tl.y)
-  widthRate = width / canvasWidth
-  heightRate = height / canvasHeight
+  widthRate = width / (canvasWidth - 2 * left)
+  heightRate = height / (canvasHeight - 2 * top)
   imgData.map(item => {
     if (item.name === 'polygon') polys.push(item)
   })
@@ -47,9 +50,10 @@ export const mapImagesDataToVGGObject = (
 export const mapImageDataToVGGFileData = polys => {
   const regionsData = mapImageDataToVGG(polys)
   if (!regionsData) return null
+  const size = picList.find(item => item.name === filename).size
   return {
     fileref: '',
-    size: '',
+    size,
     filename,
     base64_img_data: '',
     file_attributes: {},
@@ -82,22 +86,14 @@ export const mapPolygonToVGG = polyData => {
   if (points.length === 0) return null
   const all_points_x: number[] = points
     .map((point, index) => {
-      let x =
-        Math.round(point.x - left) >= 0
-          ? Math.round((point.x - left) * widthRate)
-          : 0
-      x = x > width ? width : x
+      const x = calculatePoint(point.x, left, widthRate, width)
       if (index === 0) firstX = x
       return x
     })
     .concat(firstX)
   const all_points_y: number[] = points
     .map((point, index) => {
-      let y =
-        Math.round(point.y - top) >= 0
-          ? Math.round((point.y - top) * heightRate)
-          : 0
-      y = y > height ? height : y
+      const y = calculatePoint(point.y, top, heightRate, height)
       if (index === 0) firstY = y
       return y
     })

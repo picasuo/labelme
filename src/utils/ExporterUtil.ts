@@ -12,3 +12,14 @@ export class ExporterUtil {
     }
   }
 }
+
+export const calculatePoint = (point, offset, rate, normal) => {
+  let p = Math.round((point - offset) * rate)
+  if (p < 0) {
+    p = 0
+  }
+  if (p > normal) {
+    p = normal
+  }
+  return p
+}

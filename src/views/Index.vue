@@ -376,7 +376,6 @@ export default class Index extends Vue {
   submit(type) {
     this.isExport = false
     const deepObjMap = _.cloneDeep(this.objMap)
-    const keys = Object.keys(deepObjMap)
     deepObjMap[this.lastName] = this.canvas.getObjects()
     switch (type) {
       case 'RectVOC':
@@ -386,7 +385,7 @@ export default class Index extends Vue {
         exportCOCO(deepObjMap, this.labelList, this.width, this.height)
         break
       case 'PolyVGG':
-        exportVGG(deepObjMap, this.width, this.height)
+        exportVGG(deepObjMap, this.picList, this.width, this.height)
         break
     }
   }

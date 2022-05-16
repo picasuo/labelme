@@ -1,12 +1,16 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
+import { calculatePoint } from './ExporterUtil'
 
 let width = 0
 let height = 0
+let left = 0
+let top = 0
+let widthRate = 0
+let heightRate = 0
 
 export const exportVOC = (data, canvasWidth, canvasHeight) => {
   let keys: any = Object.keys(data)
-  keys = keys.slice(1)
   const zip = new JSZip()
   keys.forEach(item => {
     const fileContent = wrapImageIntoVOC(
@@ -44,18 +48,14 @@ export const wrapImageIntoVOC = (
   const rects: any = []
   width = imgData[0].width
   height = imgData[0].height
-  const left = Math.round(imgData[0].aCoords.tl.x)
-  const top = Math.round(imgData[0].aCoords.tl.y)
+  left = Math.round(imgData[0].aCoords.tl.x)
+  top = Math.round(imgData[0].aCoords.tl.y)
+  widthRate = width / (canvasWidth - 2 * left)
+  heightRate = height / (canvasHeight - 2 * top)
   imgData.map(item => {
     if (item.name === 'rectangle') rects.push(item)
   })
-  const labels = wrapRectLabelsIntoVOC(
-    rects,
-    left,
-    top,
-    width / canvasWidth,
-    height / canvasHeight
-  )
+  const labels = wrapRectLabelsIntoVOC(rects)
   if (labels) {
     return [
       `<annotation>`,
@@ -77,28 +77,14 @@ export const wrapImageIntoVOC = (
   return null
 }
 
-export const wrapRectLabelsIntoVOC = (
-  imgData,
-  left,
-  top,
-  widthRate,
-  heightRate
-) => {
+export const wrapRectLabelsIntoVOC = imgData => {
   if (imgData.length === 0) return null
   const labelRectString = imgData.map(item => {
     const labelName = item.labelName
-    const xmin =
-      Math.round(item.aCoords.tl.x - left) >= 0
-        ? Math.round((item.aCoords.tl.x - left) * widthRate)
-        : 0
-    const ymin =
-      Math.round(item.aCoords.tr.y - top) >= 0
-        ? Math.round((item.aCoords.tr.y - top) * heightRate)
-        : 0
-    let xmax = Math.round((item.aCoords.br.x - left) * widthRate)
-    let ymax = Math.round((item.aCoords.bl.y - top) * heightRate)
-    xmax = xmax > width ? width : xmax
-    ymax = ymax > height ? height : ymax
+    const xmin = calculatePoint(item.aCoords.tl.x, left, widthRate, width)
+    const xmax = calculatePoint(item.aCoords.br.x, left, widthRate, width)
+    const ymin = calculatePoint(item.aCoords.tr.y, top, heightRate, height)
+    const ymax = calculatePoint(item.aCoords.bl.y, top, heightRate, height)
     const labelFields = !!labelName
       ? [
           `\t<object>`,
