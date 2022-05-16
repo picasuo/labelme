@@ -57,12 +57,15 @@ export default class SxExport extends Vue {
     switch (this.tabName) {
       case '多边形':
         arr = [
-          { name: 'COCOJson', label: 'PoloCOCO' },
-          { name: 'VGGJson', label: 'PoloVGG' },
+          { name: 'COCOJson', label: 'PolyCOCO' },
+          { name: 'VGGJson', label: 'PolyVGG' },
         ]
         break
       case '矩形':
-        arr = [{ name: 'CSV file', label: 'RectCSV' }]
+        arr = [
+          { name: 'VOC XML', label: 'RectVOC' },
+          //   { name: 'CSV file', label: 'RectCSV' },
+        ]
         break
     }
     return arr
