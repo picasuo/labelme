@@ -287,9 +287,6 @@ export default class Index extends Vue {
       }
     }
     this.hasEditedNum = editedNames.length
-
-    // todo
-    console.log('objMap', this.objMap)
   }
 
   // 0-分类 1-检测
@@ -389,6 +386,11 @@ export default class Index extends Vue {
   //切换标签录入的输入框展示
   switchInputLabel() {
     this.inputModalVisiable = !this.inputModalVisiable
+    if (this.inputModalVisiable) {
+      hotkeys.setScope('disable')
+    } else {
+      hotkeys.setScope('enable')
+    }
   }
 
   mounted() {
@@ -413,9 +415,13 @@ export default class Index extends Vue {
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
     this.quickCheck()
+  }
 
+  quickCheck() {
+    //切换图片快捷键
     hotkeys(
       'left,right,up,down',
+      'enable',
       //   { element: document.getElementById('tool') },
       (event, handler) => {
         event.preventDefault()
@@ -441,37 +447,49 @@ export default class Index extends Vue {
         }
       },
     )
-  }
 
-  quickCheck() {
-    document.onkeydown = e => {
-      // 键盘 delete删除所选元素
-      if (e.keyCode === 8) {
-        this.deleteObj()
-      }
-      // command+z 删除最近添加的元素
-      if (e.keyCode === 90 && e.metaKey && !e.shiftKey) {
-        this.redo.push(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
-        )
-        this.canvas.remove(
-          this.canvas.getObjects()[this.canvas.getObjects().length - 1],
-        )
-      }
-      // 还原
-      if (e.keyCode === 90 && e.metaKey && e.shiftKey) {
-        if (this.redo.length > 0) this.canvas.add(this.redo.pop())
-      }
-      // P 钢笔工具
-      if (e.keyCode === 80) {
-        this.tabClick(2)
-      }
-      // R 矩形框选
-      if (e.keyCode === 82) {
-        this.tabClick(3)
-      }
-      // 按下ctrl切换移动图片,bug
-      if (e.ctrlKey) {
+    //画图快捷键
+    hotkeys(
+      'backspace,command+z,command+shift+z,p,r,a,d',
+      'enable',
+      (event, handler) => {
+        event.preventDefault()
+
+        switch (handler.key) {
+          case 'command+z':
+            this.redo.push(
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+            )
+            this.canvas.remove(
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+            )
+            break
+          case 'command+shift+z':
+            if (this.redo.length > 0) this.canvas.add(this.redo.pop())
+            break
+          case 'p':
+            this.tabClick(2)
+            break
+          case 'r':
+            this.tabClick(3)
+            break
+          case 'a':
+            this.setZoom(0.1)
+            break
+          case 'd':
+            this.setZoom(-0.1)
+            break
+          case 'backspace':
+            this.deleteObj()
+            break
+        }
+      },
+    )
+
+    //开启快捷键 默认开启
+    hotkeys('*', 'enable', (event, handler) => {
+      event.preventDefault()
+      if (hotkeys.ctrl) {
         this.moveFlag = !this.moveFlag
         if (this.moveFlag) {
           const group = new fabric.Group(this.canvas.getObjects(), {})
@@ -489,24 +507,26 @@ export default class Index extends Vue {
           })
         }
       }
-      if (e.keyCode === 65) {
-        this.setZoom(0.1)
-      }
-      if (e.keyCode === 68) {
-        this.setZoom(-0.1)
-      }
-    }
-    window.addEventListener(
-      'keydown',
-      e => {
-        // command+s 导出
-        if (e.keyCode === 83 && e.metaKey) {
-          e.preventDefault()
-          this.tabClick(0)
-        }
-      },
-      false,
-    )
+    })
+
+    //禁用一切快捷键
+    hotkeys('*', 'disable', (event, handler) => {
+      event.preventDefault()
+    })
+
+    hotkeys.setScope('enable')
+
+    // window.addEventListener(
+    //   'keydown',
+    //   e => {
+    //     // command+s 导出
+    //     if (e.keyCode === 83 && e.metaKey) {
+    //       e.preventDefault()
+    //       this.tabClick(0)
+    //     }
+    //   },
+    //   false,
+    // )
   }
 
   setZoom(zoom) {
