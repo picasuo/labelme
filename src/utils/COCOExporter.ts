@@ -6,9 +6,11 @@ let left = 0
 let top = 0
 let canvasWidth = 0
 let canvasHeight = 0
-export const exportCOCO = (data, canvasW, canvasH) => {
+let labels = [] as any
+export const exportCOCO = (data, labelList, canvasW, canvasH) => {
   canvasWidth = canvasW
   canvasHeight = canvasH
+  labels = labelList
   const content = mapImagesDataToCOCOObject(data)
   console.log(content)
 }
