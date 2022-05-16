@@ -83,7 +83,7 @@ export default class SXMask extends Vue {
       ) => {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
-          const { type, name } = file
+          const { type, name, size } = file
           if (!/image\/(png|jp(e)g)$/.test(type)) {
             reject('请上传正确格式的图片')
             return
@@ -92,7 +92,7 @@ export default class SXMask extends Vue {
           const reader = new FileReader() as any
           reader.readAsDataURL(file)
           reader.onload = () => {
-            picUrlList.push({ name, url: reader.result })
+            picUrlList.push({ name, url: reader.result, size })
             if (picUrlList.length === fileList.length) {
               resolve(picUrlList)
             }
