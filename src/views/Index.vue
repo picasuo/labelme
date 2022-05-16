@@ -90,7 +90,10 @@
                 </p>
                 <p>{{ getPicResolution(item.url) }}</p>
                 <sx-icon
-                  v-if="objMap[item.name] && objMap[item.name].length > 1"
+                  v-if="
+                    item.label ||
+                    (objMap[item.name] && objMap[item.name].length > 1)
+                  "
                   size="small"
                   type="icon-yiwancheng"
                 />
@@ -214,18 +217,26 @@ export default class Index extends Vue {
       hotkeys(codeNum.toString(), (event, handler) => {
         event.preventDefault()
         const { name, color } = item
-        const activeObj = this.canvas.getActiveObject()
-        if (activeObj) {
-          activeObj.set({
-            fill: color,
-            labelName: name,
-            //   borderColor: color
-          })
-        }
-        // todo
-        console.log('codeNum', codeNum)
+        if (this.type === 0) {
+          const currentIndex = this.picList.findIndex(
+            pic => pic.url === this.currentPicUrl,
+          )
+          this.picList[currentIndex]['label'] = name
 
-        this.canvas.renderAll()
+          // todo
+          console.log('picList', this.picList)
+        } else {
+          const activeObj = this.canvas.getActiveObject()
+          if (activeObj) {
+            activeObj.set({
+              fill: color,
+              labelName: name,
+              //   borderColor: color
+            })
+          }
+
+          this.canvas.renderAll()
+        }
       })
     })
   }
