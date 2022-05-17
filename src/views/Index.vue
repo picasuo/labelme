@@ -245,15 +245,15 @@ export default class Index extends Vue {
 
   //设置label快捷键
   setLabelShortCuts() {
+    // todo
+    console.log('labelList', this.labelList)
     this.labelList.forEach((item, index) => {
-      let codeNum = index + 1
-      hotkeys(codeNum.toString(), (event, handler) => {
+      hotkeys((index + 1).toString(), (event, handler) => {
         event.preventDefault()
         const { name, color } = item
         this.handleLabelBind({
           newName: name,
           newColor: color,
-          type: 'bind',
           index: -1,
         })
       })
@@ -262,12 +262,12 @@ export default class Index extends Vue {
 
   //绑定-取消绑定标签到对象上
   //处理标签列表数据
-  handleLabelBind({ newName, newColor, type, index }) {
+  handleLabelBind({ newName, newColor, index }) {
     const list = [] as Array<any>
     const activeObj = this.canvas.getActiveObject()
     if (this.type === 0) {
       let { labelName = [] as any } = activeObj
-      if (type === 'bind') {
+      if (index === -1) {
         labelName.push(newName)
         labelName = Array.from(new Set(labelName))
       } else {
@@ -315,9 +315,10 @@ export default class Index extends Vue {
         })
 
         this.currentLabelList = list
-      } else {
-        this.$SxMessage.error('请先在画布中选择对象！')
       }
+      //   else {
+      //     this.$SxMessage.error('请先在画布中选择对象！')
+      //   }
     }
   }
 
@@ -326,14 +327,13 @@ export default class Index extends Vue {
     this.handleLabelBind({
       newName: name,
       newColor: color,
-      type: 'bind',
       index: -1,
     })
   }
 
   //删除绑定标签
   delLabel(index) {
-    this.handleLabelBind({ newName: '', newColor: '', type: 'unbind', index })
+    this.handleLabelBind({ newName: '', newColor: '', index })
   }
 
   loadExpImg(item) {
@@ -491,17 +491,16 @@ export default class Index extends Vue {
   submit(type) {
     this.isExport = false
     const deepObjMap = _.cloneDeep(this.objMap)
-    const keys = Object.keys(deepObjMap)
     deepObjMap[this.lastName] = this.canvas.getObjects()
     switch (type) {
       case 'RectVOC':
         exportVOC(deepObjMap, this.width, this.height)
         break
       case 'PolyCOCO':
-        exportCOCO(deepObjMap, this.width, this.height)
+        exportCOCO(deepObjMap, this.labelList, this.width, this.height)
         break
       case 'PolyVGG':
-        exportVGG(deepObjMap, this.width, this.height)
+        exportVGG(deepObjMap, this.picList, this.width, this.height)
         break
     }
   }
@@ -523,6 +522,7 @@ export default class Index extends Vue {
   switchInputLabel() {
     this.inputModalVisiable = !this.inputModalVisiable
     if (this.inputModalVisiable) {
+      //禁用快捷键
       hotkeys.setScope('disable')
     } else {
       hotkeys.setScope('enable')
@@ -587,7 +587,7 @@ export default class Index extends Vue {
       'backspace,command+z,command+shift+z,p,r,a,d',
       'enable',
       (event, handler) => {
-        // event.preventDefault()
+        event.preventDefault()
 
         switch (handler.key) {
           //撤销
@@ -651,23 +651,11 @@ export default class Index extends Vue {
     })
 
     //禁用快捷键
-    hotkeys(shortCuts, 'disable', (event, handler) => {
-      event.preventDefault()
-    })
+    // hotkeys(shortCuts, 'disable', (event, handler) => {
+    //   event.preventDefault()
+    // })
     //开启快捷键 默认开启
     hotkeys.setScope('enable')
-
-    // window.addEventListener(
-    //   'keydown',
-    //   e => {
-    //     // command+s 导出
-    //     if (e.keyCode === 83 && e.metaKey) {
-    //       e.preventDefault()
-    //       this.tabClick(0)
-    //     }
-    //   },
-    //   false,
-    // )
   }
 
   setZoom(zoom) {

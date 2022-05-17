@@ -1,3 +1,4 @@
+import { ExporterUtil, calculatePoint } from './ExporterUtil'
 let widthRate = 0
 let heightRate = 0
 let width = 0
@@ -6,18 +7,22 @@ let left = 0
 let top = 0
 let canvasWidth = 0
 let canvasHeight = 0
-export const exportCOCO = (data, canvasW, canvasH) => {
+let labels = [] as any
+export const exportCOCO = (data, labelList, canvasW, canvasH) => {
   canvasWidth = canvasW
   canvasHeight = canvasH
-  const content = mapImagesDataToCOCOObject(data)
-  console.log(content)
+  labels = labelList
+  const jsonData = mapImagesDataToCOCOObject(data)
+  const content = JSON.stringify(jsonData)
+  const fileName = `数据集-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
+  ExporterUtil.saveAs(content, fileName)
 }
 export const mapImagesDataToCOCOObject = data => {
   return {
     info: getInfoComponent(''),
     images: getImagesComponent(data),
     annotations: getAnnotationsComponent(data),
-    categories: getCategoriesComponent(data),
+    categories: getCategoriesComponent(labels),
   }
 }
 export const getInfoComponent = description => {
@@ -27,24 +32,94 @@ export const getInfoComponent = description => {
 }
 export const getImagesComponent = data => {
   let keys: any = Object.keys(data)
-  keys = keys.slice(1)
   const images = [] as any
   keys.forEach((item, index) => {
+    width = data[item][0].width
+    height = data[item][0].height
+    left = Math.round(data[item][0].aCoords.tl.x)
+    top = Math.round(data[item][0].aCoords.tl.y)
+    widthRate = width / (canvasWidth - 2 * left)
+    heightRate = height / (canvasHeight - 2 * top)
     images.push({
       id: index + 1,
-      width: data[item][0].width,
-      height: data[item][0].height,
+      width,
+      height,
       file_name: item,
     })
   })
   return images
 }
-export const getCategoriesComponent = data => {
-  let keys: any = Object.keys(data)
-  keys = keys.slice(1)
-  console.log(data)
+export const getCategoriesComponent = labelArr => {
+  return labelArr.map((item, index) => {
+    return {
+      id: index + 1,
+      name: item.name,
+    }
+  })
 }
 export const getAnnotationsComponent = data => {
   let id = 0
-  const annotations = data
+  const annotations = [] as any
+  let keys: any = Object.keys(data)
+  keys.map((item, index) => {
+    const polys: any = []
+    data[item].map(v => {
+      if (v.name === 'polygon') polys.push(v)
+    })
+    if (polys.length > 0) {
+      polys.map(v => {
+        annotations.push({
+          id: id++,
+          iscrowd: 0,
+          image_id: index + 1,
+          category_id: labels.findIndex(el => el.name === v.labelName) + 1,
+          segmentation: getCOCOSegmentation(v.points),
+          bbox: getCOCOBbox(v.points),
+          area: getCOCOArea(v.points),
+        })
+      })
+    }
+  })
+  return annotations
+}
+
+export const getCOCOSegmentation = points => {
+  const pointArr = points.map(point => {
+    const x = calculatePoint(point.x, left, widthRate, width)
+    const y = calculatePoint(point.y, top, heightRate, height)
+    return [x, y]
+  })
+  return [_.flatten(pointArr)]
+}
+
+export const getCOCOBbox = points => {
+  let xmin = points[0].x
+  let xmax = points[0].x
+  let ymin = points[0].y
+  let ymax = points[0].y
+  points.map(point => {
+    if (xmin > point.x) xmin = point.x
+    if (xmax < point.x) xmax = point.x
+    if (ymin > point.y) ymin = point.y
+    if (ymax < point.y) ymax = point.y
+  })
+  xmin = calculatePoint(xmin, left, widthRate, width)
+  xmax = calculatePoint(xmax, left, widthRate, width)
+  ymin = calculatePoint(ymin, top, heightRate, height)
+  ymax = calculatePoint(ymax, top, heightRate, height)
+  return [xmin, ymin, xmax - xmin, ymax - ymin]
+}
+
+export const getCOCOArea = points => {
+  let area = 0
+  let j = points.length - 1
+  for (let i = 0; i < points.length; i++) {
+    const jx = calculatePoint(points[j].x, left, widthRate, width)
+    const ix = calculatePoint(points[i].x, left, widthRate, width)
+    const jy = calculatePoint(points[j].y, top, heightRate, height)
+    const iy = calculatePoint(points[i].y, top, heightRate, height)
+    area += (jx + ix) * (jy - iy)
+    j = i
+  }
+  return Math.abs(area / 2)
 }
