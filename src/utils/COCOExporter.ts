@@ -8,7 +8,9 @@ let top = 0
 let canvasWidth = 0
 let canvasHeight = 0
 let labels = [] as any
-export const exportCOCO = (data, labelList, canvasW, canvasH) => {
+let type = ''
+export const exportCOCO = (objType, data, labelList, canvasW, canvasH) => {
+  type = objType
   canvasWidth = canvasW
   canvasHeight = canvasH
   labels = labelList
@@ -62,22 +64,45 @@ export const getAnnotationsComponent = data => {
   const annotations = [] as any
   let keys: any = Object.keys(data)
   keys.map((item, index) => {
-    const polys: any = []
+    const objs: any = []
     data[item].map(v => {
-      if (v.name === 'polygon') polys.push(v)
+      if (v.name === type) objs.push(v)
     })
-    if (polys.length > 0) {
-      polys.map(v => {
-        annotations.push({
-          id: id++,
-          iscrowd: 0,
-          image_id: index + 1,
-          category_id: labels.findIndex(el => el.name === v.labelName) + 1,
-          segmentation: getCOCOSegmentation(v.points),
-          bbox: getCOCOBbox(v.points),
-          area: getCOCOArea(v.points),
-        })
-      })
+    if (objs.length > 0) {
+      switch (type) {
+        case 'rectangle':
+          objs.map(v => {
+            const points = [
+              { x: v.aCoords.tl.x, y: v.aCoords.tl.y },
+              { x: v.aCoords.tr.x, y: v.aCoords.tr.y },
+              { x: v.aCoords.bl.x, y: v.aCoords.bl.y },
+              { x: v.aCoords.br.x, y: v.aCoords.br.y },
+            ] as any
+            annotations.push({
+              id: id++,
+              iscrowd: 0,
+              image_id: index + 1,
+              category_id: labels.findIndex(el => el.name === v.labelName) + 1,
+              segmentation: [],
+              bbox: getCOCOBbox(points),
+              area: getCOCOArea(points),
+            })
+          })
+          break
+        case 'polygon':
+          objs.map(v => {
+            annotations.push({
+              id: id++,
+              iscrowd: 0,
+              image_id: index + 1,
+              category_id: labels.findIndex(el => el.name === v.labelName) + 1,
+              segmentation: getCOCOSegmentation(v.points),
+              bbox: getCOCOBbox(v.points),
+              area: getCOCOArea(v.points),
+            })
+          })
+          break
+      }
     }
   })
   return annotations

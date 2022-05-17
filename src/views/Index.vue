@@ -381,8 +381,23 @@ export default class Index extends Vue {
       case 'RectVOC':
         exportVOC(deepObjMap, this.width, this.height)
         break
+      case 'RectCOCO':
+        exportCOCO(
+          'rectangle',
+          deepObjMap,
+          this.labelList,
+          this.width,
+          this.height
+        )
+        break
       case 'PolyCOCO':
-        exportCOCO(deepObjMap, this.labelList, this.width, this.height)
+        exportCOCO(
+          'polygon',
+          deepObjMap,
+          this.labelList,
+          this.width,
+          this.height
+        )
         break
       case 'PolyVGG':
         exportVGG(deepObjMap, this.picList, this.width, this.height)
