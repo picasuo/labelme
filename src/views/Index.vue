@@ -20,12 +20,7 @@
         </div>
       </div>
       <div class="tool_content">
-        <canvas
-          class="tool__canvas"
-          id="canvas"
-          :width="width"
-          :height="height"
-        ></canvas>
+        <canvas id="canvas" :width="width" :height="height"></canvas>
 
         <img id="img" :src="currentPicUrl" />
       </div>
@@ -64,6 +59,31 @@
               >{{ item.name }}</span
             >
           </div>
+
+          <ul class="table" v-if="currentLabelList.length > 0">
+            <li
+              class="table__item"
+              v-for="(label, i) in currentLabelList"
+              :key="label.name"
+            >
+              <div>
+                <span
+                  class="table__circle"
+                  :style="{ backgroundColor: label.color }"
+                ></span>
+                <span>{{ label.name }}</span>
+              </div>
+
+              <div>
+                <sx-icon
+                  type="icon-shanchu"
+                  size="small"
+                  @click="delLabel(i)"
+                />
+                <span class="table__count">{{ label.count }}</span>
+              </div>
+            </li>
+          </ul>
         </div>
 
         <div class="img">
@@ -91,7 +111,8 @@
                 <p>{{ getPicResolution(item.url) }}</p>
                 <sx-icon
                   v-if="
-                    item.label ||
+                    (labelListMap[item.name] &&
+                      labelListMap[item.name].length > 0) ||
                     (objMap[item.name] && objMap[item.name].length > 1)
                   "
                   size="small"
@@ -119,7 +140,12 @@ import { Component, Vue } from 'vue-property-decorator'
 import { fabric } from 'fabric'
 import SxMask from 'components/SxMask.vue'
 import SxExport from 'components/SxExport.vue'
-import { handlePicName, getRandomColor, getPicResolution } from '../utils/tools'
+import {
+  handlePicName,
+  getRandomColor,
+  getPicResolution,
+  shortCuts,
+} from '../utils/tools'
 import hotkeys from 'hotkeys-js'
 import { exportVGG } from 'utils/VGGExporter'
 import { exportCOCO } from 'utils/COCOExporter'
@@ -192,6 +218,9 @@ export default class Index extends Vue {
 
   objMap = {} as any
 
+  //存储队列中每张图片的label表格数据
+  labelListMap = {} as any
+
   lastName = ''
 
   label = ''
@@ -199,10 +228,8 @@ export default class Index extends Vue {
   inputModalVisiable = false
   labelList = [] as Array<any>
   hasEditedNum = 0
-
-  get canvasAllObjects() {
-    return this.canvas.getObjects()
-  }
+  //当前图片绑定的label
+  currentLabelList = [] as Array<any>
 
   getLabel() {
     if (!this.label) return
@@ -212,94 +239,182 @@ export default class Index extends Vue {
     }
     this.labelList.push({ name: this.label, color: getRandomColor() })
     this.label = ''
+    //设置label快捷键
+    this.setLabelShortCuts()
+  }
+
+  //设置label快捷键
+  setLabelShortCuts() {
+    // todo
+    console.log('labelList', this.labelList)
     this.labelList.forEach((item, index) => {
-      let codeNum = index + 1
-      hotkeys(codeNum.toString(), (event, handler) => {
+      hotkeys((index + 1).toString(), (event, handler) => {
         event.preventDefault()
         const { name, color } = item
-        if (this.type === 0) {
-          const currentIndex = this.picList.findIndex(
-            pic => pic.url === this.currentPicUrl
-          )
-          this.picList[currentIndex]['label'] = name
-
-          // todo
-          console.log('picList', this.picList)
-        } else {
-          const activeObj = this.canvas.getActiveObject()
-          if (activeObj) {
-            activeObj.set({
-              fill: color,
-              labelName: name,
-              //   borderColor: color
-            })
-          }
-
-          this.canvas.renderAll()
-        }
+        this.handleLabelBind({
+          newName: name,
+          newColor: color,
+          index: -1,
+        })
       })
     })
   }
 
+  //绑定-取消绑定标签到对象上
+  //处理标签列表数据
+  handleLabelBind({ newName, newColor, index }) {
+    const list = [] as Array<any>
+    const activeObj = this.canvas.getActiveObject()
+    if (this.type === 0) {
+      let { labelName = [] as any } = activeObj
+      if (index === -1) {
+        labelName.push(newName)
+        labelName = Array.from(new Set(labelName))
+      } else {
+        labelName.splice(index, 1)
+      }
+
+      activeObj.set({
+        labelName,
+      })
+
+      labelName.forEach(label => {
+        const { name, color } = this.labelList.find(item => item.name === label)
+        list.push({
+          name,
+          color,
+          count: 1,
+        })
+      })
+      this.currentLabelList = list
+    } else {
+      if (activeObj) {
+        activeObj.set({
+          fill: newColor,
+          labelName: newName,
+          //   borderColor: color
+        })
+
+        this.canvas.renderAll()
+        this.labelList.forEach(label => {
+          const { name, color } = label
+          let count = 0
+          this.canvas.getObjects().forEach(obj => {
+            const { labelName = '' } = obj
+            if (labelName === name) {
+              count++
+            }
+          })
+          if (count > 0) {
+            list.push({
+              name,
+              color,
+              count,
+            })
+          }
+        })
+
+        this.currentLabelList = list
+      }
+      //   else {
+      //     this.$SxMessage.error('请先在画布中选择对象！')
+      //   }
+    }
+  }
+
   selectLabel(label) {
     const { name, color } = label
+    this.handleLabelBind({
+      newName: name,
+      newColor: color,
+      index: -1,
+    })
+  }
 
-    const activeObj = this.canvas.getActiveObject()
-
-    if (activeObj) {
-      activeObj.set({
-        fill: color,
-        labelName: name,
-        //   borderColor: color
-      })
-    }
-
-    this.canvas.renderAll()
+  //删除绑定标签
+  delLabel(index) {
+    this.handleLabelBind({ newName: '', newColor: '', index })
   }
 
   loadExpImg(item) {
     const { url, name } = item
     if (this.lastName) {
       this.objMap[this.lastName] = this.canvas.getObjects()
+      this.labelListMap[this.lastName] = this.currentLabelList
     }
     this.canvas.clear()
+
     this.currentPicUrl = url
-    if (this.objMap[name]?.length > 0) {
-      this.objMap[name].forEach(v => {
-        this.canvas.add(v)
+
+    this.addImgToCanvas(url, name).then(() => {
+      if (this.type === 0) {
+        this.canvas.setActiveObject(this.canvas.getObjects()[0])
+      }
+    })
+    //判断。重现label列表数据
+    if (this.labelListMap[name]) {
+      this.currentLabelList = this.labelListMap[name]
+    } else {
+      this.currentLabelList = []
+    }
+
+    this.lastName = name
+    let count = 0
+    if (this.type === 0) {
+      Object.keys(this.labelListMap).forEach(item => {
+        if (this.labelListMap[item].length > 0) {
+          count++
+        }
       })
     } else {
-      fabric.Image.fromURL(this.currentPicUrl, oImg => {
-        if (oImg.width > oImg.height) {
-          oImg.scaleToWidth(this.width)
-          const currentHeight = (this.width * oImg.height) / oImg.width
-          oImg.scaleToHeight(currentHeight)
-          oImg.set({
-            top: (this.height - currentHeight) / 2,
-            selectable: false,
-            hasControls: false,
-          })
-        } else {
-          oImg.scaleToHeight(this.height)
-          const currentWidth = (this.height * oImg.width) / oImg.height
-          oImg.scaleToWidth(currentWidth)
-          oImg.set({
-            left: (this.width - currentWidth) / 2,
-            selectable: false,
-            hasControls: false,
-          })
+      for (let key in this.objMap) {
+        if (this.objMap[key].length > 1) {
+          count++
         }
-        this.canvas.add(oImg)
-      })
-    }
-    this.lastName = name
-    const editedNames = [] as Array<any>
-    for (let key in this.objMap) {
-      if (this.objMap[key].length > 1) {
-        editedNames.push(key)
       }
     }
-    this.hasEditedNum = editedNames.length
+
+    this.hasEditedNum = count
+  }
+
+  //将图片加载到画布中
+  addImgToCanvas(url, name) {
+    return new Promise(
+      (resolve: (value: any) => void, reject: (value: any) => void) => {
+        //!再次加载，导入之前保存的数据
+        if (this.objMap[name]?.length > 0) {
+          this.objMap[name].forEach(v => {
+            this.canvas.add(v)
+          })
+          resolve('')
+        } else {
+          //!首次加载,根据图片原尺寸来等比例缩放长宽
+          fabric.Image.fromURL(this.currentPicUrl, oImg => {
+            if (oImg.width > oImg.height) {
+              oImg.scaleToWidth(this.width)
+              const currentHeight = (this.width * oImg.height) / oImg.width
+              oImg.scaleToHeight(currentHeight)
+              oImg.set({
+                top: (this.height - currentHeight) / 2,
+                selectable: false,
+                hasControls: false,
+              })
+            } else {
+              oImg.scaleToHeight(this.height)
+              const currentWidth = (this.height * oImg.width) / oImg.height
+              oImg.scaleToWidth(currentWidth)
+              oImg.set({
+                left: (this.width - currentWidth) / 2,
+                selectable: false,
+                hasControls: false,
+              })
+            }
+            this.canvas.add(oImg)
+            resolve('')
+          })
+        }
+      },
+    )
   }
 
   // 0-分类 1-检测
@@ -409,6 +524,8 @@ export default class Index extends Vue {
     this.canvas.clear()
     this.isShown = true
     this.picList = []
+    this.currentLabelList = []
+    this.labelListMap = {}
     //解除快捷键绑定
     this.labelList.forEach((item, index) => {
       hotkeys.unbind((index + 1).toString())
@@ -420,6 +537,7 @@ export default class Index extends Vue {
   switchInputLabel() {
     this.inputModalVisiable = !this.inputModalVisiable
     if (this.inputModalVisiable) {
+      //禁用快捷键
       hotkeys.setScope('disable')
     } else {
       hotkeys.setScope('enable')
@@ -427,12 +545,6 @@ export default class Index extends Vue {
   }
 
   mounted() {
-    // const doc = document.getElementsByClassName('tool_content')[0]
-    // const myCanvas: any = document.getElementById('canvas')
-    // this.width = doc.clientWidth * 0.8
-    // this.height = doc.clientHeight * 0.8
-    // myCanvas.width = this.width
-    // myCanvas.height = this.height
     window.onbeforeunload = event => {
       //适配fireFox
       event.preventDefault()
@@ -447,10 +559,12 @@ export default class Index extends Vue {
     this.canvas.on('mouse:down', this.mousedown)
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
-    this.quickCheck()
+
+    this.setShortCuts()
   }
 
-  quickCheck() {
+  //快捷键设置
+  setShortCuts() {
     //切换图片快捷键
     hotkeys(
       'left,right,up,down',
@@ -460,14 +574,16 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
+            //上一张
             case 'left':
             case 'up':
               currentIndex =
                 currentIndex === 0 ? this.loadPicNum - 1 : currentIndex - 1
               break
+            //下一张
             case 'right':
             case 'down':
               currentIndex =
@@ -478,7 +594,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -489,39 +605,46 @@ export default class Index extends Vue {
         event.preventDefault()
 
         switch (handler.key) {
+          //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             break
+          //反撤销
           case 'command+shift+z':
             if (this.redo.length > 0) this.canvas.add(this.redo.pop())
             break
+          //钢笔工具
           case 'p':
             this.tabClick(2)
             break
+          //矩形工具
           case 'r':
             this.tabClick(3)
             break
+          //放大
           case 'a':
             this.setZoom(0.1)
             break
+          //缩小
           case 'd':
             this.setZoom(-0.1)
             break
+          //删除选定对象
           case 'backspace':
             this.deleteObj()
             break
         }
-      }
+      },
     )
 
-    //开启快捷键 默认开启
     hotkeys('*', 'enable', (event, handler) => {
-      event.preventDefault()
+      // event.preventDefault()
+
       if (hotkeys.ctrl) {
         this.moveFlag = !this.moveFlag
         if (this.moveFlag) {
@@ -529,10 +652,10 @@ export default class Index extends Vue {
           this.canvas.clear().renderAll()
           this.canvas.add(group)
         } else {
-          console.log(
-            this.canvas.getObjects(),
-            this.canvas.getObjects()[0].getObjects()
-          )
+          //   console.log(
+          //     this.canvas.getObjects(),
+          //     this.canvas.getObjects()[0].getObjects(),
+          //   )
           const objs = this.canvas.getObjects()[0].getObjects()
           this.canvas.clear().renderAll()
           objs.forEach(item => {
@@ -542,24 +665,12 @@ export default class Index extends Vue {
       }
     })
 
-    //禁用一切快捷键
-    hotkeys('*', 'disable', (event, handler) => {
-      event.preventDefault()
-    })
-
+    //禁用快捷键
+    // hotkeys(shortCuts, 'disable', (event, handler) => {
+    //   event.preventDefault()
+    // })
+    //开启快捷键 默认开启
     hotkeys.setScope('enable')
-
-    // window.addEventListener(
-    //   'keydown',
-    //   e => {
-    //     // command+s 导出
-    //     if (e.keyCode === 83 && e.metaKey) {
-    //       e.preventDefault()
-    //       this.tabClick(0)
-    //     }
-    //   },
-    //   false,
-    // )
   }
 
   setZoom(zoom) {
@@ -835,13 +946,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix()
-            )
+              fabricObject.calcTransformMatrix(),
+            ),
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler
+          this.actionHandler,
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -852,7 +963,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1
+      object.strokeUniform ? 1 / object.scaleY : 1,
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -862,7 +973,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center'
+      'center',
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -885,7 +996,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix()
+        fabricObject.calcTransformMatrix(),
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})
@@ -979,9 +1090,10 @@ export default class Index extends Vue {
         position: absolute;
       }
     }
+
     &_manage {
       .label {
-        height: get-vh(450px);
+        height: 50%;
         font-size: 12px;
         font-family: PingFangSC-Medium, PingFang SC;
         font-weight: 500;
@@ -999,7 +1111,7 @@ export default class Index extends Vue {
         }
 
         &__btn {
-          width: get-vw(100px);
+          width: get-v(100px);
           height: 40px;
           background: rgba(255, 255, 255, 0);
           border-radius: 2px;
@@ -1013,11 +1125,10 @@ export default class Index extends Vue {
         &__list {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          min-height: 30px;
+          max-height: get-vh(150px);
           justify-items: stretch;
           align-items: stretch;
           gap: 10px;
-          flex: 1;
           padding: 20px 20px 0 20px;
           overflow-y: auto;
           margin-bottom: 10px;
@@ -1033,7 +1144,7 @@ export default class Index extends Vue {
         }
       }
       .img {
-        height: get-vh(560px);
+        height: 50%;
         display: flex;
         flex-direction: column;
         font-size: 12px;
@@ -1122,5 +1233,53 @@ export default class Index extends Vue {
     margin: 0 15px;
     width: get-vw(100px);
   }
+}
+
+.table {
+  flex: 1;
+  border-top: 1px solid #454545;
+  overflow-y: scroll;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  //   padding: ;
+  &__item {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 10px;
+
+    > div {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  &__circle {
+    width: 10px;
+    height: 10px;
+    background: cyan;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+
+  &__count {
+    width: 30px;
+    border-radius: 2em;
+    background: #ccc;
+    display: flex;
+    justify-content: center;
+    margin-left: 10px;
+  }
+}
+
+.sui-icon-small {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
 }
 </style>
