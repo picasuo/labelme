@@ -356,6 +356,9 @@ export default class Index extends Vue {
     this.addImgToCanvas(url, name).then(() => {
       if (this.type === 0) {
         this.canvas.setActiveObject(this.canvas.getObjects()[0])
+        this.canvas
+          .getActiveObject()
+          .set({ lockMovementX: true, lockMovementY: true, hasBorders: false })
       }
     })
     //判断。重现label列表数据
@@ -698,7 +701,7 @@ export default class Index extends Vue {
   // 鼠标按下时触发
   mousedown(e) {
     // 记录鼠标按下时的坐标
-    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = this.canvas.getPointer(e.e)
     this.mouseFrom.x = xy.x
     this.mouseFrom.y = xy.y
     this.doDrawing = true
@@ -721,7 +724,7 @@ export default class Index extends Vue {
         }
         //未点击红点则继续作画
         if (this.polygonMode) {
-          this.addPoint(e)
+          this.addPoint(xy)
         }
       } catch (error) {
         console.log(error)
@@ -730,7 +733,7 @@ export default class Index extends Vue {
   }
   // 鼠标松开执行
   mouseup(e) {
-    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = this.canvas.getPointer(e.e)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
     this.drawingObject = null
@@ -748,7 +751,7 @@ export default class Index extends Vue {
       return
     }
     this.moveCount++
-    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = this.canvas.getPointer(e.e)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
     // 矩形
@@ -774,9 +777,6 @@ export default class Index extends Vue {
       this.canvas.renderAll()
     }
   }
-  transformMouse(mouseX, mouseY) {
-    return { x: mouseX / 1, y: mouseY / 1 }
-  }
 
   // 绘制多边形开始，绘制多边形和其他图形不一样，需要单独处理
   drawPolygon() {
@@ -786,7 +786,7 @@ export default class Index extends Vue {
     this.lineArray = new Array() //线集合
     this.canvas.isDrawingMode = false
   }
-  addPoint(e) {
+  addPoint(xy) {
     const random = Math.floor(Math.random() * 10000)
     const id = new Date().getTime() + random
     const circle = new fabric.Circle({
@@ -794,8 +794,8 @@ export default class Index extends Vue {
       fill: 'rgba(255,255,255,0.5)',
       stroke: '#333333',
       strokeWidth: 0.5,
-      left: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-      top: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+      left: xy.x,
+      top: xy.y,
       selectable: false,
       hasBorders: false,
       originX: 'center',
@@ -808,12 +808,7 @@ export default class Index extends Vue {
         fill: '#ffffff',
       })
     }
-    const points = [
-      (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-      (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
-      (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-      (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
-    ]
+    const points = [xy.x, xy.y, xy.x, xy.y]
 
     this.line = new fabric.Line(points, {
       strokeWidth: 2,
@@ -828,7 +823,7 @@ export default class Index extends Vue {
       objectCaching: false,
     })
     if (this.activeShape) {
-      const pos = this.canvas.getPointer(e.e)
+      const pos = xy
       const points: any = this.activeShape.get('points')
       points.push({
         x: pos.x,
@@ -851,8 +846,8 @@ export default class Index extends Vue {
     } else {
       const polyPoint = [
         {
-          x: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-          y: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+          x: xy.x,
+          y: xy.y,
         },
       ]
       const polygon = new fabric.Polygon(polyPoint, {
@@ -988,6 +983,7 @@ export default class Index extends Vue {
     }
   }
   .tool {
+    height: calc(100vh - 40px);
     display: grid;
     grid-template-columns: get-vw(60px) 1fr get-vw(400px);
     background: #535353;
@@ -1022,6 +1018,7 @@ export default class Index extends Vue {
     }
 
     &_manage {
+      height: calc(100vh - 40px);
       .label {
         height: 50%;
         font-size: 12px;
