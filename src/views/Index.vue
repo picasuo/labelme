@@ -123,7 +123,12 @@
           </ul>
         </div>
       </div>
-      <SxExport v-show="isExport" @cancel="cancel" @exportData="submit" />
+      <SxExport
+        v-show="isExport"
+        :type="type"
+        @cancel="cancel"
+        @exportData="submit"
+      />
     </div>
     <SxMask
       v-if="isShown"
@@ -150,6 +155,8 @@ import hotkeys from 'hotkeys-js'
 import { exportVGG } from 'utils/VGGExporter'
 import { exportCOCO } from 'utils/COCOExporter'
 import { exportVOC } from 'utils/VOCXMLExporter'
+import { exportYOLO } from 'utils/YOLOExporter'
+import { exportImgJson } from 'utils/ImgJsonExport'
 
 @Component({
   components: {
@@ -246,7 +253,6 @@ export default class Index extends Vue {
   //设置label快捷键
   setLabelShortCuts() {
     // todo
-    console.log('labelList', this.labelList)
     this.labelList.forEach((item, index) => {
       hotkeys((index + 1).toString(), (event, handler) => {
         event.preventDefault()
@@ -413,7 +419,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -493,6 +499,9 @@ export default class Index extends Vue {
     const deepObjMap = _.cloneDeep(this.objMap)
     deepObjMap[this.lastName] = this.canvas.getObjects()
     switch (type) {
+      case 'ImgJson':
+        exportImgJson(deepObjMap)
+        break
       case 'RectVOC':
         exportVOC(deepObjMap, this.width, this.height)
         break
@@ -504,6 +513,9 @@ export default class Index extends Vue {
           this.width,
           this.height
         )
+        break
+      case 'RectYOLO':
+        exportYOLO(deepObjMap, this.labelList, this.width, this.height)
         break
       case 'PolyCOCO':
         exportCOCO(
@@ -574,7 +586,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -594,7 +606,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -608,10 +620,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             break
           //反撤销
@@ -639,7 +651,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      },
+      }
     )
 
     hotkeys('*', 'enable', (event, handler) => {
@@ -946,13 +958,13 @@ export default class Index extends Vue {
             { x: x, y: y },
             fabric.util.multiplyTransformMatrices(
               fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix(),
-            ),
+              fabricObject.calcTransformMatrix()
+            )
           )
         },
         actionHandler: this.anchorWrapper(
           index > 0 ? index - 1 : lastControl,
-          this.actionHandler,
+          this.actionHandler
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
@@ -963,7 +975,7 @@ export default class Index extends Vue {
   getObjectSizeWithStroke(object) {
     const stroke = new fabric.Point(
       object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1
     ).multiply(object.strokeWidth)
     return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
   }
@@ -973,7 +985,7 @@ export default class Index extends Vue {
     const mouseLocalPosition = polygon.toLocalPoint(
       new fabric.Point(x, y),
       'center',
-      'center',
+      'center'
     )
     const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
     const size = polygon._getTransformedDimensions(0, 0)
@@ -996,7 +1008,7 @@ export default class Index extends Vue {
           x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
           y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
         },
-        fabricObject.calcTransformMatrix(),
+        fabricObject.calcTransformMatrix()
       )
       const actionPerformed = fn(eventData, transform, x, y)
       const newDim = fabricObject._setPositionDimensions({})

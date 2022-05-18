@@ -9,7 +9,6 @@ let left = 0
 let top = 0
 let picList = [] as any
 export const exportVGG = (data, pics, canvasWidth, canvasHeight) => {
-  console.log('data', data)
   picList = pics
   let keys: any = Object.keys(data)
   let jsonData: any = {}
@@ -20,7 +19,6 @@ export const exportVGG = (data, pics, canvasWidth, canvasHeight) => {
       canvasWidth,
       canvasHeight
     )
-    console.log('name', item)
     jsonData[filename] = fileData
   })
   const content = JSON.stringify(jsonData)

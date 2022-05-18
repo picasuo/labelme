@@ -48,17 +48,37 @@ import { Radio, RadioGroup } from 'iview'
   },
 })
 export default class SxExport extends Vue {
-  tabs = ['矩形', '多边形']
+  // 0-分类 1-对象
+  @Prop({
+    type: Number,
+  })
+  type: number
+  get tabs() {
+    let arr = [] as any
+    switch (this.type) {
+      case 0:
+        arr = ['图片分类']
+        break
+      case 1:
+        arr = ['矩形', '多边形']
+        break
+    }
+    return arr
+  }
   checkedTab = 0
   checked = null as any
   tabName = '' as any
   get exportRadio() {
     let arr = [] as any
     switch (this.tabName) {
+      case '图片分类':
+        arr = [{ name: 'Json', label: 'ImgJson' }]
+        break
       case '矩形':
         arr = [
           { name: 'VOC XML', label: 'RectVOC' },
           { name: 'COCOJson', label: 'RectCOCO' },
+          { name: 'YOLO', label: 'RectYOLO' },
         ]
         break
       case '多边形':
