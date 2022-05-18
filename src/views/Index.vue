@@ -142,7 +142,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import { fabric } from 'fabric'
 import SxMask from 'components/SxMask.vue'
 import SxExport from 'components/SxExport.vue'
 import {
@@ -151,6 +150,8 @@ import {
   getPicResolution,
   shortCuts,
 } from '../utils/tools'
+import { fabric } from 'fabric'
+import { polyEdit } from 'utils/PolygonControl'
 import hotkeys from 'hotkeys-js'
 import { exportVGG } from 'utils/VGGExporter'
 import { exportCOCO } from 'utils/COCOExporter'
@@ -664,10 +665,6 @@ export default class Index extends Vue {
           this.canvas.clear().renderAll()
           this.canvas.add(group)
         } else {
-          //   console.log(
-          //     this.canvas.getObjects(),
-          //     this.canvas.getObjects()[0].getObjects(),
-          //   )
           const objs = this.canvas.getObjects()[0].getObjects()
           this.canvas.clear().renderAll()
           objs.forEach(item => {
@@ -709,7 +706,7 @@ export default class Index extends Vue {
     if (activeObj) {
       // 选中时
       if (this.checkedTab === 1 && activeObj.name === 'polygon')
-        this.polygonEdit(activeObj)
+        polyEdit(activeObj)
     }
     // 绘制多边形
     if (this.checkedTab === 2) {
@@ -942,85 +939,6 @@ export default class Index extends Vue {
     if (canvasObject) {
       this.canvas.add(canvasObject)
       this.drawingObject = canvasObject
-    }
-  }
-
-  polygonEdit(poly) {
-    const lastControl = poly.points.length - 1
-    poly.cornerStyle = 'circle'
-    poly.cornerColor = 'rgba(255,255,255,1)'
-    poly.controls = poly.points.reduce((acc, point, index) => {
-      acc['p' + index] = new fabric.Control({
-        positionHandler: (dim, finalMatrix, fabricObject) => {
-          const x = fabricObject.points[index].x - fabricObject.pathOffset.x
-          const y = fabricObject.points[index].y - fabricObject.pathOffset.y
-          return fabric.util.transformPoint(
-            { x: x, y: y },
-            fabric.util.multiplyTransformMatrices(
-              fabricObject.canvas.viewportTransform,
-              fabricObject.calcTransformMatrix()
-            )
-          )
-        },
-        actionHandler: this.anchorWrapper(
-          index > 0 ? index - 1 : lastControl,
-          this.actionHandler
-        ),
-        actionName: 'modifyPolygon',
-        pointIndex: index,
-      })
-      return acc
-    }, {})
-  }
-  getObjectSizeWithStroke(object) {
-    const stroke = new fabric.Point(
-      object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1
-    ).multiply(object.strokeWidth)
-    return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
-  }
-  actionHandler(eventData, transform, x, y) {
-    const polygon = transform.target
-    const currentControl = polygon.controls[polygon.__corner]
-    const mouseLocalPosition = polygon.toLocalPoint(
-      new fabric.Point(x, y),
-      'center',
-      'center'
-    )
-    const polygonBaseSize = this.getObjectSizeWithStroke(polygon)
-    const size = polygon._getTransformedDimensions(0, 0)
-    const finalPointPosition = {
-      x:
-        (mouseLocalPosition.x * polygonBaseSize.x) / size.x +
-        polygon.pathOffset.x,
-      y:
-        (mouseLocalPosition.y * polygonBaseSize.y) / size.y +
-        polygon.pathOffset.y,
-    }
-    polygon.points[currentControl.pointIndex] = finalPointPosition
-    return true
-  }
-  anchorWrapper(anchorIndex, fn) {
-    return (eventData, transform, x, y) => {
-      const fabricObject = transform.target
-      const absolutePoint = fabric.util.transformPoint(
-        {
-          x: fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x,
-          y: fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y,
-        },
-        fabricObject.calcTransformMatrix()
-      )
-      const actionPerformed = fn(eventData, transform, x, y)
-      const newDim = fabricObject._setPositionDimensions({})
-      const polygonBaseSize = this.getObjectSizeWithStroke(fabricObject)
-      const newX =
-        (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) /
-        polygonBaseSize.x
-      const newY =
-        (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) /
-        polygonBaseSize.y
-      fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5)
-      return actionPerformed
     }
   }
 }
