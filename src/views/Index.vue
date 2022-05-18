@@ -575,8 +575,20 @@ export default class Index extends Vue {
     this.canvas.on('mouse:down', this.mousedown)
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
+    //缩放
+    this.canvas.on('mouse:wheel', this.mousewheel)
 
     this.setShortCuts()
+  }
+
+  mousewheel(opt) {
+    const delta = opt.e.deltaY
+    let zoom = this.canvas.getZoom()
+    zoom = zoom - delta / 200
+    if (zoom < 0.01) zoom = 0.01
+    this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
+    opt.e.preventDefault()
+    opt.e.stopPropagation()
   }
 
   //快捷键设置
@@ -642,14 +654,6 @@ export default class Index extends Vue {
           case 'r':
             this.tabClick(3)
             break
-          //放大
-          case 'a':
-            this.setZoom(0.1)
-            break
-          //缩小
-          case 'd':
-            this.setZoom(-0.1)
-            break
           //删除选定对象
           case 'backspace':
             this.deleteObj()
@@ -683,12 +687,6 @@ export default class Index extends Vue {
     // })
     //开启快捷键 默认开启
     hotkeys.setScope('enable')
-  }
-
-  setZoom(zoom) {
-    const center = this.canvas.getCenter()
-    const newZoom = this.canvas.getZoom() + zoom
-    this.canvas.zoomToPoint({ x: center.left, y: center.top }, newZoom)
   }
 
   deleteObj() {
