@@ -124,7 +124,7 @@
         </div>
       </div>
       <SxExport
-        v-show="isExport"
+        v-if="isExport"
         :type="type"
         @cancel="cancel"
         @exportData="submit"
