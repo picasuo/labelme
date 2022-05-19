@@ -195,7 +195,7 @@ export default class Index extends Vue {
   mouseTo = {} as any
   canvasObjectIndex = 0
   rectangleLabel = 'warning'
-  drawWidth = 2 //笔触宽度
+  drawWidth = 1 //笔触宽度
   color = '#e2e2e2' //画笔颜色
   drawingObject = null //当前绘制对象
   moveCount = 1 //绘制移动计数器
@@ -537,6 +537,7 @@ export default class Index extends Vue {
   }
   // 退出
   exit() {
+    this.objMap = {}
     this.canvas.clear()
     this.isShown = true
     this.picList = []
@@ -547,6 +548,7 @@ export default class Index extends Vue {
       hotkeys.unbind((index + 1).toString())
     })
     this.labelList = []
+    this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
   }
 
   //切换标签录入的输入框展示
@@ -584,7 +586,7 @@ export default class Index extends Vue {
   mousewheel(opt) {
     const delta = opt.e.deltaY
     let zoom = this.canvas.getZoom()
-    zoom = zoom - delta / 200
+    zoom *= 0.99 ** delta
     if (zoom < 0.01) zoom = 0.01
     this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
     opt.e.preventDefault()
@@ -653,6 +655,10 @@ export default class Index extends Vue {
           //矩形工具
           case 'r':
             this.tabClick(3)
+            break
+          //缩放还原
+          case 'a':
+            this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
             break
           //删除选定对象
           case 'backspace':
@@ -788,7 +794,7 @@ export default class Index extends Vue {
     const random = Math.floor(Math.random() * 10000)
     const id = new Date().getTime() + random
     const circle = new fabric.Circle({
-      radius: 5,
+      radius: 3,
       fill: 'rgba(255,255,255,0.5)',
       stroke: '#333333',
       strokeWidth: 0.5,
@@ -809,7 +815,7 @@ export default class Index extends Vue {
     const points = [xy.x, xy.y, xy.x, xy.y]
 
     this.line = new fabric.Line(points, {
-      strokeWidth: 2,
+      strokeWidth: 1,
       fill: '#999999',
       stroke: '#999999',
       class: 'line',

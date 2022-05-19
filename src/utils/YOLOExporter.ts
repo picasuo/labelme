@@ -1,4 +1,5 @@
 import JSZip from 'jszip'
+import YAML from 'json2yaml'
 import { saveAs } from 'file-saver'
 import { calculatePoint } from './ExporterUtil'
 import { NumberUtil } from './NumberUtil'
@@ -33,7 +34,7 @@ export const exportYOLO = (data, labelList, canvasWidth, canvasHeight) => {
   })
   const lablesContent = wrapLabels(labelList)
   try {
-    zip.file('_darknet.labels', lablesContent)
+    zip.file('data.yaml', lablesContent)
   } catch (error) {
     // TODO
     throw new Error(error as string)
@@ -49,11 +50,14 @@ export const exportYOLO = (data, labelList, canvasWidth, canvasHeight) => {
 }
 
 export const wrapLabels = data => {
-  let labelsStr = ''
+  let labels: any = {
+    nc: data.length,
+    names: [],
+  }
   data.map(item => {
-    labelsStr += item.name + '\n'
+    labels.names.push(item.name)
   })
-  return labelsStr
+  return YAML.stringify(labels)
 }
 
 export const wrapRectLabelsIntoYOLO = (imgData, canvasWidth, canvasHeight) => {
