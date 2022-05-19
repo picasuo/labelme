@@ -405,18 +405,24 @@ export default class Index extends Vue {
               const currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
               oImg.set({
+                id: 'img',
                 top: (this.height - currentHeight) / 2,
-                selectable: false,
+                selectable: true,
+                hasBorders: false,
                 hasControls: false,
+                hasRotatingPoint: false,
               })
             } else {
               oImg.scaleToHeight(this.height)
               const currentWidth = (this.height * oImg.width) / oImg.height
               oImg.scaleToWidth(currentWidth)
               oImg.set({
+                id: 'img',
                 left: (this.width - currentWidth) / 2,
-                selectable: false,
+                selectable: true,
+                hasBorders: false,
                 hasControls: false,
+                hasRotatingPoint: false,
               })
             }
             this.canvas.add(oImg)
@@ -572,7 +578,9 @@ export default class Index extends Vue {
       return 'message'
     }
 
-    this.canvas = new fabric.Canvas('canvas', {})
+    this.canvas = new fabric.Canvas('canvas', {
+      preserveObjectStacking: true,
+    })
     this.canvas.selectionColor = 'rgba(0,0,0,0.05)'
     this.canvas.on('mouse:down', this.mousedown)
     this.canvas.on('mouse:move', this.mousemove)
@@ -587,7 +595,8 @@ export default class Index extends Vue {
     const delta = opt.e.deltaY
     let zoom = this.canvas.getZoom()
     zoom *= 0.99 ** delta
-    if (zoom < 0.01) zoom = 0.01
+    if (zoom < 1) zoom = 1
+    if (zoom > 10) zoom = 20
     this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
     opt.e.preventDefault()
     opt.e.stopPropagation()
@@ -668,25 +677,6 @@ export default class Index extends Vue {
       }
     )
 
-    hotkeys('*', 'enable', (event, handler) => {
-      // event.preventDefault()
-
-      if (hotkeys.ctrl) {
-        this.moveFlag = !this.moveFlag
-        if (this.moveFlag) {
-          const group = new fabric.Group(this.canvas.getObjects(), {})
-          this.canvas.clear().renderAll()
-          this.canvas.add(group)
-        } else {
-          const objs = this.canvas.getObjects()[0].getObjects()
-          this.canvas.clear().renderAll()
-          objs.forEach(item => {
-            this.canvas.add(item)
-          })
-        }
-      }
-    })
-
     //禁用快捷键
     // hotkeys(shortCuts, 'disable', (event, handler) => {
     //   event.preventDefault()
@@ -711,9 +701,16 @@ export default class Index extends Vue {
     this.doDrawing = true
     const activeObj = this.canvas.getActiveObject()
     if (activeObj) {
-      // 选中时
-      if (this.checkedTab === 1 && activeObj.name === 'polygon')
-        polyEdit(activeObj)
+      switch (activeObj.id) {
+        case 'img':
+          this.preventImgFromLeaving(activeObj, e)
+          break
+        default:
+          // 选中多边形时
+          if (this.checkedTab === 1 && activeObj.name === 'polygon')
+            polyEdit(activeObj)
+          break
+      }
     }
     // 绘制多边形
     if (this.checkedTab === 2) {
@@ -740,6 +737,7 @@ export default class Index extends Vue {
     const xy = this.canvas.getPointer(e.e)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
+    if (this.drawingObject) this.canvas.setActiveObject(this.drawingObject)
     this.drawingObject = null
     this.moveCount = 1
     if (this.checkedTab !== 2 && this.checkedTab !== 0) {
@@ -794,7 +792,7 @@ export default class Index extends Vue {
     const random = Math.floor(Math.random() * 10000)
     const id = new Date().getTime() + random
     const circle = new fabric.Circle({
-      radius: 3,
+      radius: 4,
       fill: 'rgba(255,255,255,0.5)',
       stroke: '#333333',
       strokeWidth: 0.5,
@@ -939,6 +937,74 @@ export default class Index extends Vue {
       this.canvas.add(canvasObject)
       this.drawingObject = canvasObject
     }
+  }
+
+  preventImgFromLeaving(active, evt) {
+    this.canvas.discardActiveObject()
+    active.lockMovementX = false
+    active.lockMovementY = false
+
+    let lastLeft = active.left,
+      lastTop = active.top
+
+    active.on('moving', evt => {
+      active.setCoords()
+      // SET BOUNDING RECT TO 'active'
+      const boundingRect = active.getBoundingRect()
+      const zoom = this.canvas.getZoom()
+      const viewportMatrix = this.canvas.viewportTransform
+      // scales bounding rect when zoomed
+      boundingRect.top = (boundingRect.top - viewportMatrix[5]) / zoom
+      boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
+      boundingRect.width /= zoom
+      boundingRect.height /= zoom
+
+      const canvasHeight = this.canvas.height / zoom,
+        canvasWidth = this.canvas.width / zoom,
+        rTop = boundingRect.top + boundingRect.height,
+        rLeft = boundingRect.left + boundingRect.width
+
+      // checks top left
+
+      if (rTop < canvasHeight || rLeft < canvasWidth) {
+        active.top = Math.max(active.top, canvasHeight - boundingRect.height)
+        active.left = Math.max(active.left, canvasWidth - boundingRect.width)
+      }
+
+      // checks bottom right
+
+      if (rTop > 0 || rLeft > 0) {
+        active.top = Math.min(
+          active.top,
+          this.canvas.height -
+            boundingRect.height +
+            active.top -
+            boundingRect.top
+        )
+        active.left = Math.min(
+          active.left,
+          this.canvas.width -
+            boundingRect.width +
+            active.left -
+            boundingRect.left
+        )
+      }
+
+      let objs = this.canvas.getObjects()
+      objs.slice(1).map(item => {
+        item.left += active.left - lastLeft
+        item.top += active.top - lastTop
+        item.setCoords()
+      })
+      lastLeft = active.left
+      lastTop = active.top
+    })
+
+    // deactivates all objects on mouseup
+    active.on('mouseup', () => {
+      active.off('moving')
+      this.canvas.discardActiveObject().renderAll()
+    })
   }
 }
 </script>
