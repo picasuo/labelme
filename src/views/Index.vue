@@ -366,10 +366,8 @@ export default class Index extends Vue {
     this.addImgToCanvas(url, name).then(() => {
       //!判断是否导入过注解框
       const imgData = this.imagesData.find(img => img.fileData.name === name)
-      if (
-        imgData &&
-        imgData?.labelRects?.length + 1 !== this.canvas.getObjects().length
-      ) {
+
+      if (imgData && !imgData.loadStatus) {
         const { labelRects } = imgData
         labelRects.forEach(rectItem => {
           const { labelId, rect } = rectItem
@@ -387,6 +385,7 @@ export default class Index extends Vue {
             //   centeredRotation: true,
           })
           this.canvas.add(rectangle)
+          imgData.loadStatus = true
         })
       }
       if (this.type === 0) {
@@ -396,6 +395,9 @@ export default class Index extends Vue {
 
     // todo
     console.log('objMap', this.objMap)
+
+    // todo
+    console.log('imagesData', this.imagesData)
 
     //判断。重现label列表数据
     if (this.labelListMap[name]) {
@@ -1000,7 +1002,6 @@ export default class Index extends Vue {
       this.drawingObject = canvasObject
     }
   }
-
 
   setAnnotation(val) {
     this.imagesData = val.imagesData
