@@ -446,7 +446,6 @@ export default class Index extends Vue {
             oImg.scaleToHeight(this.height)
             const currentWidth = (this.height * oImg.width) / oImg.height
             oImg.scaleToWidth(currentWidth)
-
             if (currentWidth > this.width) {
               oImg.scaleToWidth(this.width)
               const currentHeight = (this.width * oImg.height) / oImg.width
@@ -454,7 +453,8 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 top: (this.height - currentHeight) / 2,
-                selectable: true,
+                // selectable: true,
+                selectable: false,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
@@ -463,7 +463,8 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 left: (this.width - currentWidth) / 2,
-                selectable: true,
+                // selectable: true,
+                selectable: false,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
@@ -689,7 +690,7 @@ export default class Index extends Vue {
     let zoom = this.canvas.getZoom()
     zoom *= 0.99 ** delta
     if (zoom < 1) zoom = 1
-    if (zoom > 10) zoom = 20
+    if (zoom > 5) zoom = 5
     this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
     opt.e.preventDefault()
     opt.e.stopPropagation()
@@ -799,13 +800,12 @@ export default class Index extends Vue {
     if (activeObj) {
       switch (activeObj.id) {
         case 'img':
-          this.preventImgFromLeaving(activeObj, e)
+          this.preventImgFromLeaving(activeObj)
           break
         default:
           // 选中多边形时
           if (this.checkedTab === 1 && activeObj.name === 'polygon')
             polyEdit(activeObj)
-          break
       }
     }
     // 绘制多边形
@@ -1035,29 +1035,7 @@ export default class Index extends Vue {
     }
   }
 
-  setAnnotation(val) {
-    this.imagesData = val.imagesData
-    this.labelNames = val.labelNames
-  }
-
-  confirmImport() {
-    // // todo
-    // console.log('imagesData', this.imagesData)
-
-    // // todo
-    // console.log('labelNames', this.labelNames)
-
-    const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
-    this.loadExpImg(picItem)
-    // this.picList.forEach(pic => {
-    //   this.loadExpImg(pic)
-    // })
-    // // todo
-    // console.log('picItem', picItem)
-
-    this.isImport = false
-  }
-  preventImgFromLeaving(active, evt) {
+  preventImgFromLeaving(active) {
     this.canvas.discardActiveObject()
     active.lockMovementX = false
     active.lockMovementY = false
@@ -1082,31 +1060,31 @@ export default class Index extends Vue {
         rTop = boundingRect.top + boundingRect.height,
         rLeft = boundingRect.left + boundingRect.width
 
-      // checks top left
+      // // checks top left
 
-      if (rTop < canvasHeight || rLeft < canvasWidth) {
-        active.top = Math.max(active.top, canvasHeight - boundingRect.height)
-        active.left = Math.max(active.left, canvasWidth - boundingRect.width)
-      }
+      // if (rTop < canvasHeight || rLeft < canvasWidth) {
+      //   active.top = Math.max(active.top, canvasHeight - boundingRect.height)
+      //   active.left = Math.max(active.left, canvasWidth - boundingRect.width)
+      // }
 
-      // checks bottom right
+      // // checks bottom right
 
-      if (rTop > 0 || rLeft > 0) {
-        active.top = Math.min(
-          active.top,
-          this.canvas.height -
-            boundingRect.height +
-            active.top -
-            boundingRect.top,
-        )
-        active.left = Math.min(
-          active.left,
-          this.canvas.width -
-            boundingRect.width +
-            active.left -
-            boundingRect.left,
-        )
-      }
+      // if (rTop > 0 || rLeft > 0) {
+      //   active.top = Math.min(
+      //     active.top,
+      //     this.canvas.height -
+      //       boundingRect.height +
+      //       active.top -
+      //       boundingRect.top
+      //   )
+      //   active.left = Math.min(
+      //     active.left,
+      //     this.canvas.width -
+      //       boundingRect.width +
+      //       active.left -
+      //       boundingRect.left
+      //   )
+      // }
 
       let objs = this.canvas.getObjects()
       objs.slice(1).map(item => {
