@@ -366,8 +366,13 @@ export default class Index extends Vue {
     this.addImgToCanvas(url, name).then(() => {
       //!判断是否导入过注解框
       const imgData = this.imagesData.find(img => img.fileData.name === name)
-
+      //!拿到图片的宽高左右
+      const { width, height, left, top } = this.canvas.getObjects()[0]
+      // todo
+      console.log(width, height, left, top)
       if (imgData && !imgData.loadStatus) {
+        const widthRate = width / (this.width - 2 * left)
+        const heightRate = height / (this.height - 2 * top)
         const { labelRects } = imgData
         labelRects.forEach(rectItem => {
           const { labelId, rect } = rectItem
@@ -379,11 +384,11 @@ export default class Index extends Vue {
           //   console.log('rect', rect)
 
           const rectangle = new fabric.Rect({
-            width: rect.width,
-            height: rect.height,
+            width: rect.width / widthRate,
+            height: rect.height / heightRate,
             fill: color,
-            left: rect.x,
-            top: rect.y,
+            left: rect.x / widthRate + left,
+            top: rect.y / heightRate + top,
             labelName: name,
             // stroke:'green',
             // strokeWidth:3,
@@ -453,6 +458,7 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 top: (this.height - currentHeight) / 2,
+                left: 0,
                 // selectable: true,
                 selectable: false,
                 hasBorders: false,
@@ -463,6 +469,7 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 left: (this.width - currentWidth) / 2,
+                top: 0,
                 // selectable: true,
                 selectable: false,
                 hasBorders: false,
@@ -478,39 +485,6 @@ export default class Index extends Vue {
         }
       },
     )
-  }
-
-  setImgObj(url) {
-    fabric.Image.fromURL(url, oImg => {
-      oImg.scaleToHeight(this.height)
-      const currentWidth = (this.height * oImg.width) / oImg.height
-      oImg.scaleToWidth(currentWidth)
-
-      if (currentWidth > this.width) {
-        oImg.scaleToWidth(this.width)
-        const currentHeight = (this.width * oImg.height) / oImg.width
-        oImg.scaleToHeight(currentHeight)
-        oImg.set({
-          id: 'img',
-          top: (this.height - currentHeight) / 2,
-          selectable: true,
-          hasBorders: false,
-          hasControls: false,
-          hasRotatingPoint: false,
-        })
-      } else {
-        oImg.set({
-          id: 'img',
-          left: (this.width - currentWidth) / 2,
-          selectable: true,
-          hasBorders: false,
-          hasControls: false,
-          hasRotatingPoint: false,
-        })
-      }
-
-      return oImg
-    })
   }
 
   // 0-分类 1-检测
@@ -599,8 +573,6 @@ export default class Index extends Vue {
     this.isExport = false
     const deepObjMap = _.cloneDeep(this.objMap)
     deepObjMap[this.lastName] = this.canvas.getObjects()
-    // todo
-    console.log('deepObjMap', deepObjMap)
 
     switch (type) {
       case 'ImgJson':
@@ -1101,6 +1073,18 @@ export default class Index extends Vue {
       active.off('moving')
       this.canvas.discardActiveObject().renderAll()
     })
+  }
+
+  setAnnotation(val) {
+    this.imagesData = val.imagesData
+    this.labelNames = val.labelNames
+  }
+
+  confirmImport() {
+    const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
+
+    this.loadExpImg(picItem)
+    this.isImport = false
   }
 }
 </script>
