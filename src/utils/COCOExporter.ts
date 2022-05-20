@@ -36,16 +36,10 @@ export const getImagesComponent = data => {
   let keys: any = Object.keys(data)
   const images = [] as any
   keys.forEach((item, index) => {
-    width = data[item][0].width
-    height = data[item][0].height
-    left = Math.round(data[item][0].aCoords.tl.x)
-    top = Math.round(data[item][0].aCoords.tl.y)
-    widthRate = width / (canvasWidth - 2 * left)
-    heightRate = height / (canvasHeight - 2 * top)
     images.push({
       id: index + 1,
-      width,
-      height,
+      width: data[item][0].width,
+      height: data[item][0].height,
       file_name: item,
     })
   })
@@ -64,6 +58,12 @@ export const getAnnotationsComponent = data => {
   const annotations = [] as any
   let keys: any = Object.keys(data)
   keys.map((item, index) => {
+    width = data[item][0].width
+    height = data[item][0].height
+    left = Math.round(data[item][0].aCoords.tl.x)
+    top = Math.round(data[item][0].aCoords.tl.y)
+    widthRate = width / (canvasWidth - 2 * left)
+    heightRate = height / (canvasHeight - 2 * top)
     const objs: any = []
     data[item].map(v => {
       if (v.name === type) objs.push(v)

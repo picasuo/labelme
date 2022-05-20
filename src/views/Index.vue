@@ -202,7 +202,7 @@ export default class Index extends Vue {
   mouseTo = {} as any
   canvasObjectIndex = 0
   rectangleLabel = 'warning'
-  drawWidth = 2 //笔触宽度
+  drawWidth = 1 //笔触宽度
   color = '#e2e2e2' //画笔颜色
   drawingObject = null //当前绘制对象
   moveCount = 1 //绘制移动计数器
@@ -374,12 +374,17 @@ export default class Index extends Vue {
           const { name, color } = this.labelNames.find(
             label => label.id === labelId,
           )
+
+          //   // todo
+          //   console.log('rect', rect)
+
           const rectangle = new fabric.Rect({
             width: rect.width,
             height: rect.height,
             fill: color,
             left: rect.x,
             top: rect.y,
+            labelName: name,
             // stroke:'green',
             // strokeWidth:3,
             //   centeredRotation: true,
@@ -390,14 +395,14 @@ export default class Index extends Vue {
       }
       if (this.type === 0) {
         this.canvas.setActiveObject(this.canvas.getObjects()[0])
+        this.canvas
+          .getActiveObject()
+          .set({ lockMovementX: true, lockMovementY: true, hasBorders: false })
       }
     })
 
-    // todo
-    console.log('objMap', this.objMap)
-
-    // todo
-    console.log('imagesData', this.imagesData)
+    // // todo
+    // console.log('objMap', this.objMap)
 
     //判断。重现label列表数据
     if (this.labelListMap[name]) {
@@ -447,15 +452,21 @@ export default class Index extends Vue {
               const currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
               oImg.set({
+                id: 'img',
                 top: (this.height - currentHeight) / 2,
-                selectable: false,
+                selectable: true,
+                hasBorders: false,
                 hasControls: false,
+                hasRotatingPoint: false,
               })
             } else {
               oImg.set({
+                id: 'img',
                 left: (this.width - currentWidth) / 2,
-                selectable: false,
+                selectable: true,
+                hasBorders: false,
                 hasControls: false,
+                hasRotatingPoint: false,
               })
             }
 
@@ -466,6 +477,39 @@ export default class Index extends Vue {
         }
       },
     )
+  }
+
+  setImgObj(url) {
+    fabric.Image.fromURL(url, oImg => {
+      oImg.scaleToHeight(this.height)
+      const currentWidth = (this.height * oImg.width) / oImg.height
+      oImg.scaleToWidth(currentWidth)
+
+      if (currentWidth > this.width) {
+        oImg.scaleToWidth(this.width)
+        const currentHeight = (this.width * oImg.height) / oImg.width
+        oImg.scaleToHeight(currentHeight)
+        oImg.set({
+          id: 'img',
+          top: (this.height - currentHeight) / 2,
+          selectable: true,
+          hasBorders: false,
+          hasControls: false,
+          hasRotatingPoint: false,
+        })
+      } else {
+        oImg.set({
+          id: 'img',
+          left: (this.width - currentWidth) / 2,
+          selectable: true,
+          hasBorders: false,
+          hasControls: false,
+          hasRotatingPoint: false,
+        })
+      }
+
+      return oImg
+    })
   }
 
   // 0-分类 1-检测
@@ -592,6 +636,7 @@ export default class Index extends Vue {
   }
   // 退出
   exit() {
+    this.objMap = {}
     this.canvas.clear()
     this.isShown = true
     this.picList = []
@@ -602,6 +647,7 @@ export default class Index extends Vue {
       hotkeys.unbind((index + 1).toString())
     })
     this.labelList = []
+    this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
   }
 
   //切换标签录入的输入框展示
@@ -625,13 +671,28 @@ export default class Index extends Vue {
       return 'message'
     }
 
-    this.canvas = new fabric.Canvas('canvas', {})
+    this.canvas = new fabric.Canvas('canvas', {
+      preserveObjectStacking: true,
+    })
     this.canvas.selectionColor = 'rgba(0,0,0,0.05)'
     this.canvas.on('mouse:down', this.mousedown)
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
+    //缩放
+    this.canvas.on('mouse:wheel', this.mousewheel)
 
     this.setShortCuts()
+  }
+
+  mousewheel(opt) {
+    const delta = opt.e.deltaY
+    let zoom = this.canvas.getZoom()
+    zoom *= 0.99 ** delta
+    if (zoom < 1) zoom = 1
+    if (zoom > 10) zoom = 20
+    this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
+    opt.e.preventDefault()
+    opt.e.stopPropagation()
   }
 
   //快捷键设置
@@ -700,13 +761,9 @@ export default class Index extends Vue {
           case 's':
             this.tabClick(2)
             break
-          //放大
+          //缩放还原
           case 'a':
-            this.setZoom(0.1)
-            break
-          //缩小
-          case 'd':
-            this.setZoom(-0.1)
+            this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
             break
           //删除选定对象
           case 'backspace':
@@ -716,37 +773,12 @@ export default class Index extends Vue {
       },
     )
 
-    hotkeys('*', 'enable', (event, handler) => {
-      // event.preventDefault()
-
-      if (hotkeys.ctrl) {
-        this.moveFlag = !this.moveFlag
-        if (this.moveFlag) {
-          const group = new fabric.Group(this.canvas.getObjects(), {})
-          this.canvas.clear().renderAll()
-          this.canvas.add(group)
-        } else {
-          const objs = this.canvas.getObjects()[0].getObjects()
-          this.canvas.clear().renderAll()
-          objs.forEach(item => {
-            this.canvas.add(item)
-          })
-        }
-      }
-    })
-
     //禁用快捷键
     // hotkeys(shortCuts, 'disable', (event, handler) => {
     //   event.preventDefault()
     // })
     //开启快捷键 默认开启
     hotkeys.setScope('enable')
-  }
-
-  setZoom(zoom) {
-    const center = this.canvas.getCenter()
-    const newZoom = this.canvas.getZoom() + zoom
-    this.canvas.zoomToPoint({ x: center.left, y: center.top }, newZoom)
   }
 
   deleteObj() {
@@ -759,15 +791,22 @@ export default class Index extends Vue {
   // 鼠标按下时触发
   mousedown(e) {
     // 记录鼠标按下时的坐标
-    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = this.canvas.getPointer(e.e)
     this.mouseFrom.x = xy.x
     this.mouseFrom.y = xy.y
     this.doDrawing = true
     const activeObj = this.canvas.getActiveObject()
     if (activeObj) {
-      // 选中时
-      if (this.checkedTab === 2 && activeObj.name === 'polygon')
-        polyEdit(activeObj)
+      switch (activeObj.id) {
+        case 'img':
+          this.preventImgFromLeaving(activeObj, e)
+          break
+        default:
+          // 选中多边形时
+          if (this.checkedTab === 1 && activeObj.name === 'polygon')
+            polyEdit(activeObj)
+          break
+      }
     }
     // 绘制多边形
     if (this.checkedTab === 3) {
@@ -782,7 +821,7 @@ export default class Index extends Vue {
         }
         //未点击红点则继续作画
         if (this.polygonMode) {
-          this.addPoint(e)
+          this.addPoint(xy)
         }
       } catch (error) {
         console.log(error)
@@ -791,9 +830,10 @@ export default class Index extends Vue {
   }
   // 鼠标松开执行
   mouseup(e) {
-    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = this.canvas.getPointer(e.e)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
+    if (this.drawingObject) this.canvas.setActiveObject(this.drawingObject)
     this.drawingObject = null
     this.moveCount = 1
     if (this.checkedTab === 2 || this.checkedTab === 4) {
@@ -809,7 +849,7 @@ export default class Index extends Vue {
       return
     }
     this.moveCount++
-    const xy = e.pointer || this.transformMouse(e.e.offsetX, e.e.offsetY)
+    const xy = this.canvas.getPointer(e.e)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
     // 矩形
@@ -835,9 +875,6 @@ export default class Index extends Vue {
       this.canvas.renderAll()
     }
   }
-  transformMouse(mouseX, mouseY) {
-    return { x: mouseX / 1, y: mouseY / 1 }
-  }
 
   // 绘制多边形开始，绘制多边形和其他图形不一样，需要单独处理
   drawPolygon() {
@@ -847,16 +884,16 @@ export default class Index extends Vue {
     this.lineArray = new Array() //线集合
     this.canvas.isDrawingMode = false
   }
-  addPoint(e) {
+  addPoint(xy) {
     const random = Math.floor(Math.random() * 10000)
     const id = new Date().getTime() + random
     const circle = new fabric.Circle({
-      radius: 5,
+      radius: 4,
       fill: 'rgba(255,255,255,0.5)',
       stroke: '#333333',
       strokeWidth: 0.5,
-      left: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-      top: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+      left: xy.x,
+      top: xy.y,
       selectable: false,
       hasBorders: false,
       originX: 'center',
@@ -869,15 +906,10 @@ export default class Index extends Vue {
         fill: '#ffffff',
       })
     }
-    const points = [
-      (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-      (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
-      (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-      (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
-    ]
+    const points = [xy.x, xy.y, xy.x, xy.y]
 
     this.line = new fabric.Line(points, {
-      strokeWidth: 2,
+      strokeWidth: 1,
       fill: '#999999',
       stroke: '#999999',
       class: 'line',
@@ -889,7 +921,7 @@ export default class Index extends Vue {
       objectCaching: false,
     })
     if (this.activeShape) {
-      const pos = this.canvas.getPointer(e.e)
+      const pos = xy
       const points: any = this.activeShape.get('points')
       points.push({
         x: pos.x,
@@ -912,8 +944,8 @@ export default class Index extends Vue {
     } else {
       const polyPoint = [
         {
-          x: (e.pointer.x || e.e.layerX) / this.canvas.getZoom(),
-          y: (e.pointer.y || e.e.layerY) / this.canvas.getZoom(),
+          x: xy.x,
+          y: xy.y,
         },
       ]
       const polygon = new fabric.Polygon(polyPoint, {
@@ -1009,10 +1041,88 @@ export default class Index extends Vue {
   }
 
   confirmImport() {
-    const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
+    // // todo
+    // console.log('imagesData', this.imagesData)
 
+    // // todo
+    // console.log('labelNames', this.labelNames)
+
+    const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
     this.loadExpImg(picItem)
+    // this.picList.forEach(pic => {
+    //   this.loadExpImg(pic)
+    // })
+    // // todo
+    // console.log('picItem', picItem)
+
     this.isImport = false
+  }
+  preventImgFromLeaving(active, evt) {
+    this.canvas.discardActiveObject()
+    active.lockMovementX = false
+    active.lockMovementY = false
+
+    let lastLeft = active.left,
+      lastTop = active.top
+
+    active.on('moving', evt => {
+      active.setCoords()
+      // SET BOUNDING RECT TO 'active'
+      const boundingRect = active.getBoundingRect()
+      const zoom = this.canvas.getZoom()
+      const viewportMatrix = this.canvas.viewportTransform
+      // scales bounding rect when zoomed
+      boundingRect.top = (boundingRect.top - viewportMatrix[5]) / zoom
+      boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
+      boundingRect.width /= zoom
+      boundingRect.height /= zoom
+
+      const canvasHeight = this.canvas.height / zoom,
+        canvasWidth = this.canvas.width / zoom,
+        rTop = boundingRect.top + boundingRect.height,
+        rLeft = boundingRect.left + boundingRect.width
+
+      // checks top left
+
+      if (rTop < canvasHeight || rLeft < canvasWidth) {
+        active.top = Math.max(active.top, canvasHeight - boundingRect.height)
+        active.left = Math.max(active.left, canvasWidth - boundingRect.width)
+      }
+
+      // checks bottom right
+
+      if (rTop > 0 || rLeft > 0) {
+        active.top = Math.min(
+          active.top,
+          this.canvas.height -
+            boundingRect.height +
+            active.top -
+            boundingRect.top,
+        )
+        active.left = Math.min(
+          active.left,
+          this.canvas.width -
+            boundingRect.width +
+            active.left -
+            boundingRect.left,
+        )
+      }
+
+      let objs = this.canvas.getObjects()
+      objs.slice(1).map(item => {
+        item.left += active.left - lastLeft
+        item.top += active.top - lastTop
+        item.setCoords()
+      })
+      lastLeft = active.left
+      lastTop = active.top
+    })
+
+    // deactivates all objects on mouseup
+    active.on('mouseup', () => {
+      active.off('moving')
+      this.canvas.discardActiveObject().renderAll()
+    })
   }
 }
 </script>
@@ -1061,6 +1171,7 @@ export default class Index extends Vue {
     }
   }
   .tool {
+    height: calc(100vh - 40px);
     display: grid;
     grid-template-columns: get-vw(60px) 1fr get-vw(400px);
     background: #535353;
@@ -1095,6 +1206,7 @@ export default class Index extends Vue {
     }
 
     &_manage {
+      height: calc(100vh - 40px);
       .label {
         height: 50%;
         font-size: 12px;
