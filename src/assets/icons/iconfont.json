@@ -6,6 +6,13 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "169942",
+      "name": "文件导入",
+      "font_class": "wenjiandaoru",
+      "unicode": "e6a2",
+      "unicode_decimal": 59042
+    },
+    {
       "icon_id": "705686",
       "name": "删除",
       "font_class": "shanchu",

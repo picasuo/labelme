@@ -22,6 +22,7 @@
     "sass-loader": "^8.0.2",
     "sx-sui-design": "^1.3.12",
     "sxkj-echarts": "^1.13.54",
+    "uuid": "^8.3.2",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
     "vue-property-decorator": "^9.1.2",

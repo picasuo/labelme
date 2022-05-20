@@ -27,6 +27,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import { saveFileList } from 'utils/COCOImporter'
 
 @Component({
   components: {},
@@ -64,6 +65,10 @@ export default class SXMask extends Vue {
 
   uploadImg() {
     const fileList = this!.$refs!.fileInput!['files'] as any
+    // todo
+    console.log('fileList', fileList)
+    saveFileList(fileList)
+
     this.getUrlList(fileList)
       .then(val => {
         this.picUrlList = val

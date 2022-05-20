@@ -137,6 +137,14 @@
       :loadPicNum="loadPicNum"
       :isAdd="isAdd"
     />
+
+    <SxImport
+      v-if="isImport"
+      :type="type"
+      @cancelImport="cancelImport"
+      @importData="confirmImport"
+      @setAnnotation="setAnnotation"
+    />
   </div>
 </template>
 
@@ -158,26 +166,25 @@ import { exportCOCO } from 'utils/COCOExporter'
 import { exportVOC } from 'utils/VOCXMLExporter'
 import { exportYOLO } from 'utils/YOLOExporter'
 import { exportImgJson } from 'utils/ImgJsonExport'
+import SxImport from 'components/SxImport.vue'
 
 @Component({
   components: {
     SxMask,
     SxExport,
+    SxImport,
   },
 })
 export default class Index extends Vue {
-  icons = [
-    'icon-export',
-    'icon-icon-',
-    'icon-pentoolgangbigongju',
-    'icon-huajuxing_0',
-  ] as any
+  icons = [] as any
 
   checkedTab = 0
   // 区分分类以及对象识别
   iconShow = false
   isShown = true
   isExport = false
+  isImport = false
+
   // 区分添加还是初始化
   isAdd = false
   //存储编辑模式
@@ -217,6 +224,9 @@ export default class Index extends Vue {
 
   currentPicUrl = ''
 
+  imagesData = [] as Array<any>
+  labelNames = [] as Array<any>
+
   get loadPicNum() {
     return this.picList?.length || 0
   }
@@ -253,7 +263,6 @@ export default class Index extends Vue {
 
   //设置label快捷键
   setLabelShortCuts() {
-    // todo
     this.labelList.forEach((item, index) => {
       hotkeys((index + 1).toString(), (event, handler) => {
         event.preventDefault()
@@ -345,6 +354,7 @@ export default class Index extends Vue {
 
   loadExpImg(item) {
     const { url, name } = item
+
     if (this.lastName) {
       this.objMap[this.lastName] = this.canvas.getObjects()
       this.labelListMap[this.lastName] = this.currentLabelList
@@ -354,10 +364,39 @@ export default class Index extends Vue {
     this.currentPicUrl = url
 
     this.addImgToCanvas(url, name).then(() => {
+      //!判断是否导入过注解框
+      const imgData = this.imagesData.find(img => img.fileData.name === name)
+      if (
+        imgData &&
+        imgData?.labelRects?.length + 1 !== this.canvas.getObjects().length
+      ) {
+        const { labelRects } = imgData
+        labelRects.forEach(rectItem => {
+          const { labelId, rect } = rectItem
+          const { name, color } = this.labelNames.find(
+            label => label.id === labelId,
+          )
+          const rectangle = new fabric.Rect({
+            width: rect.width,
+            height: rect.height,
+            fill: color,
+            left: rect.x,
+            top: rect.y,
+            // stroke:'green',
+            // strokeWidth:3,
+            //   centeredRotation: true,
+          })
+          this.canvas.add(rectangle)
+        })
+      }
       if (this.type === 0) {
         this.canvas.setActiveObject(this.canvas.getObjects()[0])
       }
     })
+
+    // todo
+    console.log('objMap', this.objMap)
+
     //判断。重现label列表数据
     if (this.labelListMap[name]) {
       this.currentLabelList = this.labelListMap[name]
@@ -397,7 +436,11 @@ export default class Index extends Vue {
         } else {
           //!首次加载,根据图片原尺寸来等比例缩放长宽
           fabric.Image.fromURL(this.currentPicUrl, oImg => {
-            if (oImg.width > oImg.height) {
+            oImg.scaleToHeight(this.height)
+            const currentWidth = (this.height * oImg.width) / oImg.height
+            oImg.scaleToWidth(currentWidth)
+
+            if (currentWidth > this.width) {
               oImg.scaleToWidth(this.width)
               const currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
@@ -407,20 +450,19 @@ export default class Index extends Vue {
                 hasControls: false,
               })
             } else {
-              oImg.scaleToHeight(this.height)
-              const currentWidth = (this.height * oImg.width) / oImg.height
-              oImg.scaleToWidth(currentWidth)
               oImg.set({
                 left: (this.width - currentWidth) / 2,
                 selectable: false,
                 hasControls: false,
               })
             }
+
             this.canvas.add(oImg)
+
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -430,8 +472,9 @@ export default class Index extends Vue {
     if (type !== 2) {
       this.icons =
         type === 0
-          ? ['icon-export']
+          ? ['icon-wenjiandaoru', 'icon-export']
           : [
+              'icon-wenjiandaoru',
               'icon-export',
               'icon-icon-',
               'icon-pentoolgangbigongju',
@@ -476,15 +519,21 @@ export default class Index extends Vue {
     this.polygonMode = false
     this.doDrawing = false
   }
-  // 0-导出 1-移动 2-钢笔 3-矩形
+  //0-导入 1-导出 2-移动 3-钢笔 4-矩形
   tabClick(tab) {
     this.initPolygonParams()
     this.checkedTab = tab
     //整个画板元素不可被选中
-    this.canvas.skipTargetFind = this.checkedTab === 3
+    this.canvas.skipTargetFind = this.checkedTab === 4
     // 多边形特殊处理
-    if (this.checkedTab === 2) this.drawPolygon()
-    if (this.checkedTab === 0) this.exportData()
+    if (this.checkedTab === 3) this.drawPolygon()
+    if (this.checkedTab === 0) this.importData()
+    if (this.checkedTab === 1) this.exportData()
+  }
+
+  //输入框
+  importData() {
+    this.isImport = true
   }
   // 导出框
   exportData() {
@@ -494,11 +543,18 @@ export default class Index extends Vue {
   cancel() {
     this.isExport = false
   }
+  //取消导入
+  cancelImport() {
+    this.isImport = false
+  }
   // 导出
   submit(type) {
     this.isExport = false
     const deepObjMap = _.cloneDeep(this.objMap)
     deepObjMap[this.lastName] = this.canvas.getObjects()
+    // todo
+    console.log('deepObjMap', deepObjMap)
+
     switch (type) {
       case 'ImgJson':
         exportImgJson(deepObjMap)
@@ -512,7 +568,7 @@ export default class Index extends Vue {
           deepObjMap,
           this.labelList,
           this.width,
-          this.height
+          this.height,
         )
         break
       case 'RectYOLO':
@@ -524,7 +580,7 @@ export default class Index extends Vue {
           deepObjMap,
           this.labelList,
           this.width,
-          this.height
+          this.height,
         )
         break
       case 'PolyVGG':
@@ -587,7 +643,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -607,12 +663,12 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
     hotkeys(
-      'backspace,command+z,command+shift+z,p,r,a,d',
+      'backspace,command+z,command+shift+z,p,r,a,d,s',
       'enable',
       (event, handler) => {
         event.preventDefault()
@@ -621,10 +677,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             break
           //反撤销
@@ -633,11 +689,14 @@ export default class Index extends Vue {
             break
           //钢笔工具
           case 'p':
-            this.tabClick(2)
+            this.tabClick(3)
             break
           //矩形工具
           case 'r':
-            this.tabClick(3)
+            this.tabClick(4)
+            break
+          case 's':
+            this.tabClick(2)
             break
           //放大
           case 'a':
@@ -652,7 +711,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      }
+      },
     )
 
     hotkeys('*', 'enable', (event, handler) => {
@@ -705,11 +764,11 @@ export default class Index extends Vue {
     const activeObj = this.canvas.getActiveObject()
     if (activeObj) {
       // 选中时
-      if (this.checkedTab === 1 && activeObj.name === 'polygon')
+      if (this.checkedTab === 2 && activeObj.name === 'polygon')
         polyEdit(activeObj)
     }
     // 绘制多边形
-    if (this.checkedTab === 2) {
+    if (this.checkedTab === 3) {
       this.canvas.skipTargetFind = false
       try {
         // 此段为判断是否闭合多边形，点击红点时闭合多边形
@@ -735,9 +794,9 @@ export default class Index extends Vue {
     this.mouseTo.y = xy.y
     this.drawingObject = null
     this.moveCount = 1
-    if (this.checkedTab !== 2 && this.checkedTab !== 0) {
+    if (this.checkedTab === 2 || this.checkedTab === 4) {
       this.doDrawing = false
-      this.checkedTab = 1
+      this.checkedTab = 2
       this.canvas.skipTargetFind = false
     }
   }
@@ -752,10 +811,10 @@ export default class Index extends Vue {
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
     // 矩形
-    if (this.checkedTab === 3) {
+    if (this.checkedTab === 4) {
       this.drawing(e)
     }
-    if (this.checkedTab === 2) {
+    if (this.checkedTab === 3) {
       if (this.activeLine && this.activeLine.class == 'line') {
         const pointer = this.canvas.getPointer(e.e)
         this.activeLine.set({ x2: pointer.x, y2: pointer.y })
@@ -902,7 +961,7 @@ export default class Index extends Vue {
     this.activeShape = null
     this.polygonMode = false
     this.doDrawing = false
-    this.checkedTab = 1
+    this.checkedTab = 2
   }
   //绘制矩形
   drawing(e) {
@@ -940,6 +999,19 @@ export default class Index extends Vue {
       this.canvas.add(canvasObject)
       this.drawingObject = canvasObject
     }
+  }
+
+
+  setAnnotation(val) {
+    this.imagesData = val.imagesData
+    this.labelNames = val.labelNames
+  }
+
+  confirmImport() {
+    const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
+
+    this.loadExpImg(picItem)
+    this.isImport = false
   }
 }
 </script>
