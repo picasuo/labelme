@@ -1,4 +1,4 @@
-import { ExporterUtil, calculatePoint } from './ExporterUtil'
+import { calculatePoint, ExporterUtil } from './ExporterUtil'
 let widthRate = 0
 let heightRate = 0
 let width = 0
@@ -60,6 +60,7 @@ export const getAnnotationsComponent = data => {
   keys.map((item, index) => {
     width = data[item][0].width
     height = data[item][0].height
+    //图片的相对位置
     left = Math.round(data[item][0].aCoords.tl.x)
     top = Math.round(data[item][0].aCoords.tl.y)
     widthRate = width / (canvasWidth - 2 * left)
@@ -122,6 +123,7 @@ export const getCOCOBbox = points => {
   let xmax = points[0].x
   let ymin = points[0].y
   let ymax = points[0].y
+  //!求出最接近原点的x/y
   points.map(point => {
     if (xmin > point.x) xmin = point.x
     if (xmax < point.x) xmax = point.x
