@@ -459,14 +459,9 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 top: (this.height - currentHeight) / 2,
-<<<<<<< HEAD
-                selectable: true,
-                // selectable: false,
-=======
                 left: 0,
                 // selectable: true,
                 selectable: false,
->>>>>>> b1c4fc7bf0702e5b27f1cb95209f3a0257273cca
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
@@ -475,14 +470,9 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 left: (this.width - currentWidth) / 2,
-<<<<<<< HEAD
-                selectable: true,
-                // selectable: false,
-=======
                 top: 0,
                 // selectable: true,
                 selectable: false,
->>>>>>> b1c4fc7bf0702e5b27f1cb95209f3a0257273cca
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
