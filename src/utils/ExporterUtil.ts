@@ -1,4 +1,3 @@
-import moment from 'moment'
 import { saveAs } from 'file-saver'
 
 export class ExporterUtil {
@@ -15,6 +14,8 @@ export class ExporterUtil {
 
 export const calculatePoint = (point, offset, rate, normal) => {
   let p = Math.round((point - offset) * rate)
+
+  //偏移超过图片范围，不显示
   if (p < 0) {
     p = 0
   }

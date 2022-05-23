@@ -9,7 +9,7 @@
           ref="fileInput"
           type="file"
           multiple
-          accept="*.jpeg,*.jpg,*.png"
+          accept="image/jpeg,image/jpg,image/png"
           @change="uploadImg"
         />
       </div>
