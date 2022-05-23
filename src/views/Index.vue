@@ -387,7 +387,7 @@ export default class Index extends Vue {
         labelRects.forEach(rectItem => {
           const { labelId, rect } = rectItem
           const { name: labelName, color } = this.labelNames.find(
-            label => label.id === labelId,
+            label => label.id === labelId
           )
 
           if (!labelMap[labelName]) {
