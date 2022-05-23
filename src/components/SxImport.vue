@@ -17,7 +17,12 @@
           </div>
         </div>
         <div class="check">
-          <i-radio-group v-if="!checked" v-model="checked" vertical>
+          <i-radio-group
+            v-if="!checked"
+            v-model="checked"
+            vertical
+            @on-change="checkInputStatus"
+          >
             <i-radio
               v-for="(item, index) in importRadio"
               :key="index"
@@ -49,7 +54,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Radio, RadioGroup } from 'iview'
-import { loadFileList } from 'utils/COCOImporter'
+import { loadCocoFile } from 'utils/COCOImporter'
 
 @Component({
   components: {
@@ -90,8 +95,6 @@ export default class SxImport extends Vue {
         arr = [{ name: 'Json', label: 'ImgJson' }]
         break
       case '矩形':
-        this.isMultiple = false
-        this.fileFormat = 'application/json'
         arr = [
           { name: 'VOC XML', label: 'RectVOC' },
           {
@@ -115,6 +118,12 @@ export default class SxImport extends Vue {
     this.changeTab(0, this.tabs[0])
   }
 
+  checkInputStatus(val) {
+    if (val === 'RectCOCO' || val === 'ImgJson') {
+      this.fileFormat = 'application/json'
+    }
+  }
+
   changeTab(type, item) {
     this.tabName = item
     this.checkedTab = type
@@ -132,12 +141,11 @@ export default class SxImport extends Vue {
   importFile() {
     const fileList = this!.$refs!.fileImport!['files'] as any
 
-    if ((this.checked = 'COCOJson')) {
-      loadFileList(fileList[0]).then(val => {
-        // todo
-        console.log('val', val)
+    if (this.checked === 'RectCOCO' || this.checked === 'ImgJson') {
+      loadCocoFile(fileList[0], this.type).then(val => {
         this.$emit('setAnnotation', val)
       })
+    } else if (this.checked === '') {
     }
   }
 }

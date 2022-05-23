@@ -65,8 +65,8 @@ export default class SXMask extends Vue {
 
   uploadImg() {
     const fileList = this!.$refs!.fileInput!['files'] as any
-    // todo
-    console.log('fileList', fileList)
+    // // todo
+    // console.log('fileList', fileList)
     saveFileList(fileList)
 
     this.getUrlList(fileList)
