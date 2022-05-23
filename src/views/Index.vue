@@ -123,12 +123,6 @@
           </ul>
         </div>
       </div>
-      <SxExport
-        v-if="isExport"
-        :type="type"
-        @cancel="cancel"
-        @exportData="submit"
-      />
     </div>
     <SxMask
       v-if="isShown"
@@ -136,6 +130,13 @@
       :type="type"
       :loadPicNum="loadPicNum"
       :isAdd="isAdd"
+    />
+
+    <SxExport
+      v-if="isExport"
+      :type="type"
+      @cancel="cancel"
+      @exportData="submit"
     />
 
     <SxImport
@@ -483,9 +484,8 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 top: (this.height - currentHeight) / 2,
-                left: 0,
-                // selectable: true,
-                selectable: false,
+                selectable: true,
+                // selectable: false,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
@@ -494,9 +494,8 @@ export default class Index extends Vue {
               oImg.set({
                 id: 'img',
                 left: (this.width - currentWidth) / 2,
-                top: 0,
-                // selectable: true,
-                selectable: false,
+                selectable: true,
+                // selectable: false,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
@@ -508,7 +507,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -612,7 +611,7 @@ export default class Index extends Vue {
           deepObjMap,
           this.labelList,
           this.width,
-          this.height,
+          this.height
         )
         break
       case 'RectYOLO':
@@ -624,7 +623,7 @@ export default class Index extends Vue {
           deepObjMap,
           this.labelList,
           this.width,
-          this.height,
+          this.height
         )
         break
       case 'PolyVGG':
@@ -704,7 +703,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -724,7 +723,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -738,10 +737,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             break
           //反撤销
@@ -768,7 +767,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      },
+      }
     )
 
     //禁用快捷键
