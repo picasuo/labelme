@@ -123,7 +123,6 @@ export const getCOCOBbox = points => {
   let xmax = points[0].x
   let ymin = points[0].y
   let ymax = points[0].y
-  //!求出最接近原点的x/y
   points.map(point => {
     if (xmin > point.x) xmin = point.x
     if (xmax < point.x) xmax = point.x
