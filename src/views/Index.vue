@@ -355,7 +355,7 @@ export default class Index extends Vue {
   }
 
   loadExpImg(item) {
-    const { url, name } = item
+    const { url, name, type } = item
 
     if (this.lastName) {
       this.objMap[this.lastName] = this.canvas.getObjects()
@@ -367,7 +367,18 @@ export default class Index extends Vue {
 
     this.addImgToCanvas(url, name).then(() => {
       //!判断是否导入过注解框
-      const imgData = this.imagesData.find(img => img.fileData.name === name)
+      //图片后缀 jpg/jpeg/png
+
+      let imgData = {} as any
+      if (this.isYolo) {
+        const prefixName = name.split('.')[0]
+        imgData = this.imagesData.find(img => img.imgName === prefixName)
+      } else {
+        imgData = this.imagesData.find(img => img.fileData.name === name)
+      }
+
+      //   // todo
+      //   console.log('imgData', imgData)
 
       if (imgData && !imgData.loadStatus) {
         //!拿到图片的宽高左右
@@ -381,11 +392,33 @@ export default class Index extends Vue {
         const top = tl.y
         const widthRate = width / imgWidth
         const heightRate = height / imgHeight
+
         const { labelRects } = imgData
         //!当前图片labelMap
         let labelMap = {} as Record<string, any>
+        // // todo
+        // console.log('labelRects', labelRects)
+
         labelRects.forEach(rectItem => {
-          const { labelId, rect } = rectItem
+          let rectWidth = 0
+          let rectHeight = 0
+          let rectLeft = 0
+          let rectTop = 0
+          const { labelId } = rectItem
+          if (this.isYolo) {
+            const { bbox } = rectItem
+            rectWidth = bbox[2] * imgWidth
+            rectHeight = bbox[3] * imgHeight
+            rectLeft = bbox[0] * imgWidth - 0.5 * rectWidth
+            rectTop = bbox[1] * imgHeight - 0.5 * rectHeight
+          } else {
+            const { rect } = rectItem
+            rectWidth = rect.width / widthRate
+            rectHeight = rect.height / heightRate
+            rectLeft = rect.x / widthRate + left
+            rectTop = rect.y / heightRate + top
+          }
+
           const { name: labelName, color } = this.labelNames.find(
             label => label.id === labelId,
           )
@@ -397,16 +430,17 @@ export default class Index extends Vue {
               count: 1,
             }
           } else {
-            labelMap[name].count++
+            labelMap[labelName].count++
           }
 
           const rectangle = new fabric.Rect({
-            width: rect.width / widthRate,
-            height: rect.height / heightRate,
+            width: rectWidth,
+            height: rectHeight,
             fill: color,
-            left: rect.x / widthRate + left,
-            top: rect.y / heightRate + top,
+            left: rectLeft,
+            top: rectTop,
             labelName,
+            lockRotation: true,
             name: 'rectangle',
             // stroke:'green',
             // strokeWidth:3,
@@ -452,12 +486,6 @@ export default class Index extends Vue {
 
       this.hasEditedNum = count
     })
-
-    // // todo
-    // console.log('canvas', this.canvas.getObjects())
-
-    // // todo
-    // console.log('objMap', this.objMap)
   }
 
   //将图片加载到画布中
@@ -476,29 +504,38 @@ export default class Index extends Vue {
             oImg.scaleToHeight(this.height)
             const currentWidth = (this.height * oImg.width) / oImg.height
             oImg.scaleToWidth(currentWidth)
+            this.canvas.setWidth([currentWidth])
+            this.canvas.setHeight([this.height])
             if (currentWidth > this.width) {
               oImg.scaleToWidth(this.width)
               const currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
+              this.canvas.setWidth([this.width])
+              this.canvas.setHeight([currentHeight])
               oImg.set({
                 id: 'img',
-                top: (this.height - currentHeight) / 2,
+                top: 0,
+                left: 0,
                 selectable: true,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
+                cvsWidth: this.width,
+                cvsHeight: currentHeight,
               })
             } else {
               oImg.set({
                 id: 'img',
-                left: (this.width - currentWidth) / 2,
+                top: 0,
+                left: 0,
                 selectable: true,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
+                cvsWidth: currentWidth,
+                cvsHeight: this.height,
               })
             }
-
             this.canvas.add(oImg)
 
             resolve('')
@@ -592,46 +629,42 @@ export default class Index extends Vue {
   // 导出
   submit(type) {
     this.isExport = false
-    // todo
-    console.log('labelListMap', this.labelListMap)
 
-    const deepObjMap = _.cloneDeep(this.objMap)
-    // todo
-    console.log('deepObjMap', deepObjMap)
+    this.objMap[this.lastName] = this.canvas.getObjects()
 
-    deepObjMap[this.lastName] = this.canvas.getObjects()
-
-    switch (type) {
-      case 'ImgJson':
-        exportImgJson(deepObjMap)
-        break
-      case 'RectVOC':
-        exportVOC(deepObjMap, this.width, this.height)
-        break
-      case 'RectCOCO':
-        exportCOCO(
-          'rectangle',
-          deepObjMap,
-          this.labelList,
-          this.width,
-          this.height,
-        )
-        break
-      case 'RectYOLO':
-        exportYOLO(deepObjMap, this.labelList, this.width, this.height)
-        break
-      case 'PolyCOCO':
-        exportCOCO(
-          'polygon',
-          deepObjMap,
-          this.labelList,
-          this.width,
-          this.height,
-        )
-        break
-      case 'PolyVGG':
-        exportVGG(deepObjMap, this.picList, this.width, this.height)
-        break
+    const deepObjMap =
+      this.type === 0
+        ? _.cloneDeep(this.labelListMap)
+        : _.cloneDeep(this.objMap)
+    const keys = Object.keys(deepObjMap)
+    keys.map(key => {
+      if (!(deepObjMap[key].length > 1)) {
+        delete deepObjMap[key]
+      }
+    })
+    if (Object.keys(deepObjMap).length === 0) {
+      this.$SxMessage.error('未标注图片')
+    } else {
+      switch (type) {
+        case 'ImgJson':
+          exportImgJson(deepObjMap)
+          break
+        case 'RectVOC':
+          exportVOC(deepObjMap)
+          break
+        case 'RectCOCO':
+          exportCOCO('rectangle', deepObjMap, this.labelList)
+          break
+        case 'RectYOLO':
+          exportYOLO(deepObjMap, this.labelList)
+          break
+        case 'PolyCOCO':
+          exportCOCO('polygon', deepObjMap, this.labelList)
+          break
+        case 'PolyVGG':
+          exportVGG(deepObjMap, this.picList)
+          break
+      }
     }
   }
   // 退出
@@ -690,7 +723,8 @@ export default class Index extends Vue {
     zoom *= 0.99 ** delta
     if (zoom < 1) zoom = 1
     if (zoom > 5) zoom = 5
-    this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
+    // this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
+    this.canvas.setZoom(zoom)
     opt.e.preventDefault()
     opt.e.stopPropagation()
   }
@@ -803,8 +837,11 @@ export default class Index extends Vue {
           break
         default:
           // 选中多边形时
-          if (this.checkedTab === 1 && activeObj.name === 'polygon')
+          if (this.checkedTab === 2 && activeObj.name === 'polygon') {
             polyEdit(activeObj)
+          }
+          this.preventRectFromLeaving(activeObj)
+          break
       }
     }
     // 绘制多边形
@@ -920,11 +957,10 @@ export default class Index extends Vue {
       objectCaching: false,
     })
     if (this.activeShape) {
-      const pos = xy
       const points: any = this.activeShape.get('points')
       points.push({
-        x: pos.x,
-        y: pos.y,
+        x: xy.x,
+        y: xy.y,
       })
       const polygon = new fabric.Polygon(points, {
         stroke: '#333333',
@@ -987,6 +1023,7 @@ export default class Index extends Vue {
       fill: 'rgba(255, 255, 255, 0.2)',
       objectCaching: false,
       transparentCorners: false,
+      // hasBorders: false,
       name: 'polygon',
     })
     this.canvas.add(polygon)
@@ -1026,6 +1063,7 @@ export default class Index extends Vue {
       //填充
       fill: 'rgba(255, 255, 255, 0.2)',
       name: 'rectangle',
+      lockRotation: true,
     })
 
     if (canvasObject) {
@@ -1053,37 +1091,34 @@ export default class Index extends Vue {
       boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
       boundingRect.width /= zoom
       boundingRect.height /= zoom
-
       const canvasHeight = this.canvas.height / zoom,
         canvasWidth = this.canvas.width / zoom,
         rTop = boundingRect.top + boundingRect.height,
         rLeft = boundingRect.left + boundingRect.width
 
-      // // checks top left
+      // checks top left
+      if (rTop < canvasHeight || rLeft < canvasWidth) {
+        active.top = Math.max(active.top, canvasHeight - boundingRect.height)
+        active.left = Math.max(active.left, canvasWidth - boundingRect.width)
+      }
 
-      // if (rTop < canvasHeight || rLeft < canvasWidth) {
-      //   active.top = Math.max(active.top, canvasHeight - boundingRect.height)
-      //   active.left = Math.max(active.left, canvasWidth - boundingRect.width)
-      // }
-
-      // // checks bottom right
-
-      // if (rTop > 0 || rLeft > 0) {
-      //   active.top = Math.min(
-      //     active.top,
-      //     this.canvas.height -
-      //       boundingRect.height +
-      //       active.top -
-      //       boundingRect.top
-      //   )
-      //   active.left = Math.min(
-      //     active.left,
-      //     this.canvas.width -
-      //       boundingRect.width +
-      //       active.left -
-      //       boundingRect.left
-      //   )
-      // }
+      // checks bottom right
+      if (rTop > 0 || rLeft > 0) {
+        active.top = Math.min(
+          active.top,
+          this.canvas.height -
+            boundingRect.height +
+            active.top -
+            boundingRect.top,
+        )
+        active.left = Math.min(
+          active.left,
+          this.canvas.width -
+            boundingRect.width +
+            active.left -
+            boundingRect.left,
+        )
+      }
 
       let objs = this.canvas.getObjects()
       objs.slice(1).map(item => {
@@ -1099,6 +1134,49 @@ export default class Index extends Vue {
     active.on('mouseup', () => {
       active.off('moving')
       this.canvas.discardActiveObject().renderAll()
+    })
+  }
+
+  preventRectFromLeaving(active) {
+    active.on('moving', evt => {
+      const obj = active
+      obj.setCoords()
+
+      const boundingRect = obj.getBoundingRect()
+
+      const zoom = this.canvas.getZoom()
+      const viewportMatrix = this.canvas.viewportTransform
+
+      boundingRect.top = (boundingRect.top - viewportMatrix[5]) / zoom
+      boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
+      boundingRect.width /= zoom
+      boundingRect.height /= zoom
+
+      const canvasWidth = this.canvas.width / zoom
+      const canvasHeight = this.canvas.height / zoom
+
+      // if object is too big ignore
+      if (obj.height > obj.canvas.height || obj.width > this.canvas.width) {
+        return
+      }
+      if (boundingRect.top < 0 || boundingRect.left < 0) {
+        obj.top = Math.max(obj.top, obj.top - boundingRect.top)
+        obj.left = Math.max(obj.left, obj.left - boundingRect.left)
+      }
+      // bot-right corner
+      if (
+        boundingRect.top + boundingRect.height > canvasHeight ||
+        boundingRect.left + boundingRect.width > canvasWidth
+      ) {
+        obj.top = Math.min(
+          obj.top,
+          canvasHeight - boundingRect.height + obj.top - boundingRect.top,
+        )
+        obj.left = Math.min(
+          obj.left,
+          canvasWidth - boundingRect.width + obj.left - boundingRect.left,
+        )
+      }
     })
   }
 
@@ -1127,16 +1205,20 @@ export default class Index extends Vue {
         this.labelListMap[image] = list
       })
 
-      this.setLabelShortCuts()
+      //   this.setLabelShortCuts()
     } else {
+      this.isYolo = val.isYolo
       this.imagesData = val.imagesData
       this.labelNames = val.labelNames
     }
   }
 
+  isYolo = false
+
   confirmImport() {
     const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
     this.labelList = this.labelList.concat(this.labelNames)
+    this.setLabelShortCuts()
     this.loadExpImg(picItem)
     this.isImport = false
   }

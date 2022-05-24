@@ -5,14 +5,10 @@ let width = 0
 let height = 0
 let left = 0
 let top = 0
-let canvasWidth = 0
-let canvasHeight = 0
 let labels = [] as any
 let type = ''
-export const exportCOCO = (objType, data, labelList, canvasW, canvasH) => {
+export const exportCOCO = (objType, data, labelList) => {
   type = objType
-  canvasWidth = canvasW
-  canvasHeight = canvasH
   labels = labelList
   const jsonData = mapImagesDataToCOCOObject(data)
   const content = JSON.stringify(jsonData)
@@ -61,14 +57,18 @@ export const getAnnotationsComponent = data => {
     width = data[item][0].width
     height = data[item][0].height
     //图片的相对位置
-    left = Math.round(data[item][0].aCoords.tl.x)
-    top = Math.round(data[item][0].aCoords.tl.y)
-    widthRate = width / (canvasWidth - 2 * left)
-    heightRate = height / (canvasHeight - 2 * top)
+    left = Math.round(data[item][0].left)
+    top = Math.round(data[item][0].top)
+    const canvasWidth = data[item][0].cvsWidth
+    const canvasHeight = data[item][0].cvsHeight
+    widthRate = width / canvasWidth
+    heightRate = height / canvasHeight
     const objs: any = []
     data[item].map(v => {
+      // 区分矩形、多边形
       if (v.name === type) objs.push(v)
     })
+    console.log()
     if (objs.length > 0) {
       switch (type) {
         case 'rectangle':
@@ -92,14 +92,20 @@ export const getAnnotationsComponent = data => {
           break
         case 'polygon':
           objs.map(v => {
+            const points = [] as any
+            const keys = Object.keys(v.oCoords)
+            keys.map(key => {
+              // points 缩放拖动之后无效,用oCoords替代
+              points.push({ x: v.oCoords[key].x, y: v.oCoords[key].y })
+            })
             annotations.push({
               id: id++,
               iscrowd: 0,
               image_id: index + 1,
               category_id: labels.findIndex(el => el.name === v.labelName) + 1,
-              segmentation: getCOCOSegmentation(v.points),
-              bbox: getCOCOBbox(v.points),
-              area: getCOCOArea(v.points),
+              segmentation: getCOCOSegmentation(points),
+              bbox: getCOCOBbox(points),
+              area: getCOCOArea(points),
             })
           })
           break

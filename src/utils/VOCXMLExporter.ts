@@ -9,16 +9,11 @@ let top = 0
 let widthRate = 0
 let heightRate = 0
 
-export const exportVOC = (data, canvasWidth, canvasHeight) => {
+export const exportVOC = data => {
   let keys: any = Object.keys(data)
   const zip = new JSZip()
   keys.forEach(item => {
-    const fileContent = wrapImageIntoVOC(
-      data[item],
-      item,
-      canvasWidth,
-      canvasHeight
-    )
+    const fileContent = wrapImageIntoVOC(data[item], item)
     if (fileContent) {
       const fileName: string = item.replace(/\.[^/.]+$/, '.xml')
       try {
@@ -39,19 +34,16 @@ export const exportVOC = (data, canvasWidth, canvasHeight) => {
   }
 }
 
-export const wrapImageIntoVOC = (
-  imgData,
-  filename,
-  canvasWidth,
-  canvasHeight
-) => {
+export const wrapImageIntoVOC = (imgData, filename) => {
   const rects: any = []
   width = imgData[0].width
   height = imgData[0].height
-  left = Math.round(imgData[0].aCoords.tl.x)
-  top = Math.round(imgData[0].aCoords.tl.y)
-  widthRate = width / (canvasWidth - 2 * left)
-  heightRate = height / (canvasHeight - 2 * top)
+  left = Math.round(imgData[0].left)
+  top = Math.round(imgData[0].top)
+  const canvasWidth = imgData[0].cvsWidth
+  const canvasHeight = imgData[0].cvsHeight
+  widthRate = width / canvasWidth
+  heightRate = height / canvasHeight
   imgData.map(item => {
     if (item.name === 'rectangle') rects.push(item)
   })

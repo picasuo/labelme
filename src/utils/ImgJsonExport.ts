@@ -1,18 +1,17 @@
 import { ExporterUtil } from './ExporterUtil'
 export const exportImgJson = data => {
   let keys: any = Object.keys(data)
-  const contentObject = keys
-    .filter(item => {
-      const imgData = data[item][0]
-      return imgData.labelName && imgData.labelName.length > 0
+  const contentObject = keys.map(item => {
+    const labelData = data[item]
+    const labels = [] as any
+    labelData.map(v => {
+      labels.push(v.name)
     })
-    .map(item => {
-      const imgData = data[item][0]
-      return {
-        image: item,
-        annotations: imgData.labelName,
-      }
-    })
+    return {
+      image: item,
+      annotations: labels,
+    }
+  })
   const content = JSON.stringify(contentObject)
   const fileName = `数据集-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
   ExporterUtil.saveAs(content, fileName)

@@ -145,6 +145,7 @@ export const loadCocoFile = (file, type) => {
             resolve({
               imagesData,
               labelNames,
+              isYolo: false,
             })
           }
         } else {

@@ -47,9 +47,7 @@
         </div>
       </div>
       <div class="btn">
-        <span :class="checked !== null ? 'active' : ''" @click="importData"
-          >确定</span
-        >
+        <span :class="isActive ? 'active' : ''" @click="importData">确定</span>
         <span class="cancel" @click="cancel">取消</span>
       </div>
     </div>
@@ -75,12 +73,19 @@ export default class SxImport extends Vue {
   })
   type: number
 
+  @Prop({
+    type: Array,
+  })
+  imagesData: Array<any>
+
   tabName = '' as any
   checked = null as any
   checkedTab = 0
   isMultiple = false
   isDirectory = false
   fileFormat = ''
+
+  isActive = false
 
   get tabs() {
     let arr = [] as any
@@ -103,7 +108,7 @@ export default class SxImport extends Vue {
         break
       case '矩形':
         arr = [
-          { name: 'VOC XML', label: 'RectVOC' },
+          //   { name: 'VOC XML', label: 'RectVOC' },
           {
             name: 'COCOJson',
             label: 'RectCOCO',
@@ -145,10 +150,16 @@ export default class SxImport extends Vue {
   }
 
   importData() {
-    this.$emit('importData')
+    if (this.isActive) {
+      this.$emit('importData')
+      this.isActive = false
+    } else {
+      return
+    }
   }
 
   cancel() {
+    this.isActive = false
     this.$emit('cancelImport')
   }
 
@@ -158,9 +169,13 @@ export default class SxImport extends Vue {
     if (this.checked === 'RectCOCO' || this.checked === 'ImgJson') {
       loadCocoFile(fileList[0], this.type).then(val => {
         this.$emit('setAnnotation', val)
+        this.isActive = true
       })
     } else if (this.checked === 'RectYOLO') {
-      loadYoloFile(fileList)
+      loadYoloFile(fileList).then(val => {
+        this.$emit('setAnnotation', val)
+        this.isActive = true
+      })
     }
   }
 }
