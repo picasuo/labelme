@@ -31,6 +31,10 @@
             >
           </i-radio-group>
           <p v-if="checked">点击此处上传文件</p>
+          <!-- <p>
+            <span> 上传yaml文件 </span>
+            <span>上传txt文件</span>
+          </p> -->
           <input
             v-if="checked"
             ref="fileImport"
@@ -38,6 +42,7 @@
             :multiple="isMultiple"
             :accept="fileFormat"
             @change="importFile"
+            :webkitdirectory="isDirectory"
           />
         </div>
       </div>
@@ -55,6 +60,7 @@
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Radio, RadioGroup } from 'iview'
 import { loadCocoFile } from 'utils/COCOImporter'
+import { loadYoloFile } from 'utils/YOLOImporter'
 
 @Component({
   components: {
@@ -73,6 +79,7 @@ export default class SxImport extends Vue {
   checked = null as any
   checkedTab = 0
   isMultiple = false
+  isDirectory = false
   fileFormat = ''
 
   get tabs() {
@@ -121,6 +128,13 @@ export default class SxImport extends Vue {
   checkInputStatus(val) {
     if (val === 'RectCOCO' || val === 'ImgJson') {
       this.fileFormat = 'application/json'
+      this.isMultiple = false
+      this.isDirectory = false
+    } else if (val === 'RectYOLO') {
+      //   this.fileFormat = 'text/plain,application/x-yaml'
+      this.fileFormat = 'file'
+      this.isMultiple = true
+      this.isDirectory = true
     }
   }
 
@@ -145,7 +159,8 @@ export default class SxImport extends Vue {
       loadCocoFile(fileList[0], this.type).then(val => {
         this.$emit('setAnnotation', val)
       })
-    } else if (this.checked === '') {
+    } else if (this.checked === 'RectYOLO') {
+      loadYoloFile(fileList)
     }
   }
 }

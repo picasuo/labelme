@@ -1,6 +1,6 @@
-import JSZip from 'jszip'
 // import YAML from 'json2yaml'
 import { saveAs } from 'file-saver'
+import JSZip from 'jszip'
 import { calculatePoint } from './ExporterUtil'
 import { NumberUtil } from './NumberUtil'
 
@@ -13,6 +13,9 @@ let heightRate = 0
 let labels
 
 export const exportYOLO = (data, labelList, canvasWidth, canvasHeight) => {
+  // todo
+  console.log('data', data)
+
   let keys: any = Object.keys(data)
   labels = labelList
   const zip = new JSZip()
@@ -20,7 +23,7 @@ export const exportYOLO = (data, labelList, canvasWidth, canvasHeight) => {
     const fileContent: string = wrapRectLabelsIntoYOLO(
       data[item],
       canvasWidth,
-      canvasHeight
+      canvasHeight,
     )
     if (fileContent) {
       const fileName: string = item.replace(/\.[^/.]+$/, '.txt')
@@ -92,20 +95,25 @@ export const wrapRectLabelsIntoYOLO = (imgData, canvasWidth, canvasHeight) => {
 export const wrapRectLabelIntoYOLO = data => {
   const snapAndFix = (value: number) =>
     NumberUtil.snapValueToRange(value, 0, 1).toFixed(6)
+  // todo
+  console.log('labels', labels)
+
   const classIdx = _.findIndex(labels, { name: data.labelName }).toString()
   const rectCenter = getCenter(data)
   const rectSize = getSize(data)
   const rawBBox: number[] = [
+      //!中心点在框中的位置
     rectCenter.x / width,
     rectCenter.y / height,
+    //!框/图片
     rectSize.width / width,
     rectSize.height / height,
   ]
   let [x, y, rwidth, rheight] = rawBBox.map((value: number) =>
-    parseFloat(snapAndFix(value))
+    parseFloat(snapAndFix(value)),
   )
   const processedBBox = [x, y, rwidth, rheight].map((value: number) =>
-    snapAndFix(value)
+    snapAndFix(value),
   )
   return [classIdx, ...processedBBox].join(' ')
 }
