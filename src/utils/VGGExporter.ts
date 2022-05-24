@@ -8,17 +8,13 @@ let height = 0
 let left = 0
 let top = 0
 let picList = [] as any
-export const exportVGG = (data, pics, canvasWidth, canvasHeight) => {
+export const exportVGG = (data, pics) => {
   picList = pics
   let keys: any = Object.keys(data)
   let jsonData: any = {}
   keys.forEach(item => {
     filename = item
-    const fileData = mapImagesDataToVGGObject(
-      data[item],
-      canvasWidth,
-      canvasHeight
-    )
+    const fileData = mapImagesDataToVGGObject(data[item])
     jsonData[filename] = fileData
   })
   const content = JSON.stringify(jsonData)
@@ -26,18 +22,16 @@ export const exportVGG = (data, pics, canvasWidth, canvasHeight) => {
   ExporterUtil.saveAs(content, fileName)
 }
 
-export const mapImagesDataToVGGObject = (
-  imgData,
-  canvasWidth,
-  canvasHeight
-) => {
+export const mapImagesDataToVGGObject = imgData => {
   const polys: any = []
   width = imgData[0].width
   height = imgData[0].height
-  left = Math.round(imgData[0].aCoords.tl.x)
-  top = Math.round(imgData[0].aCoords.tl.y)
-  widthRate = width / (canvasWidth - 2 * left)
-  heightRate = height / (canvasHeight - 2 * top)
+  left = Math.round(imgData[0].left)
+  top = Math.round(imgData[0].top)
+  const canvasWidth = imgData[0].canvas.width
+  const canvasHeight = imgData[0].canvas.height
+  widthRate = width / canvasWidth
+  heightRate = height / canvasHeight
   imgData.map(item => {
     if (item.name === 'polygon') polys.push(item)
   })
@@ -64,9 +58,15 @@ export const mapImageDataToVGG = polys => {
   const data: any = {}
   polys.map((item, index) => {
     const labelName = item.labelName
+    const points = [] as any
+    const keys = Object.keys(item.oCoords)
+    keys.map(key => {
+      // points 缩放拖动之后无效,用oCoords替代
+      points.push({ x: item.oCoords[key].x, y: item.oCoords[key].y })
+    })
     if (!!labelName) {
       data[index.toString()] = {
-        shape_attributes: mapPolygonToVGG(item.points),
+        shape_attributes: mapPolygonToVGG(points),
         region_attributes: {
           label: labelName,
         },

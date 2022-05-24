@@ -12,16 +12,12 @@ let widthRate = 0
 let heightRate = 0
 let labels
 
-export const exportYOLO = (data, labelList, canvasWidth, canvasHeight) => {
+export const exportYOLO = (data, labelList) => {
   let keys: any = Object.keys(data)
   labels = labelList
   const zip = new JSZip()
   keys.forEach(item => {
-    const fileContent: string = wrapRectLabelsIntoYOLO(
-      data[item],
-      canvasWidth,
-      canvasHeight
-    )
+    const fileContent: string = wrapRectLabelsIntoYOLO(data[item])
     if (fileContent) {
       const fileName: string = item.replace(/\.[^/.]+$/, '.txt')
       try {
@@ -72,14 +68,16 @@ export const wrapLabels = data => {
   return yml
 }
 
-export const wrapRectLabelsIntoYOLO = (imgData, canvasWidth, canvasHeight) => {
+export const wrapRectLabelsIntoYOLO = imgData => {
   const rects: any = []
   width = imgData[0].width
   height = imgData[0].height
-  left = Math.round(imgData[0].aCoords.tl.x)
-  top = Math.round(imgData[0].aCoords.tl.y)
-  widthRate = width / (canvasWidth - 2 * left)
-  heightRate = height / (canvasHeight - 2 * top)
+  left = Math.round(imgData[0].left)
+  top = Math.round(imgData[0].top)
+  const canvasWidth = imgData[0].canvas.width
+  const canvasHeight = imgData[0].canvas.height
+  widthRate = width / canvasWidth
+  heightRate = height / canvasHeight
   imgData.map(item => {
     if (item.name === 'rectangle') rects.push(item)
   })

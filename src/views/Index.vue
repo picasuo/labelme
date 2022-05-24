@@ -409,9 +409,7 @@ export default class Index extends Vue {
             left: rect.x / widthRate + left,
             top: rect.y / heightRate + top,
             labelName,
-            // stroke:'green',
-            // strokeWidth:3,
-            //   centeredRotation: true,
+            lockRotation: true,
           })
           this.canvas.add(rectangle)
         })
@@ -477,13 +475,18 @@ export default class Index extends Vue {
             oImg.scaleToHeight(this.height)
             const currentWidth = (this.height * oImg.width) / oImg.height
             oImg.scaleToWidth(currentWidth)
+            this.canvas.setWidth([currentWidth])
+            this.canvas.setHeight([this.height])
             if (currentWidth > this.width) {
               oImg.scaleToWidth(this.width)
               const currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
+              this.canvas.setWidth([this.width])
+              this.canvas.setHeight([currentHeight])
               oImg.set({
                 id: 'img',
-                top: (this.height - currentHeight) / 2,
+                top: 0,
+                left: 0,
                 selectable: true,
                 // selectable: false,
                 hasBorders: false,
@@ -493,7 +496,8 @@ export default class Index extends Vue {
             } else {
               oImg.set({
                 id: 'img',
-                left: (this.width - currentWidth) / 2,
+                top: 0,
+                left: 0,
                 selectable: true,
                 // selectable: false,
                 hasBorders: false,
@@ -501,7 +505,6 @@ export default class Index extends Vue {
                 hasRotatingPoint: false,
               })
             }
-
             this.canvas.add(oImg)
 
             resolve('')
@@ -603,31 +606,19 @@ export default class Index extends Vue {
         exportImgJson(deepObjMap)
         break
       case 'RectVOC':
-        exportVOC(deepObjMap, this.width, this.height)
+        exportVOC(deepObjMap)
         break
       case 'RectCOCO':
-        exportCOCO(
-          'rectangle',
-          deepObjMap,
-          this.labelList,
-          this.width,
-          this.height
-        )
+        exportCOCO('rectangle', deepObjMap, this.labelList)
         break
       case 'RectYOLO':
-        exportYOLO(deepObjMap, this.labelList, this.width, this.height)
+        exportYOLO(deepObjMap, this.labelList)
         break
       case 'PolyCOCO':
-        exportCOCO(
-          'polygon',
-          deepObjMap,
-          this.labelList,
-          this.width,
-          this.height
-        )
+        exportCOCO('polygon', deepObjMap, this.labelList)
         break
       case 'PolyVGG':
-        exportVGG(deepObjMap, this.picList, this.width, this.height)
+        exportVGG(deepObjMap, this.picList)
         break
     }
   }
@@ -687,7 +678,8 @@ export default class Index extends Vue {
     zoom *= 0.99 ** delta
     if (zoom < 1) zoom = 1
     if (zoom > 5) zoom = 5
-    this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
+    // this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
+    this.canvas.setZoom(zoom)
     opt.e.preventDefault()
     opt.e.stopPropagation()
   }
@@ -800,7 +792,7 @@ export default class Index extends Vue {
           break
         default:
           // 选中多边形时
-          if (this.checkedTab === 1 && activeObj.name === 'polygon')
+          if (this.checkedTab === 2 && activeObj.name === 'polygon')
             polyEdit(activeObj)
       }
     }
@@ -917,11 +909,10 @@ export default class Index extends Vue {
       objectCaching: false,
     })
     if (this.activeShape) {
-      const pos = xy
       const points: any = this.activeShape.get('points')
       points.push({
-        x: pos.x,
-        y: pos.y,
+        x: xy.x,
+        y: xy.y,
       })
       const polygon = new fabric.Polygon(points, {
         stroke: '#333333',
@@ -984,6 +975,7 @@ export default class Index extends Vue {
       fill: 'rgba(255, 255, 255, 0.2)',
       objectCaching: false,
       transparentCorners: false,
+      // hasBorders: false,
       name: 'polygon',
     })
     this.canvas.add(polygon)
@@ -1023,6 +1015,7 @@ export default class Index extends Vue {
       //填充
       fill: 'rgba(255, 255, 255, 0.2)',
       name: 'rectangle',
+      lockRotation: true,
     })
 
     if (canvasObject) {
@@ -1050,37 +1043,34 @@ export default class Index extends Vue {
       boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
       boundingRect.width /= zoom
       boundingRect.height /= zoom
-
       const canvasHeight = this.canvas.height / zoom,
         canvasWidth = this.canvas.width / zoom,
         rTop = boundingRect.top + boundingRect.height,
         rLeft = boundingRect.left + boundingRect.width
 
-      // // checks top left
+      // checks top left
+      if (rTop < canvasHeight || rLeft < canvasWidth) {
+        active.top = Math.max(active.top, canvasHeight - boundingRect.height)
+        active.left = Math.max(active.left, canvasWidth - boundingRect.width)
+      }
 
-      // if (rTop < canvasHeight || rLeft < canvasWidth) {
-      //   active.top = Math.max(active.top, canvasHeight - boundingRect.height)
-      //   active.left = Math.max(active.left, canvasWidth - boundingRect.width)
-      // }
-
-      // // checks bottom right
-
-      // if (rTop > 0 || rLeft > 0) {
-      //   active.top = Math.min(
-      //     active.top,
-      //     this.canvas.height -
-      //       boundingRect.height +
-      //       active.top -
-      //       boundingRect.top
-      //   )
-      //   active.left = Math.min(
-      //     active.left,
-      //     this.canvas.width -
-      //       boundingRect.width +
-      //       active.left -
-      //       boundingRect.left
-      //   )
-      // }
+      // checks bottom right
+      if (rTop > 0 || rLeft > 0) {
+        active.top = Math.min(
+          active.top,
+          this.canvas.height -
+            boundingRect.height +
+            active.top -
+            boundingRect.top
+        )
+        active.left = Math.min(
+          active.left,
+          this.canvas.width -
+            boundingRect.width +
+            active.left -
+            boundingRect.left
+        )
+      }
 
       let objs = this.canvas.getObjects()
       objs.slice(1).map(item => {
@@ -1096,6 +1086,7 @@ export default class Index extends Vue {
     active.on('mouseup', () => {
       active.off('moving')
       this.canvas.discardActiveObject().renderAll()
+      console.log(this.canvas.getObjects())
     })
   }
 
