@@ -407,14 +407,11 @@ export default class Index extends Vue {
             left: rect.x / widthRate + left,
             top: rect.y / heightRate + top,
             labelName,
-<<<<<<< HEAD
             lockRotation: true,
-=======
             name: 'rectangle',
             // stroke:'green',
             // strokeWidth:3,
             //   centeredRotation: true,
->>>>>>> 59e8118179fab95999172a4df27708fd4c694649
           })
           this.canvas.add(rectangle)
         })
@@ -496,6 +493,8 @@ export default class Index extends Vue {
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
+                cvsWidth: this.width,
+                cvsHeight: currentHeight,
               })
             } else {
               oImg.set({
@@ -506,6 +505,8 @@ export default class Index extends Vue {
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
+                cvsWidth: currentWidth,
+                cvsHeight: this.height,
               })
             }
             this.canvas.add(oImg)
@@ -513,7 +514,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -601,54 +602,44 @@ export default class Index extends Vue {
   // 导出
   submit(type) {
     this.isExport = false
-    // todo
-    console.log('labelListMap', this.labelListMap)
 
-    const deepObjMap = _.cloneDeep(this.objMap)
-    // todo
-    console.log('deepObjMap', deepObjMap)
+    this.objMap[this.lastName] = this.canvas.getObjects()
 
-    deepObjMap[this.lastName] = this.canvas.getObjects()
-
-    switch (type) {
-      case 'ImgJson':
-        exportImgJson(deepObjMap)
-        break
-      case 'RectVOC':
-        exportVOC(deepObjMap)
-        break
-      case 'RectCOCO':
-<<<<<<< HEAD
-        exportCOCO('rectangle', deepObjMap, this.labelList)
-=======
-        exportCOCO(
-          'rectangle',
-          deepObjMap,
-          this.labelList,
-          this.width,
-          this.height,
-        )
->>>>>>> 59e8118179fab95999172a4df27708fd4c694649
-        break
-      case 'RectYOLO':
-        exportYOLO(deepObjMap, this.labelList)
-        break
-      case 'PolyCOCO':
-<<<<<<< HEAD
-        exportCOCO('polygon', deepObjMap, this.labelList)
-=======
-        exportCOCO(
-          'polygon',
-          deepObjMap,
-          this.labelList,
-          this.width,
-          this.height,
-        )
->>>>>>> 59e8118179fab95999172a4df27708fd4c694649
-        break
-      case 'PolyVGG':
-        exportVGG(deepObjMap, this.picList)
-        break
+    const deepObjMap =
+      this.type === 0
+        ? _.cloneDeep(this.labelListMap)
+        : _.cloneDeep(this.objMap)
+    console.log(this.objMap, deepObjMap)
+    const keys = Object.keys(deepObjMap)
+    keys.map(key => {
+      if (!(deepObjMap[key].length > 1)) {
+        delete deepObjMap[key]
+      }
+    })
+    console.log(deepObjMap)
+    if (Object.keys(deepObjMap).length === 0) {
+      this.$SxMessage.error('未标注图片')
+    } else {
+      switch (type) {
+        case 'ImgJson':
+          exportImgJson(deepObjMap)
+          break
+        case 'RectVOC':
+          exportVOC(deepObjMap)
+          break
+        case 'RectCOCO':
+          exportCOCO('rectangle', deepObjMap, this.labelList)
+          break
+        case 'RectYOLO':
+          exportYOLO(deepObjMap, this.labelList)
+          break
+        case 'PolyCOCO':
+          exportCOCO('polygon', deepObjMap, this.labelList)
+          break
+        case 'PolyVGG':
+          exportVGG(deepObjMap, this.picList)
+          break
+      }
     }
   }
   // 退出
@@ -724,7 +715,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -744,7 +735,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -758,10 +749,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             break
           //反撤销
@@ -788,7 +779,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      },
+      }
     )
 
     //禁用快捷键
@@ -1115,7 +1106,6 @@ export default class Index extends Vue {
     active.on('mouseup', () => {
       active.off('moving')
       this.canvas.discardActiveObject().renderAll()
-      console.log(this.canvas.getObjects())
     })
   }
 

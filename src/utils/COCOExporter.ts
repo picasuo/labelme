@@ -59,8 +59,8 @@ export const getAnnotationsComponent = data => {
     //图片的相对位置
     left = Math.round(data[item][0].left)
     top = Math.round(data[item][0].top)
-    const canvasWidth = data[item][0].canvas.width
-    const canvasHeight = data[item][0].canvas.height
+    const canvasWidth = data[item][0].cvsWidth
+    const canvasHeight = data[item][0].cvsHeight
     widthRate = width / canvasWidth
     heightRate = height / canvasHeight
     const objs: any = []

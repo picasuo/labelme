@@ -28,8 +28,8 @@ export const mapImagesDataToVGGObject = imgData => {
   height = imgData[0].height
   left = Math.round(imgData[0].left)
   top = Math.round(imgData[0].top)
-  const canvasWidth = imgData[0].canvas.width
-  const canvasHeight = imgData[0].canvas.height
+  const canvasWidth = imgData[0].cvsWidth
+  const canvasHeight = imgData[0].cvsHeight
   widthRate = width / canvasWidth
   heightRate = height / canvasHeight
   imgData.map(item => {
