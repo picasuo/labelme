@@ -279,6 +279,7 @@ export default class Index extends Vue {
 
   //绑定-取消绑定标签到对象上
   //处理标签列表数据
+  //index -1：添加 其他:删除
   handleLabelBind({ newName, newColor, index }) {
     const list = [] as Array<any>
     const activeObj = this.canvas.getActiveObject()
@@ -367,20 +368,17 @@ export default class Index extends Vue {
     this.addImgToCanvas(url, name).then(() => {
       //!判断是否导入过注解框
       const imgData = this.imagesData.find(img => img.fileData.name === name)
-      // todo
-      console.log('imgData', imgData)
-
-      //!拿到图片的宽高左右
-      const { width, height, aCoords } = this.canvas.getObjects()[0]
-      const { bl, br, tl, tr } = aCoords
-      //!求出img在图层中缩放后的宽高以及它相对于图层的left、top
-      const imgWidth = br.x - bl.x
-      const imgHeight = bl.y - tl.y
-
-      const left = tl.x
-      const top = tl.y
 
       if (imgData && !imgData.loadStatus) {
+        //!拿到图片的宽高左右
+        const { width, height, aCoords } = this.canvas.getObjects()[0]
+        const { bl, br, tl, tr } = aCoords
+        //!求出img在图层中缩放后的宽高以及它相对于图层的left、top
+        const imgWidth = br.x - bl.x
+        const imgHeight = bl.y - tl.y
+
+        const left = tl.x
+        const top = tl.y
         const widthRate = width / imgWidth
         const heightRate = height / imgHeight
         const { labelRects } = imgData
@@ -409,7 +407,14 @@ export default class Index extends Vue {
             left: rect.x / widthRate + left,
             top: rect.y / heightRate + top,
             labelName,
+<<<<<<< HEAD
             lockRotation: true,
+=======
+            name: 'rectangle',
+            // stroke:'green',
+            // strokeWidth:3,
+            //   centeredRotation: true,
+>>>>>>> 59e8118179fab95999172a4df27708fd4c694649
           })
           this.canvas.add(rectangle)
         })
@@ -418,9 +423,6 @@ export default class Index extends Vue {
           ? this.labelListMap[name].concat(Object.values(labelMap))
           : Object.values(labelMap)
         imgData.loadStatus = true
-
-        // todo
-        console.log('canvas', this.canvas.getObjects())
       }
       if (this.type === 0) {
         this.canvas.setActiveObject(this.canvas.getObjects()[0])
@@ -456,6 +458,9 @@ export default class Index extends Vue {
     })
 
     // // todo
+    // console.log('canvas', this.canvas.getObjects())
+
+    // // todo
     // console.log('objMap', this.objMap)
   }
 
@@ -488,7 +493,6 @@ export default class Index extends Vue {
                 top: 0,
                 left: 0,
                 selectable: true,
-                // selectable: false,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
@@ -499,7 +503,6 @@ export default class Index extends Vue {
                 top: 0,
                 left: 0,
                 selectable: true,
-                // selectable: false,
                 hasBorders: false,
                 hasControls: false,
                 hasRotatingPoint: false,
@@ -510,7 +513,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -598,7 +601,13 @@ export default class Index extends Vue {
   // 导出
   submit(type) {
     this.isExport = false
+    // todo
+    console.log('labelListMap', this.labelListMap)
+
     const deepObjMap = _.cloneDeep(this.objMap)
+    // todo
+    console.log('deepObjMap', deepObjMap)
+
     deepObjMap[this.lastName] = this.canvas.getObjects()
 
     switch (type) {
@@ -609,13 +618,33 @@ export default class Index extends Vue {
         exportVOC(deepObjMap)
         break
       case 'RectCOCO':
+<<<<<<< HEAD
         exportCOCO('rectangle', deepObjMap, this.labelList)
+=======
+        exportCOCO(
+          'rectangle',
+          deepObjMap,
+          this.labelList,
+          this.width,
+          this.height,
+        )
+>>>>>>> 59e8118179fab95999172a4df27708fd4c694649
         break
       case 'RectYOLO':
         exportYOLO(deepObjMap, this.labelList)
         break
       case 'PolyCOCO':
+<<<<<<< HEAD
         exportCOCO('polygon', deepObjMap, this.labelList)
+=======
+        exportCOCO(
+          'polygon',
+          deepObjMap,
+          this.labelList,
+          this.width,
+          this.height,
+        )
+>>>>>>> 59e8118179fab95999172a4df27708fd4c694649
         break
       case 'PolyVGG':
         exportVGG(deepObjMap, this.picList)
@@ -695,7 +724,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -715,7 +744,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -729,10 +758,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             break
           //反撤销
@@ -759,7 +788,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      }
+      },
     )
 
     //禁用快捷键
@@ -1091,8 +1120,35 @@ export default class Index extends Vue {
   }
 
   setAnnotation(val) {
-    this.imagesData = val.imagesData
-    this.labelNames = val.labelNames
+    if (this.type === 0) {
+      //   // todo
+      //   console.log('val', val)
+      val.forEach(item => {
+        const { image, annotations } = item
+        const list = [] as Array<any>
+        annotations.forEach(anno => {
+          const obj = {
+            name: anno,
+            color: getRandomColor(),
+          }
+          if (!this.labelList.find(i => i.name === anno)) {
+            this.labelList.push(obj)
+          }
+
+          list.push({
+            ...obj,
+            count: 1,
+          })
+        })
+
+        this.labelListMap[image] = list
+      })
+
+      this.setLabelShortCuts()
+    } else {
+      this.imagesData = val.imagesData
+      this.labelNames = val.labelNames
+    }
   }
 
   confirmImport() {
