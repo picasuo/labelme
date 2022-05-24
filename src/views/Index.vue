@@ -609,14 +609,12 @@ export default class Index extends Vue {
       this.type === 0
         ? _.cloneDeep(this.labelListMap)
         : _.cloneDeep(this.objMap)
-    console.log(this.objMap, deepObjMap)
     const keys = Object.keys(deepObjMap)
     keys.map(key => {
       if (!(deepObjMap[key].length > 1)) {
         delete deepObjMap[key]
       }
     })
-    console.log(deepObjMap)
     if (Object.keys(deepObjMap).length === 0) {
       this.$SxMessage.error('未标注图片')
     } else {
