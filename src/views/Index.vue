@@ -810,8 +810,11 @@ export default class Index extends Vue {
           break
         default:
           // 选中多边形时
-          if (this.checkedTab === 2 && activeObj.name === 'polygon')
+          if (this.checkedTab === 2 && activeObj.name === 'polygon') {
             polyEdit(activeObj)
+          }
+          this.preventRectFromLeaving(activeObj)
+          break
       }
     }
     // 绘制多边形
@@ -1104,6 +1107,49 @@ export default class Index extends Vue {
     active.on('mouseup', () => {
       active.off('moving')
       this.canvas.discardActiveObject().renderAll()
+    })
+  }
+
+  preventRectFromLeaving(active) {
+    active.on('moving', evt => {
+      const obj = active
+      obj.setCoords()
+
+      const boundingRect = obj.getBoundingRect()
+
+      const zoom = this.canvas.getZoom()
+      const viewportMatrix = this.canvas.viewportTransform
+
+      boundingRect.top = (boundingRect.top - viewportMatrix[5]) / zoom
+      boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
+      boundingRect.width /= zoom
+      boundingRect.height /= zoom
+
+      const canvasWidth = this.canvas.width / zoom
+      const canvasHeight = this.canvas.height / zoom
+
+      // if object is too big ignore
+      if (obj.height > obj.canvas.height || obj.width > this.canvas.width) {
+        return
+      }
+      if (boundingRect.top < 0 || boundingRect.left < 0) {
+        obj.top = Math.max(obj.top, obj.top - boundingRect.top)
+        obj.left = Math.max(obj.left, obj.left - boundingRect.left)
+      }
+      // bot-right corner
+      if (
+        boundingRect.top + boundingRect.height > canvasHeight ||
+        boundingRect.left + boundingRect.width > canvasWidth
+      ) {
+        obj.top = Math.min(
+          obj.top,
+          canvasHeight - boundingRect.height + obj.top - boundingRect.top
+        )
+        obj.left = Math.min(
+          obj.left,
+          canvasWidth - boundingRect.width + obj.left - boundingRect.left
+        )
+      }
     })
   }
 
