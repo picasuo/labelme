@@ -8,8 +8,10 @@ let height = 0
 let left = 0
 let top = 0
 let picList = [] as any
-export const exportVGG = (data, pics) => {
+let scale = 1
+export const exportVGG = (data, pics, zoom) => {
   picList = pics
+  scale = zoom
   let keys: any = Object.keys(data)
   let jsonData: any = {}
   keys.forEach(item => {
@@ -18,7 +20,7 @@ export const exportVGG = (data, pics) => {
     jsonData[filename] = fileData
   })
   const content = JSON.stringify(jsonData)
-  const fileName = `数据集-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
+  const fileName = `VGG-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
   ExporterUtil.saveAs(content, fileName)
 }
 
@@ -62,7 +64,10 @@ export const mapImageDataToVGG = polys => {
     const keys = Object.keys(item.oCoords)
     keys.map(key => {
       // points 缩放拖动之后无效,用oCoords替代
-      points.push({ x: item.oCoords[key].x, y: item.oCoords[key].y })
+      points.push({
+        x: item.oCoords[key].x / scale,
+        y: item.oCoords[key].y / scale,
+      })
     })
     if (!!labelName) {
       data[index.toString()] = {

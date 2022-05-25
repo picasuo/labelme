@@ -8,9 +8,11 @@ let left = 0
 let top = 0
 let widthRate = 0
 let heightRate = 0
+let scale = 1
 
-export const exportVOC = data => {
+export const exportVOC = (data, zoom) => {
   let keys: any = Object.keys(data)
+  scale = zoom
   const zip = new JSZip()
   keys.forEach(item => {
     const fileContent = wrapImageIntoVOC(data[item], item)
@@ -26,7 +28,7 @@ export const exportVOC = data => {
   })
   try {
     zip.generateAsync({ type: 'blob' }).then(function (content) {
-      saveAs(content, `数据集-${moment().format('YYYY-MM-DD-hh-mm-ss')}.zip`)
+      saveAs(content, `VOC-${moment().format('YYYY-MM-DD-hh-mm-ss')}.zip`)
     })
   } catch (error) {
     // TODO
@@ -44,10 +46,9 @@ export const wrapImageIntoVOC = (imgData, filename) => {
   const canvasHeight = imgData[0].cvsHeight
   widthRate = width / canvasWidth
   heightRate = height / canvasHeight
-  imgData.map(item => {
-    if (item.name === 'rectangle') rects.push(item)
-  })
-  const labels = wrapRectLabelsIntoVOC(rects)
+  const labelData = imgData.slice(1)
+  console.log('labelData', labelData)
+  const labels = wrapAllLabelsIntoVOC(labelData)
   if (labels) {
     return [
       `<annotation>`,
@@ -69,31 +70,81 @@ export const wrapImageIntoVOC = (imgData, filename) => {
   return null
 }
 
-export const wrapRectLabelsIntoVOC = imgData => {
-  if (imgData.length === 0) return null
-  const labelRectString = imgData.map(item => {
+export const wrapAllLabelsIntoVOC = labelData => {
+  if (labelData.length === 0) return null
+  const labelRectString = labelData.map(item => {
     const labelName = item.labelName
     const xmin = calculatePoint(item.aCoords.tl.x, left, widthRate, width)
     const xmax = calculatePoint(item.aCoords.br.x, left, widthRate, width)
-    const ymin = calculatePoint(item.aCoords.tr.y, top, heightRate, height)
-    const ymax = calculatePoint(item.aCoords.bl.y, top, heightRate, height)
+    const ymin = calculatePoint(item.aCoords.tl.y, top, heightRate, height)
+    const ymax = calculatePoint(item.aCoords.br.y, top, heightRate, height)
+    let polygons: any = ''
+    if (item.name === 'polygon') polygons = wrapPolygonLabelsIntoVOC(item)
     const labelFields = !!labelName
-      ? [
-          `\t<object>`,
-          `\t\t<name>${labelName}</name>`,
-          `\t\t<pose>Unspecified</pose>`,
-          `\t\t<truncated>0</truncated>`,
-          `\t\t<difficult>0</difficult>`,
-          `\t\t<bndbox>`,
-          `\t\t\t<xmin>${Math.round(xmin)}</xmin>`,
-          `\t\t\t<ymin>${Math.round(ymin)}</ymin>`,
-          `\t\t\t<xmax>${Math.round(xmax)}</xmax>`,
-          `\t\t\t<ymax>${Math.round(ymax)}</ymax>`,
-          `\t\t</bndbox>`,
-          `\t</object>`,
-        ]
+      ? item.name === 'polygon'
+        ? [
+            `\t<object>`,
+            `\t\t<name>${labelName}</name>`,
+            `\t\t<pose>Unspecified</pose>`,
+            `\t\t<truncated>0</truncated>`,
+            `\t\t<difficult>0</difficult>`,
+            `\t\t<bndbox>`,
+            `\t\t\t<xmin>${Math.round(xmin)}</xmin>`,
+            `\t\t\t<ymin>${Math.round(ymin)}</ymin>`,
+            `\t\t\t<xmax>${Math.round(xmax)}</xmax>`,
+            `\t\t\t<ymax>${Math.round(ymax)}</ymax>`,
+            `\t\t</bndbox>`,
+            `\t\t<polygon>`,
+            polygons,
+            `\t\t<polygon>`,
+            `\t</object>`,
+          ]
+        : [
+            `\t<object>`,
+            `\t\t<name>${labelName}</name>`,
+            `\t\t<pose>Unspecified</pose>`,
+            `\t\t<truncated>0</truncated>`,
+            `\t\t<difficult>0</difficult>`,
+            `\t\t<bndbox>`,
+            `\t\t\t<xmin>${Math.round(xmin)}</xmin>`,
+            `\t\t\t<ymin>${Math.round(ymin)}</ymin>`,
+            `\t\t\t<xmax>${Math.round(xmax)}</xmax>`,
+            `\t\t\t<ymax>${Math.round(ymax)}</ymax>`,
+            `\t\t</bndbox>`,
+            `\t</object>`,
+          ]
       : []
     return labelFields.join('\n')
   })
   return labelRectString.join('\n')
+}
+
+export const wrapPolygonLabelsIntoVOC = poly => {
+  const points = [] as any
+  const keys = Object.keys(poly.oCoords)
+  keys.map(key => {
+    // points 缩放拖动之后无效,用oCoords替代
+    points.push({
+      x: poly.oCoords[key].x / scale,
+      y: poly.oCoords[key].y / scale,
+    })
+  })
+  const polyString = points.map((item, index) => {
+    const polyFields = [
+      `\t\t\t<x${index + 1}>${calculatePoint(
+        item.x,
+        left,
+        widthRate,
+        width
+      )}</x${index + 1}>`,
+      `\t\t\t<y${index + 1}>${calculatePoint(
+        item.y,
+        top,
+        heightRate,
+        height
+      )}</y${index + 1}>`,
+    ]
+    return polyFields.join('\n')
+  })
+  return polyString.join('\n')
 }

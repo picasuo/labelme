@@ -60,7 +60,7 @@ export default class SxExport extends Vue {
         arr = ['图片分类']
         break
       case 1:
-        arr = ['矩形', '多边形']
+        arr = ['全部导出', '矩形', '多边形']
         break
     }
     return arr
@@ -74,18 +74,17 @@ export default class SxExport extends Vue {
       case '图片分类':
         arr = [{ name: 'Json', label: 'ImgJson' }]
         break
-      case '矩形':
+      case '全部导出':
         arr = [
-          { name: 'VOC XML', label: 'RectVOC' },
-          { name: 'COCOJson', label: 'RectCOCO' },
-          { name: 'YOLO', label: 'RectYOLO' },
+          { name: 'VOC XML', label: 'VOC' },
+          { name: 'COCOJson', label: 'COCO' },
         ]
         break
+      case '矩形':
+        arr = [{ name: 'YOLO v5', label: 'RectYOLO' }]
+        break
       case '多边形':
-        arr = [
-          { name: 'COCOJson', label: 'PolyCOCO' },
-          { name: 'VGGJson', label: 'PolyVGG' },
-        ]
+        arr = [{ name: 'VGGJson', label: 'PolyVGG' }]
         break
     }
     return arr

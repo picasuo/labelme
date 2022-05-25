@@ -6,13 +6,13 @@ let height = 0
 let left = 0
 let top = 0
 let labels = [] as any
-let type = ''
-export const exportCOCO = (objType, data, labelList) => {
-  type = objType
+let scale = 1
+export const exportCOCO = (data, labelList, zoom) => {
   labels = labelList
+  scale = zoom
   const jsonData = mapImagesDataToCOCOObject(data)
   const content = JSON.stringify(jsonData)
-  const fileName = `数据集-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
+  const fileName = `COCO-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
   ExporterUtil.saveAs(content, fileName)
 }
 export const mapImagesDataToCOCOObject = data => {
@@ -63,53 +63,53 @@ export const getAnnotationsComponent = data => {
     const canvasHeight = data[item][0].cvsHeight
     widthRate = width / canvasWidth
     heightRate = height / canvasHeight
-    const objs: any = []
+    const rects: any = []
+    const polys: any = []
     data[item].map(v => {
       // 区分矩形、多边形
-      if (v.name === type) objs.push(v)
+      if (v.name === 'rectangle') rects.push(v)
+      if (v.name === 'polygon') polys.push(v)
     })
-    console.log()
-    if (objs.length > 0) {
-      switch (type) {
-        case 'rectangle':
-          objs.map(v => {
-            const points = [
-              { x: v.aCoords.tl.x, y: v.aCoords.tl.y },
-              { x: v.aCoords.tr.x, y: v.aCoords.tr.y },
-              { x: v.aCoords.bl.x, y: v.aCoords.bl.y },
-              { x: v.aCoords.br.x, y: v.aCoords.br.y },
-            ] as any
-            annotations.push({
-              id: id++,
-              iscrowd: 0,
-              image_id: index + 1,
-              category_id: labels.findIndex(el => el.name === v.labelName) + 1,
-              segmentation: [],
-              bbox: getCOCOBbox(points),
-              area: getCOCOArea(points),
-            })
+    if (rects.length > 0) {
+      rects.map(v => {
+        const points = [
+          { x: v.aCoords.tl.x, y: v.aCoords.tl.y },
+          { x: v.aCoords.tr.x, y: v.aCoords.tr.y },
+          { x: v.aCoords.bl.x, y: v.aCoords.bl.y },
+          { x: v.aCoords.br.x, y: v.aCoords.br.y },
+        ] as any
+        annotations.push({
+          id: id++,
+          iscrowd: 0,
+          image_id: index + 1,
+          category_id: labels.findIndex(el => el.name === v.labelName) + 1,
+          segmentation: [],
+          bbox: getCOCOBbox(points),
+          area: getCOCOArea(points),
+        })
+      })
+    }
+    if (polys.length > 0) {
+      polys.map(v => {
+        const points = [] as any
+        const keys = Object.keys(v.oCoords)
+        keys.map(key => {
+          // points 缩放拖动之后无效,用oCoords替代
+          points.push({
+            x: v.oCoords[key].x / scale,
+            y: v.oCoords[key].y / scale,
           })
-          break
-        case 'polygon':
-          objs.map(v => {
-            const points = [] as any
-            const keys = Object.keys(v.oCoords)
-            keys.map(key => {
-              // points 缩放拖动之后无效,用oCoords替代
-              points.push({ x: v.oCoords[key].x, y: v.oCoords[key].y })
-            })
-            annotations.push({
-              id: id++,
-              iscrowd: 0,
-              image_id: index + 1,
-              category_id: labels.findIndex(el => el.name === v.labelName) + 1,
-              segmentation: getCOCOSegmentation(points),
-              bbox: getCOCOBbox(points),
-              area: getCOCOArea(points),
-            })
-          })
-          break
-      }
+        })
+        annotations.push({
+          id: id++,
+          iscrowd: 0,
+          image_id: index + 1,
+          category_id: labels.findIndex(el => el.name === v.labelName) + 1,
+          segmentation: getCOCOSegmentation(points),
+          bbox: getCOCOBbox(points),
+          area: getCOCOArea(points),
+        })
+      })
     }
   })
   return annotations
