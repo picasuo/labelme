@@ -1,6 +1,6 @@
-import JSZip from 'jszip'
 // import YAML from 'json2yaml'
 import { saveAs } from 'file-saver'
+import JSZip from 'jszip'
 import { calculatePoint } from './ExporterUtil'
 import { NumberUtil } from './NumberUtil'
 
@@ -90,20 +90,23 @@ export const wrapRectLabelsIntoYOLO = imgData => {
 export const wrapRectLabelIntoYOLO = data => {
   const snapAndFix = (value: number) =>
     NumberUtil.snapValueToRange(value, 0, 1).toFixed(6)
+
   const classIdx = _.findIndex(labels, { name: data.labelName }).toString()
   const rectCenter = getCenter(data)
   const rectSize = getSize(data)
   const rawBBox: number[] = [
+    //!中心点在框中的位置
     rectCenter.x / width,
     rectCenter.y / height,
+    //!框/图片
     rectSize.width / width,
     rectSize.height / height,
   ]
   let [x, y, rwidth, rheight] = rawBBox.map((value: number) =>
-    parseFloat(snapAndFix(value))
+    parseFloat(snapAndFix(value)),
   )
   const processedBBox = [x, y, rwidth, rheight].map((value: number) =>
-    snapAndFix(value)
+    snapAndFix(value),
   )
   return [classIdx, ...processedBBox].join(' ')
 }

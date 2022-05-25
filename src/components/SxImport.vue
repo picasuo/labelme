@@ -31,6 +31,10 @@
             >
           </i-radio-group>
           <p v-if="checked">点击此处上传文件</p>
+          <!-- <p>
+            <span> 上传yaml文件 </span>
+            <span>上传txt文件</span>
+          </p> -->
           <input
             v-if="checked"
             ref="fileImport"
@@ -38,13 +42,12 @@
             :multiple="isMultiple"
             :accept="fileFormat"
             @change="importFile"
+            :webkitdirectory="isDirectory"
           />
         </div>
       </div>
       <div class="btn">
-        <span :class="checked !== null ? 'active' : ''" @click="importData"
-          >确定</span
-        >
+        <span :class="isActive ? 'active' : ''" @click="importData">确定</span>
         <span class="cancel" @click="cancel">取消</span>
       </div>
     </div>
@@ -55,6 +58,7 @@
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Radio, RadioGroup } from 'iview'
 import { loadCocoFile } from 'utils/COCOImporter'
+import { loadYoloFile } from 'utils/YOLOImporter'
 
 @Component({
   components: {
@@ -69,11 +73,19 @@ export default class SxImport extends Vue {
   })
   type: number
 
+  @Prop({
+    type: Array,
+  })
+  imagesData: Array<any>
+
   tabName = '' as any
   checked = null as any
   checkedTab = 0
   isMultiple = false
+  isDirectory = false
   fileFormat = ''
+
+  isActive = false
 
   get tabs() {
     let arr = [] as any
@@ -96,7 +108,7 @@ export default class SxImport extends Vue {
         break
       case '矩形':
         arr = [
-          { name: 'VOC XML', label: 'RectVOC' },
+          //   { name: 'VOC XML', label: 'RectVOC' },
           {
             name: 'COCOJson',
             label: 'RectCOCO',
@@ -121,6 +133,13 @@ export default class SxImport extends Vue {
   checkInputStatus(val) {
     if (val === 'RectCOCO' || val === 'ImgJson') {
       this.fileFormat = 'application/json'
+      this.isMultiple = false
+      this.isDirectory = false
+    } else if (val === 'RectYOLO') {
+      //   this.fileFormat = 'text/plain,application/x-yaml'
+      this.fileFormat = 'file'
+      this.isMultiple = true
+      this.isDirectory = true
     }
   }
 
@@ -131,10 +150,16 @@ export default class SxImport extends Vue {
   }
 
   importData() {
-    this.$emit('importData')
+    if (this.isActive) {
+      this.$emit('importData')
+      this.isActive = false
+    } else {
+      return
+    }
   }
 
   cancel() {
+    this.isActive = false
     this.$emit('cancelImport')
   }
 
@@ -144,8 +169,13 @@ export default class SxImport extends Vue {
     if (this.checked === 'RectCOCO' || this.checked === 'ImgJson') {
       loadCocoFile(fileList[0], this.type).then(val => {
         this.$emit('setAnnotation', val)
+        this.isActive = true
       })
-    } else if (this.checked === '') {
+    } else if (this.checked === 'RectYOLO') {
+      loadYoloFile(fileList).then(val => {
+        this.$emit('setAnnotation', val)
+        this.isActive = true
+      })
     }
   }
 }

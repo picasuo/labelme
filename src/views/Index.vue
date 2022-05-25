@@ -355,7 +355,7 @@ export default class Index extends Vue {
   }
 
   loadExpImg(item) {
-    const { url, name } = item
+    const { url, name, type } = item
 
     if (this.lastName) {
       this.objMap[this.lastName] = this.canvas.getObjects()
@@ -367,7 +367,18 @@ export default class Index extends Vue {
 
     this.addImgToCanvas(url, name).then(() => {
       //!判断是否导入过注解框
-      const imgData = this.imagesData.find(img => img.fileData.name === name)
+      //图片后缀 jpg/jpeg/png
+
+      let imgData = {} as any
+      if (this.isYolo) {
+        const prefixName = name.split('.')[0]
+        imgData = this.imagesData.find(img => img.imgName === prefixName)
+      } else {
+        imgData = this.imagesData.find(img => img.fileData.name === name)
+      }
+
+      //   // todo
+      //   console.log('imgData', imgData)
 
       if (imgData && !imgData.loadStatus) {
         //!拿到图片的宽高左右
@@ -381,13 +392,35 @@ export default class Index extends Vue {
         const top = tl.y
         const widthRate = width / imgWidth
         const heightRate = height / imgHeight
+
         const { labelRects } = imgData
         //!当前图片labelMap
         let labelMap = {} as Record<string, any>
+        // // todo
+        // console.log('labelRects', labelRects)
+
         labelRects.forEach(rectItem => {
-          const { labelId, rect } = rectItem
+          let rectWidth = 0
+          let rectHeight = 0
+          let rectLeft = 0
+          let rectTop = 0
+          const { labelId } = rectItem
+          if (this.isYolo) {
+            const { bbox } = rectItem
+            rectWidth = bbox[2] * imgWidth
+            rectHeight = bbox[3] * imgHeight
+            rectLeft = bbox[0] * imgWidth - 0.5 * rectWidth
+            rectTop = bbox[1] * imgHeight - 0.5 * rectHeight
+          } else {
+            const { rect } = rectItem
+            rectWidth = rect.width / widthRate
+            rectHeight = rect.height / heightRate
+            rectLeft = rect.x / widthRate + left
+            rectTop = rect.y / heightRate + top
+          }
+
           const { name: labelName, color } = this.labelNames.find(
-            label => label.id === labelId
+            label => label.id === labelId,
           )
 
           if (!labelMap[labelName]) {
@@ -397,15 +430,15 @@ export default class Index extends Vue {
               count: 1,
             }
           } else {
-            labelMap[name].count++
+            labelMap[labelName].count++
           }
 
           const rectangle = new fabric.Rect({
-            width: rect.width / widthRate,
-            height: rect.height / heightRate,
+            width: rectWidth,
+            height: rectHeight,
             fill: color,
-            left: rect.x / widthRate + left,
-            top: rect.y / heightRate + top,
+            left: rectLeft,
+            top: rectTop,
             labelName,
             lockRotation: true,
             name: 'rectangle',
@@ -453,12 +486,6 @@ export default class Index extends Vue {
 
       this.hasEditedNum = count
     })
-
-    // // todo
-    // console.log('canvas', this.canvas.getObjects())
-
-    // // todo
-    // console.log('objMap', this.objMap)
   }
 
   //将图片加载到画布中
@@ -514,7 +541,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -710,7 +737,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -730,7 +757,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -744,10 +771,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             break
           //反撤销
@@ -774,7 +801,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      }
+      },
     )
 
     //禁用快捷键
@@ -1079,14 +1106,14 @@ export default class Index extends Vue {
           this.canvas.height -
             boundingRect.height +
             active.top -
-            boundingRect.top
+            boundingRect.top,
         )
         active.left = Math.min(
           active.left,
           this.canvas.width -
             boundingRect.width +
             active.left -
-            boundingRect.left
+            boundingRect.left,
         )
       }
 
@@ -1140,11 +1167,11 @@ export default class Index extends Vue {
       ) {
         obj.top = Math.min(
           obj.top,
-          canvasHeight - boundingRect.height + obj.top - boundingRect.top
+          canvasHeight - boundingRect.height + obj.top - boundingRect.top,
         )
         obj.left = Math.min(
           obj.left,
-          canvasWidth - boundingRect.width + obj.left - boundingRect.left
+          canvasWidth - boundingRect.width + obj.left - boundingRect.left,
         )
       }
     })
@@ -1175,16 +1202,20 @@ export default class Index extends Vue {
         this.labelListMap[image] = list
       })
 
-      this.setLabelShortCuts()
+      //   this.setLabelShortCuts()
     } else {
+      this.isYolo = val.isYolo
       this.imagesData = val.imagesData
       this.labelNames = val.labelNames
     }
   }
 
+  isYolo = false
+
   confirmImport() {
     const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
     this.labelList = this.labelList.concat(this.labelNames)
+    this.setLabelShortCuts()
     this.loadExpImg(picItem)
     this.isImport = false
   }

@@ -66,7 +66,7 @@ export default class SXMask extends Vue {
   uploadImg() {
     const fileList = this!.$refs!.fileInput!['files'] as any
     // // todo
-    // console.log('fileList', fileList)
+
     saveFileList(fileList)
 
     this.getUrlList(fileList)
@@ -94,10 +94,17 @@ export default class SXMask extends Vue {
             return
           }
 
+          const formatType = type.split('/')[1]
+
           const reader = new FileReader() as any
           reader.readAsDataURL(file)
           reader.onload = () => {
-            picUrlList.push({ name, url: reader.result, size })
+            picUrlList.push({
+              name,
+              url: reader.result,
+              size,
+              type: formatType,
+            })
             if (picUrlList.length === fileList.length) {
               resolve(picUrlList)
             }

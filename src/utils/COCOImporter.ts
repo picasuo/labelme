@@ -138,9 +138,14 @@ export const loadCocoFile = (file, type) => {
             imagesData.length === resultImageData.length &&
             labelNames.length === categories.length
           ) {
+            // todo
+            console.log('imagesData', imagesData)
+            console.log('labelNames', labelNames)
+
             resolve({
               imagesData,
               labelNames,
+              isYolo: false,
             })
           }
         } else {
