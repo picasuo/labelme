@@ -625,14 +625,11 @@ export default class Index extends Vue {
         case 'RectVOC':
           exportVOC(deepObjMap)
           break
-        case 'RectCOCO':
-          exportCOCO('rectangle', deepObjMap, this.labelList)
+        case 'COCO':
+          exportCOCO(deepObjMap, this.labelList)
           break
         case 'RectYOLO':
           exportYOLO(deepObjMap, this.labelList)
-          break
-        case 'PolyCOCO':
-          exportCOCO('polygon', deepObjMap, this.labelList)
           break
         case 'PolyVGG':
           exportVGG(deepObjMap, this.picList)
@@ -1265,6 +1262,9 @@ export default class Index extends Vue {
       display: flex;
       align-items: center;
       justify-content: center;
+      #canvas {
+        border: 1px solid #fff;
+      }
 
       > img {
         display: none;
