@@ -6,11 +6,13 @@ let height = 0
 let left = 0
 let top = 0
 let labels = [] as any
-export const exportCOCO = (data, labelList) => {
+let scale = 1
+export const exportCOCO = (data, labelList, zoom) => {
   labels = labelList
+  scale = zoom
   const jsonData = mapImagesDataToCOCOObject(data)
   const content = JSON.stringify(jsonData)
-  const fileName = `数据集-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
+  const fileName = `COCO-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
   ExporterUtil.saveAs(content, fileName)
 }
 export const mapImagesDataToCOCOObject = data => {
@@ -93,7 +95,10 @@ export const getAnnotationsComponent = data => {
         const keys = Object.keys(v.oCoords)
         keys.map(key => {
           // points 缩放拖动之后无效,用oCoords替代
-          points.push({ x: v.oCoords[key].x, y: v.oCoords[key].y })
+          points.push({
+            x: v.oCoords[key].x / scale,
+            y: v.oCoords[key].y / scale,
+          })
         })
         annotations.push({
           id: id++,

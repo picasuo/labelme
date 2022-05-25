@@ -13,6 +13,6 @@ export const exportImgJson = data => {
     }
   })
   const content = JSON.stringify(contentObject)
-  const fileName = `数据集-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
+  const fileName = `Img-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
   ExporterUtil.saveAs(content, fileName)
 }
