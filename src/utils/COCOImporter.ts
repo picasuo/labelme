@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { deserialize } from './ImportHelper'
-import { getRandomColor } from './tools'
+import { Colors } from './tools'
 
 let fileList = [] as Array<any>
 
@@ -25,10 +25,11 @@ export const arrange = (items, idArrangement: string[]): ImageData[] => {
 
 //!包装文件
 const packImageData = fileList => {
-  return Array.prototype.map.call(fileList, (file: File) => {
+  return fileList.map(file => {
     return {
       id: uuidv4(),
-      fileData: file,
+      //   fileData: file,
+      imgName: file.file_name,
       loadStatus: false,
       labelRects: [],
       labelPoints: [],
@@ -45,7 +46,7 @@ const packImageData = fileList => {
 const partitionImageData = (inputImagesData, imageNames) => {
   const imageDataPartition = { pass: [], fail: [] } as Record<string, any>
   inputImagesData.forEach((item: any) => {
-    if (imageNames.includes(item.fileData.name)) {
+    if (imageNames.includes(item.imgName)) {
       imageDataPartition.pass.push(item)
     } else {
       imageDataPartition.fail.push(item)
@@ -61,7 +62,7 @@ const handleLabelMap = categories => {
     labelNameMap[categorie.id] = {
       id: uuidv4(),
       name: categorie.name,
-      color: getRandomColor(),
+      color: Colors.random(),
     }
   })
 
@@ -73,7 +74,7 @@ const handleImageData = (images, imageDataPartition) => {
   images.forEach(image => {
     const { id, file_name } = image
     const passItem = imageDataPartition.pass.find(
-      img => img.fileData.name === file_name,
+      img => img.imgName === file_name,
     )
     if (passItem) {
       imageDataMap[id] = passItem
@@ -93,12 +94,19 @@ export const loadCocoFile = (file, type) => {
           let imagesData = [] as any
           let labelNames = [] as any
           const annotationsObject = deserialize(evt.target.result)
+          //   // todo
+          //   console.log('annotationsObject', annotationsObject)
+
           const { images, categories, annotations } = annotationsObject
 
           //!引入的注解文件包含的图片名称
           const imageNames: string[] = images.map(i => i.file_name)
 
-          const inputImagesData = packImageData(fileList)
+          //   const inputImagesData = packImageData(fileList)
+          const inputImagesData = packImageData(images)
+
+          //   // todo
+          //   console.log('inputImagesData', inputImagesData)
 
           //!对目前存在的图片进行分类 pass-包含在注解文件中  fail-不包含
           const imageDataPartition = partitionImageData(
@@ -138,10 +146,6 @@ export const loadCocoFile = (file, type) => {
             imagesData.length === resultImageData.length &&
             labelNames.length === categories.length
           ) {
-            // todo
-            console.log('imagesData', imagesData)
-            console.log('labelNames', labelNames)
-
             resolve({
               imagesData,
               labelNames,
