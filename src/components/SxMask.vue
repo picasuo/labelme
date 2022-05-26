@@ -34,6 +34,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { saveFileList } from 'utils/COCOImporter'
+import { getPicResolution } from 'utils/tools'
 
 @Component({
   components: {},
@@ -73,12 +74,6 @@ export default class SXMask extends Vue {
 
   uploadImg() {
     const fileList = this!.$refs!.fileInput!['files'] as any
-
-    // todo
-    console.log('fileList', fileList)
-
-    // // todo
-
     saveFileList(fileList)
 
     this.getUrlList(fileList)
@@ -109,18 +104,22 @@ export default class SXMask extends Vue {
             return
           }
 
-          const formatType = type.split('/')[1]
-
           const reader = new FileReader() as any
           reader.readAsDataURL(file)
           reader.onload = () => {
-            picUrlList.push({
-              name,
-              url: reader.result,
-              size,
-            })
-            if (picUrlList.length === fileList.length) {
-              resolve(picUrlList)
+            const img = new Image()
+            img.src = reader.result
+            // 获取图片宽高
+            img.onload = function () {
+              picUrlList.push({
+                name,
+                url: reader.result,
+                format: `${img.width}*${img.height}`,
+                size,
+              })
+              if (picUrlList.length === fileList.length) {
+                resolve(picUrlList)
+              }
             }
           }
         })

@@ -99,36 +99,43 @@
             <span class="addImg" @click="addImg">继续添加</span>
           </div>
 
-          <ul class="img__list" v-if="!isShown && picList.length > 0">
-            <li
-              class="img__item"
-              v-for="(item, index) in picList"
-              :key="index"
-              :class="currentPicUrl === item.url ? 'img-active' : ''"
-              @click="loadExpImg(item)"
-            >
-              <div
-                class="img__background"
-                :style="{ backgroundImage: `url(${item.url})` }"
-              ></div>
+          <!-- :prerender="10"好像没效果 -->
+          <RecycleScroller
+            class="img__list"
+            :items="picList"
+            :item-size="70"
+            key-field="name"
+            v-if="!isShown && picList.length > 0"
+          >
+            <template v-slot="{ item }">
+              <li
+                class="img__item"
+                :class="currentPicUrl === item.url ? 'img-active' : ''"
+                @click="loadExpImg(item)"
+              >
+                <div
+                  class="img__background"
+                  :style="{ backgroundImage: `url(${item.url})` }"
+                ></div>
 
-              <div class="img__info">
-                <p class="img__name" :title="item.name">
-                  {{ handlePicName(item.name, 5) }}
-                </p>
-                <p>{{ getPicResolution(item.url) }}</p>
-                <sx-icon
-                  v-if="
-                    (labelListMap[item.name] &&
-                      labelListMap[item.name].length > 0) ||
-                    (objMap[item.name] && objMap[item.name].length > 1)
-                  "
-                  size="small"
-                  type="icon-yiwancheng"
-                />
-              </div>
-            </li>
-          </ul>
+                <div class="img__info">
+                  <p class="img__name" :title="item.name">
+                    {{ handlePicName(item.name, 5) }}
+                  </p>
+                  <p>{{ item.format }}</p>
+                  <sx-icon
+                    v-if="
+                      (labelListMap[item.name] &&
+                        labelListMap[item.name].length > 0) ||
+                      (objMap[item.name] && objMap[item.name].length > 1)
+                    "
+                    size="small"
+                    type="icon-yiwancheng"
+                  />
+                </div>
+              </li>
+            </template>
+          </RecycleScroller>
         </div>
       </div>
     </div>
@@ -438,7 +445,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -500,6 +507,8 @@ export default class Index extends Vue {
       (resolve: (value: any) => void, reject: (value: any) => void) => {
         //!再次加载，导入之前保存的数据
         if (this.objMap[name]?.length > 0) {
+          this.canvas.setWidth([this.objMap[name][0].cvsWidth])
+          this.canvas.setHeight([this.objMap[name][0].cvsHeight])
           this.objMap[name].forEach(v => {
             this.canvas.add(v)
           })
@@ -535,7 +544,6 @@ export default class Index extends Vue {
               cvsHeight: currentHeight,
             })
             this.canvas.add(oImg)
-
             resolve('')
           })
         }
@@ -573,6 +581,9 @@ export default class Index extends Vue {
 
       this.picList = this.picList.concat(addPicList)
     }
+
+    // todo
+    console.log('picList', this.picList)
 
     if (this.loadPicNum > 0) {
       this.loadExpImg(this.picList[0])
@@ -681,6 +692,7 @@ export default class Index extends Vue {
             this.labelList,
             this.canvas.getZoom(),
             changedPic,
+            rate,
           )
           break
         case 'RectYOLO':
@@ -1451,7 +1463,7 @@ export default class Index extends Vue {
 
         &__list {
           flex: 1;
-          overflow-y: scroll;
+          //   overflow-y: scroll;
         }
 
         &__item {

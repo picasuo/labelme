@@ -91,8 +91,9 @@ export const getRandomColor = () => {
 export const getPicResolution = url => {
   const img = new Image()
   img.src = url
-
-  return `${img.width}*${img.height}`
+  img.onload = () => {
+    return `${img.width}*${img.height}`
+  }
 }
 
 export const shortCuts =
