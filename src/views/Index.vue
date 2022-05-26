@@ -5,18 +5,21 @@
         正在进行的任务<span>{{ hasEditedNum }}</span
         >{{ `/${loadPicNum && !isShown ? loadPicNum : 0}` }}
       </p>
-      <sx-icon class="exit" type="icon-tuichu" @click="exit" />
+      <p class="exit">
+        <sx-icon type="icon-tuichu" @click="exit" />
+      </p>
     </div>
     <div id="tool" class="tool">
       <div class="tool_bar">
         <div
           class="icon"
-          :class="checkedTab === index ? 'checked' : ''"
+          :class="{ hover: true, checked: checkedTab === index }"
           v-for="(item, index) in icons"
           :key="index"
+          :data-line="item.content"
           @click="tabClick(index)"
         >
-          <sx-icon :type="item" />
+          <sx-icon :type="item.icon" />
         </div>
       </div>
       <div class="tool_content">
@@ -543,7 +546,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -553,13 +556,16 @@ export default class Index extends Vue {
     if (type !== 2) {
       this.icons =
         type === 0
-          ? ['icon-wenjiandaoru', 'icon-export']
+          ? [
+              { icon: 'icon-wenjiandaoru', content: '导入文件' },
+              { icon: 'icon-export', content: '导出文件' },
+            ]
           : [
-              'icon-wenjiandaoru',
-              'icon-export',
-              'icon-icon-',
-              'icon-pentoolgangbigongju',
-              'icon-huajuxing_0',
+              { icon: 'icon-wenjiandaoru', content: '导入文件' },
+              { icon: 'icon-export', content: '导出文件' },
+              { icon: 'icon-icon-', content: '拖拽工具(S)' },
+              { icon: 'icon-pentoolgangbigongju', content: '套索工具(P)' },
+              { icon: 'icon-huajuxing_0', content: '矩形工具(R)' },
             ]
     }
 
@@ -741,7 +747,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -761,7 +767,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -775,10 +781,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             break
           //反撤销
@@ -805,7 +811,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      }
+      },
     )
 
     //禁用快捷键
@@ -1111,14 +1117,14 @@ export default class Index extends Vue {
           this.canvas.height -
             boundingRect.height +
             active.top -
-            boundingRect.top
+            boundingRect.top,
         )
         active.left = Math.min(
           active.left,
           this.canvas.width -
             boundingRect.width +
             active.left -
-            boundingRect.left
+            boundingRect.left,
         )
       }
 
@@ -1172,11 +1178,11 @@ export default class Index extends Vue {
       ) {
         obj.top = Math.min(
           obj.top,
-          canvasHeight - boundingRect.height + obj.top - boundingRect.top
+          canvasHeight - boundingRect.height + obj.top - boundingRect.top,
         )
         obj.left = Math.min(
           obj.left,
-          canvasWidth - boundingRect.width + obj.left - boundingRect.left
+          canvasWidth - boundingRect.width + obj.left - boundingRect.left,
         )
       }
     })
@@ -1268,6 +1274,33 @@ export default class Index extends Vue {
       position: absolute;
       right: 1%;
       cursor: pointer;
+      display: flex;
+      height: 100%;
+      width: 40px;
+      justify-content: center;
+      align-items: center;
+
+      &:hover {
+        background: #488feb;
+        &::after {
+          display: flex;
+          min-width: 80px;
+          justify-content: center;
+        }
+      }
+
+      &::after {
+        content: '退出编辑';
+        display: none;
+        position: absolute;
+        top: 10px;
+        right: 45px;
+        background: rgba(34, 34, 34, 0.6);
+        z-index: 998;
+        font-size: 18px;
+        font-family: PingFangSC-Regular, PingFang SC;
+        color: #fff;
+      }
     }
   }
   .tool {
@@ -1284,6 +1317,26 @@ export default class Index extends Vue {
         cursor: pointer;
         width: get-vw(60px);
         height: get-vw(60px);
+
+        &:hover {
+          background: #488feb;
+          &::after {
+            display: flex;
+          }
+        }
+
+        &::after {
+          content: attr(data-line);
+          display: none;
+          position: absolute;
+          //   top: 0;
+          left: 70px;
+          background: rgba(34, 34, 34, 0.6);
+          z-index: 998;
+          font-size: 18px;
+          font-family: PingFangSC-Regular, PingFang SC;
+          color: #fff;
+        }
       }
       .checked {
         background: #488feb;
