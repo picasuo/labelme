@@ -636,10 +636,11 @@ export default class Index extends Vue {
     this.isImport = false
   }
   // 导出
-  submit(type) {
+  submit(type, rate) {
     this.isExport = false
-
     this.objMap[this.lastName] = this.canvas.getObjects()
+
+    const changedPic = [] as any
 
     const deepObjMap =
       this.type === 0
@@ -649,6 +650,9 @@ export default class Index extends Vue {
     keys.map(key => {
       if (!(deepObjMap[key].length > 1)) {
         delete deepObjMap[key]
+      } else {
+        const img = this.picList.find(item => item.name === key)
+        changedPic.push(img)
       }
     })
     if (Object.keys(deepObjMap).length === 0) {
@@ -662,7 +666,12 @@ export default class Index extends Vue {
           exportVOC(deepObjMap, this.canvas.getZoom())
           break
         case 'COCO':
-          exportCOCO(deepObjMap, this.labelList, this.canvas.getZoom())
+          exportCOCO(
+            deepObjMap,
+            this.labelList,
+            this.canvas.getZoom(),
+            changedPic
+          )
           break
         case 'RectYOLO':
           exportYOLO(deepObjMap, this.labelList)
