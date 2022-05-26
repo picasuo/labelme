@@ -25,6 +25,29 @@
               >{{ item.name }}</i-radio
             >
           </i-radio-group>
+          <div class="database">
+            <span>Train:</span>
+            <i-input
+              placeholder="输入占比"
+              type="number"
+              class="rate"
+              v-model="trainRate"
+            />
+            <span>Valid:</span>
+            <i-input
+              placeholder="输入占比"
+              type="number"
+              class="rate"
+              v-model="valRate"
+            />
+            <span>Test:</span>
+            <i-input
+              placeholder="输入占比"
+              type="number"
+              class="rate"
+              v-model="testRate"
+            />
+          </div>
         </div>
       </div>
       <div class="btn">
@@ -39,12 +62,13 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import { Radio, RadioGroup } from 'iview'
+import { Radio, RadioGroup, Input } from 'iview'
 
 @Component({
   components: {
     iRadioGroup: RadioGroup,
     iRadio: Radio,
+    iInput: Input,
   },
 })
 export default class SxExport extends Vue {
@@ -68,6 +92,9 @@ export default class SxExport extends Vue {
   checkedTab = 0
   checked = null as any
   tabName = '' as any
+  trainRate = 1 as any
+  valRate = 0 as any
+  testRate = 0 as any
   get exportRadio() {
     let arr = [] as any
     switch (this.tabName) {
@@ -101,7 +128,21 @@ export default class SxExport extends Vue {
     this.$emit('cancel')
   }
   exportData() {
-    this.$emit('exportData', this.checked)
+    let sum: number =
+      parseFloat(this.trainRate) +
+      parseFloat(this.testRate) +
+      parseFloat(this.valRate)
+    if (sum === 0) {
+      sum = 0
+      this.trainRate = 1
+      this.testRate = this.valRate = 0
+    }
+    const rate = {
+      train: this.trainRate / sum,
+      valid: this.valRate / sum,
+      test: this.testRate / sum,
+    }
+    this.$emit('exportData', this.checked, rate)
   }
 }
 </script>
@@ -179,10 +220,22 @@ export default class SxExport extends Vue {
     height: 100%;
     flex: 1;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     color: #fff;
     font-family: PingFangSC-Regular, PingFang SC;
+    .database {
+      margin-top: 20px;
+      span {
+        font-size: 16px;
+        font-weight: 400;
+        margin: 0 5px 0 15px;
+      }
+      .rate {
+        width: 100px;
+      }
+    }
   }
 }
 

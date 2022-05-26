@@ -94,7 +94,7 @@ export default class SxImport extends Vue {
         arr = ['图片分类']
         break
       case 1:
-        arr = ['矩形', '多边形']
+        arr = ['全部导入', '矩形', '多边形']
         break
     }
     return arr
@@ -106,21 +106,14 @@ export default class SxImport extends Vue {
       case '图片分类':
         arr = [{ name: 'Json', label: 'ImgJson' }]
         break
+      case '全部导入':
+        arr = [{ name: 'COCOJson', label: 'RectCOCO' }]
+        break
       case '矩形':
-        arr = [
-          //   { name: 'VOC XML', label: 'RectVOC' },
-          {
-            name: 'COCOJson',
-            label: 'RectCOCO',
-          },
-          { name: 'YOLO', label: 'RectYOLO' },
-        ]
+        arr = [{ name: 'YOLO', label: 'RectYOLO' }]
         break
       case '多边形':
-        arr = [
-          { name: 'COCOJson', label: 'PolyCOCO' },
-          { name: 'VGGJson', label: 'PolyVGG' },
-        ]
+        arr = []
         break
     }
     return arr

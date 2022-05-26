@@ -51,6 +51,7 @@ export const wrapLabels = data => {
   let labels: any = {
     train: '../train/images',
     val: '../valid/images',
+    test: '../test/images',
     nc: data.length,
   }
   let names = '['
@@ -59,13 +60,14 @@ export const wrapLabels = data => {
   })
   // 替换最后一个字符,改为]
   names = names.replace(/.$/, ']')
-  const yml = `
-    train: ${labels.train}
-    val: ${labels.val}
-    nc: ${labels.nc}
-    names: ${names}
-  `
-  return yml
+  const yml = [
+    `train: ${labels.train}`,
+    `val: ${labels.val}`,
+    `test: ${labels.test}`,
+    `nc: ${labels.nc}`,
+    `names: ${names}`,
+  ]
+  return yml.join('\n')
 }
 
 export const wrapRectLabelsIntoYOLO = imgData => {

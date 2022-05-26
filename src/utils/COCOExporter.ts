@@ -1,4 +1,7 @@
-import { calculatePoint, ExporterUtil } from './ExporterUtil'
+import { calculatePoint } from './ExporterUtil'
+import { saveAs } from 'file-saver'
+import JSZip from 'jszip'
+
 let widthRate = 0
 let heightRate = 0
 let width = 0
@@ -7,13 +10,32 @@ let left = 0
 let top = 0
 let labels = [] as any
 let scale = 1
-export const exportCOCO = (data, labelList, zoom) => {
+let picList = [] as any
+export const exportCOCO = (data, labelList, zoom, changedPic) => {
   labels = labelList
   scale = zoom
+  picList = changedPic
+  const zip = new JSZip()
   const jsonData = mapImagesDataToCOCOObject(data)
   const content = JSON.stringify(jsonData)
-  const fileName = `COCO-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
-  ExporterUtil.saveAs(content, fileName)
+  try {
+    zip.file('train.json', content)
+    const train: any = zip.folder('train')
+    picList.map(pic => {
+      train.file(pic.name, pic.url.substring(22), { base64: true })
+    })
+  } catch (error) {
+    // TODO
+    throw new Error(error as string)
+  }
+  try {
+    zip.generateAsync({ type: 'blob' }).then((content: Blob) => {
+      saveAs(content, `COCO-${moment().format('YYYY-MM-DD-hh-mm-ss')}.zip`)
+    })
+  } catch (error) {
+    // TODO
+    throw new Error(error as string)
+  }
 }
 export const mapImagesDataToCOCOObject = data => {
   return {
