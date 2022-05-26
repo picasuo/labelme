@@ -111,6 +111,7 @@
                 class="img__background"
                 :style="{ backgroundImage: `url(${item.url})` }"
               ></div>
+
               <div class="img__info">
                 <p class="img__name" :title="item.name">
                   {{ handlePicName(item.name, 5) }}
@@ -670,7 +671,7 @@ export default class Index extends Vue {
             deepObjMap,
             this.labelList,
             this.canvas.getZoom(),
-            changedPic
+            changedPic,
           )
           break
         case 'RectYOLO':
@@ -1333,8 +1334,7 @@ export default class Index extends Vue {
             display: flex;
           }
         }
-
-        &::after {
+        a &::after {
           content: attr(data-line);
           display: none;
           position: absolute;
