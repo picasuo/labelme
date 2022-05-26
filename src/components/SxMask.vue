@@ -13,13 +13,19 @@
           @change="uploadImg"
         />
       </div>
-      <div v-if="!isAdd" class="btn" :class="loadContext ? 'btn-active' : ''">
-        <span @click="enterEdit(0)">图片分类</span>
-        <span @click="enterEdit(1)">对象检测</span>
+      <div v-if="!isAdd" class="btn">
+        <span :class="isActive ? 'active' : ''" @click="enterEdit(0)"
+          >图片分类</span
+        >
+        <span :class="isActive ? 'active' : ''" @click="enterEdit(1)"
+          >对象检测</span
+        >
       </div>
       <div v-else class="btn" :class="loadContext ? 'btn-active' : ''">
-        <span @click="enterEdit(type)">确定</span>
-        <span @click="enterEdit(2)">取消</span>
+        <span :class="isActive ? 'active' : ''" @click="enterEdit(type)"
+          >确定</span
+        >
+        <span class="active" @click="enterEdit(2)">取消</span>
       </div>
     </div>
   </div>
@@ -48,6 +54,8 @@ export default class SXMask extends Vue {
   })
   type: number
 
+  isActive = false
+
   get loadContext() {
     let picNum = this.picUrlList.length + this.loadPicNum
     // if (this.isAdd) {
@@ -72,8 +80,10 @@ export default class SXMask extends Vue {
     this.getUrlList(fileList)
       .then(val => {
         this.picUrlList = val
+        this.isActive = true
       })
       .catch(err => {
+        this.isActive = false
         this.$SxMessage.error(err)
       })
 
@@ -89,6 +99,7 @@ export default class SXMask extends Vue {
         const picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
           const { type, name, size } = file
+
           if (!/image\/(png|jp(e)g)$/.test(type)) {
             reject('请上传正确格式的图片')
             return
@@ -103,7 +114,6 @@ export default class SXMask extends Vue {
               name,
               url: reader.result,
               size,
-              type: formatType,
             })
             if (picUrlList.length === fileList.length) {
               resolve(picUrlList)
@@ -121,6 +131,8 @@ export default class SXMask extends Vue {
       this.$emit('enterEdit', type, [])
     }
     this.picUrlList = []
+
+    this.isActive = false
   }
 }
 </script>
@@ -203,12 +215,11 @@ export default class SXMask extends Vue {
     border: 2px solid #7d7d7d;
     cursor: no-drop;
   }
-  &-active {
-    > span {
-      color: #fff;
-      border-color: #fff;
-      cursor: pointer;
-    }
-  }
+}
+
+.active {
+  color: #fff;
+  border-color: #fff;
+  cursor: pointer !important;
 }
 </style>

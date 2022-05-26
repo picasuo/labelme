@@ -80,7 +80,11 @@
                   size="small"
                   @click="delLabel(i)"
                 />
-                <span class="table__count">{{ label.count }}</span>
+                <span
+                  class="table__count"
+                  :style="{ backgroundColor: label.color }"
+                  >{{ label.count }}</span
+                >
               </div>
             </li>
           </ul>
@@ -155,7 +159,7 @@ import SxMask from 'components/SxMask.vue'
 import SxExport from 'components/SxExport.vue'
 import {
   handlePicName,
-  getRandomColor,
+  Colors,
   getPicResolution,
   shortCuts,
 } from '../utils/tools'
@@ -256,7 +260,7 @@ export default class Index extends Vue {
       this.$SxMessage.error('该标签已添加')
       return
     }
-    this.labelList.push({ name: this.label, color: getRandomColor() })
+    this.labelList.push({ name: this.label, color: Colors.random() })
     this.label = ''
     //设置label快捷键
     this.setLabelShortCuts()
@@ -355,7 +359,7 @@ export default class Index extends Vue {
   }
 
   loadExpImg(item) {
-    const { url, name, type } = item
+    const { url, name } = item
 
     if (this.lastName) {
       this.objMap[this.lastName] = this.canvas.getObjects()
@@ -366,94 +370,9 @@ export default class Index extends Vue {
     this.currentPicUrl = url
 
     this.addImgToCanvas(url, name).then(() => {
-      //!判断是否导入过注解框
-      //图片后缀 jpg/jpeg/png
+      //将导入文件添加到画板和标签列表中
+      this.addAnnotationToCanvas(name)
 
-      let imgData = {} as any
-      if (this.isYolo) {
-        const prefixName = name.split('.')[0]
-        imgData = this.imagesData.find(img => img.imgName === prefixName)
-      } else {
-        imgData = this.imagesData.find(img => img.fileData.name === name)
-      }
-
-      //   // todo
-      //   console.log('imgData', imgData)
-
-      if (imgData && !imgData.loadStatus) {
-        //!拿到图片的宽高左右
-        const { width, height, aCoords } = this.canvas.getObjects()[0]
-        const { bl, br, tl, tr } = aCoords
-        //!求出img在图层中缩放后的宽高以及它相对于图层的left、top
-        const imgWidth = br.x - bl.x
-        const imgHeight = bl.y - tl.y
-
-        const left = tl.x
-        const top = tl.y
-        const widthRate = width / imgWidth
-        const heightRate = height / imgHeight
-
-        const { labelRects } = imgData
-        //!当前图片labelMap
-        let labelMap = {} as Record<string, any>
-        // // todo
-        // console.log('labelRects', labelRects)
-
-        labelRects.forEach(rectItem => {
-          let rectWidth = 0
-          let rectHeight = 0
-          let rectLeft = 0
-          let rectTop = 0
-          const { labelId } = rectItem
-          if (this.isYolo) {
-            const { bbox } = rectItem
-            rectWidth = bbox[2] * imgWidth
-            rectHeight = bbox[3] * imgHeight
-            rectLeft = bbox[0] * imgWidth - 0.5 * rectWidth
-            rectTop = bbox[1] * imgHeight - 0.5 * rectHeight
-          } else {
-            const { rect } = rectItem
-            rectWidth = rect.width / widthRate
-            rectHeight = rect.height / heightRate
-            rectLeft = rect.x / widthRate + left
-            rectTop = rect.y / heightRate + top
-          }
-
-          const { name: labelName, color } = this.labelNames.find(
-            label => label.id === labelId
-          )
-
-          if (!labelMap[labelName]) {
-            labelMap[labelName] = {
-              color,
-              name: labelName,
-              count: 1,
-            }
-          } else {
-            labelMap[labelName].count++
-          }
-
-          const rectangle = new fabric.Rect({
-            width: rectWidth,
-            height: rectHeight,
-            fill: color,
-            left: rectLeft,
-            top: rectTop,
-            labelName,
-            lockRotation: true,
-            name: 'rectangle',
-            // stroke:'green',
-            // strokeWidth:3,
-            //   centeredRotation: true,
-          })
-          this.canvas.add(rectangle)
-        })
-
-        this.labelListMap[name] = this.labelListMap[name]
-          ? this.labelListMap[name].concat(Object.values(labelMap))
-          : Object.values(labelMap)
-        imgData.loadStatus = true
-      }
       if (this.type === 0) {
         this.canvas.setActiveObject(this.canvas.getObjects()[0])
         this.canvas
@@ -462,30 +381,113 @@ export default class Index extends Vue {
       }
 
       //判断。重现label列表数据
-      if (this.labelListMap[name]) {
-        this.currentLabelList = this.labelListMap[name]
-      } else {
-        this.currentLabelList = []
-      }
+      this.currentLabelList = this.labelListMap[name]
+        ? this.labelListMap[name]
+        : []
 
       this.lastName = name
-      let count = 0
-      if (this.type === 0) {
-        Object.keys(this.labelListMap).forEach(item => {
-          if (this.labelListMap[item].length > 0) {
-            count++
+
+      this.hasEditedNum = this.computeEditedSession()
+    })
+  }
+
+  //将导入文件添加到画板和标签列表中
+  addAnnotationToCanvas(name) {
+    const prefixName = this.isYolo ? name.slice(0, name.lastIndexOf('.')) : name
+    const imgData = this.imagesData.find(img => img.imgName === prefixName)
+
+    if (imgData && !imgData.loadStatus) {
+      //!拿到图片的宽高左右
+      const { width, height, aCoords } = this.canvas.getObjects()[0]
+      const { bl, br, tl, tr } = aCoords
+      //!求出img在图层中缩放后的宽高以及它相对于图层的left、top
+      const imgWidth = br.x - bl.x
+      const imgHeight = bl.y - tl.y
+
+      const { labelRects } = imgData
+      //!当前图片labelMap
+      let labelMap = {} as Record<string, any>
+
+      labelRects.forEach(rectItem => {
+        let rectWidth = 0
+        let rectHeight = 0
+        let rectLeft = 0
+        let rectTop = 0
+        const { labelId } = rectItem
+
+        if (this.isYolo) {
+          const { bbox } = rectItem
+          rectWidth = bbox[2] * imgWidth
+          rectHeight = bbox[3] * imgHeight
+          rectLeft = bbox[0] * imgWidth - 0.5 * rectWidth
+          rectTop = bbox[1] * imgHeight - 0.5 * rectHeight
+        } else {
+          const left = tl.x
+          const top = tl.y
+          const widthRate = width / imgWidth
+          const heightRate = height / imgHeight
+          const { rect } = rectItem
+          rectWidth = rect.width / widthRate
+          rectHeight = rect.height / heightRate
+          rectLeft = rect.x / widthRate + left
+          rectTop = rect.y / heightRate + top
+        }
+
+        const { name: labelName, color } = this.labelNames.find(
+          label => label.id === labelId,
+        )
+
+        if (!labelMap[labelName]) {
+          labelMap[labelName] = {
+            color,
+            name: labelName,
+            count: 1,
           }
+        } else {
+          labelMap[labelName].count++
+        }
+
+        const rectangle = new fabric.Rect({
+          width: rectWidth,
+          height: rectHeight,
+          fill: color,
+          left: rectLeft,
+          top: rectTop,
+          labelName,
+          lockRotation: true,
+          name: 'rectangle',
+          opacity: 0.5,
+          // stroke:'green',
+          // strokeWidth:3,
+          //   centeredRotation: true,
         })
-      } else {
-        for (let key in this.objMap) {
-          if (this.objMap[key].length > 1) {
-            count++
-          }
+        this.canvas.add(rectangle)
+      })
+
+      this.labelListMap[name] = this.labelListMap[name]
+        ? this.labelListMap[name].concat(Object.values(labelMap))
+        : Object.values(labelMap)
+      imgData.loadStatus = true
+    }
+  }
+
+  //计算正在进行的任务
+  computeEditedSession() {
+    let count = 0
+    if (this.type === 0) {
+      Object.keys(this.labelListMap).forEach(item => {
+        if (this.labelListMap[item].length > 0) {
+          count++
+        }
+      })
+    } else {
+      for (let key in this.objMap) {
+        if (this.objMap[key].length > 1) {
+          count++
         }
       }
-
-      this.hasEditedNum = count
-    })
+    }
+    return count
   }
 
   //将图片加载到画布中
@@ -560,22 +562,23 @@ export default class Index extends Vue {
               'icon-huajuxing_0',
             ]
     }
-    const addPicList = [] as Array<any>
+
     if (val.length > 0) {
+      const addPicList = [] as Array<any>
       val.forEach(pic => {
         const { name } = pic
         if (!this.picList.find(item => item.name === name)) {
           addPicList.push(pic)
         }
       })
+
+      this.picList = this.picList.concat(addPicList)
     }
 
-    this.picList = [...this.picList, ...addPicList]
-
     if (this.loadPicNum > 0) {
+      this.loadExpImg(this.picList[0])
       this.isShown = false
       this.isAdd = false
-      this.loadExpImg(this.picList[0])
     }
   }
   addImg() {
@@ -675,6 +678,7 @@ export default class Index extends Vue {
   }
   // 退出
   exit() {
+    location.reload()
     this.objMap = {}
     this.canvas.clear()
     this.isShown = true
@@ -1069,6 +1073,7 @@ export default class Index extends Vue {
       //填充
       fill: 'rgba(255, 255, 255, 0.2)',
       name: 'rectangle',
+      opacity: 0.5,
       lockRotation: true,
     })
 
@@ -1196,7 +1201,7 @@ export default class Index extends Vue {
         annotations.forEach(anno => {
           const obj = {
             name: anno,
-            color: getRandomColor(),
+            color: Colors.random(),
           }
           if (!this.labelList.find(i => i.name === anno)) {
             this.labelList.push(obj)
@@ -1492,10 +1497,10 @@ export default class Index extends Vue {
   &__count {
     width: 30px;
     border-radius: 2em;
-    background: #ccc;
     display: flex;
     justify-content: center;
     margin-left: 10px;
+    opacity: 0.5;
   }
 }
 

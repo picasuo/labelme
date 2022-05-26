@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { getRandomColor } from './tools'
+import { Colors } from './tools'
 
 const yaml = require('js-yaml')
 
@@ -49,7 +49,7 @@ export const loadYoloFile = fileList => {
                     return {
                       name,
                       id: uuidv4(),
-                      color: getRandomColor(),
+                      color: Colors.random(),
                     }
                   })
                   let list = [] as Array<any>
