@@ -438,7 +438,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId,
+          label => label.id === labelId
         )
 
         if (!labelMap[labelName]) {
@@ -508,40 +508,32 @@ export default class Index extends Vue {
           //!首次加载,根据图片原尺寸来等比例缩放长宽
           fabric.Image.fromURL(this.currentPicUrl, oImg => {
             oImg.scaleToHeight(this.height)
-            const currentWidth = (this.height * oImg.width) / oImg.height
+            let currentWidth = (this.height * oImg.width) / oImg.height
+            let currentHeight = this.height
             oImg.scaleToWidth(currentWidth)
             this.canvas.setWidth([currentWidth])
-            this.canvas.setHeight([this.height])
+            this.canvas.setHeight([currentHeight])
             if (currentWidth > this.width) {
               oImg.scaleToWidth(this.width)
-              const currentHeight = (this.width * oImg.height) / oImg.width
+              currentWidth = this.width
+              currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
-              this.canvas.setWidth([this.width])
+              this.canvas.setWidth([currentWidth])
               this.canvas.setHeight([currentHeight])
-              oImg.set({
-                id: 'img',
-                top: 0,
-                left: 0,
-                selectable: true,
-                hasBorders: false,
-                hasControls: false,
-                hasRotatingPoint: false,
-                cvsWidth: this.width,
-                cvsHeight: currentHeight,
-              })
-            } else {
-              oImg.set({
-                id: 'img',
-                top: 0,
-                left: 0,
-                selectable: true,
-                hasBorders: false,
-                hasControls: false,
-                hasRotatingPoint: false,
-                cvsWidth: currentWidth,
-                cvsHeight: this.height,
-              })
             }
+            oImg.set({
+              id: 'img',
+              top: 0,
+              left: 0,
+              selectable: true,
+              hasBorders: false,
+              hasControls: false,
+              hasRotatingPoint: false,
+              lockMovementX: true,
+              lockMovementY: true,
+              cvsWidth: currentWidth,
+              cvsHeight: currentHeight,
+            })
             this.canvas.add(oImg)
 
             resolve('')
@@ -610,10 +602,27 @@ export default class Index extends Vue {
   }
   //0-导入 1-导出 2-移动 3-钢笔 4-矩形
   tabClick(tab) {
+    if (this.canvas.getObjects()[0]) {
+      switch (tab) {
+        case 0:
+        case 1:
+        case 3:
+        case 4:
+          this.canvas
+            .getObjects()[0]
+            .set({ lockMovementX: true, lockMovementY: true })
+          break
+        case 2:
+          this.canvas
+            .getObjects()[0]
+            .set({ lockMovementX: false, lockMovementY: false })
+          break
+      }
+    }
     this.initPolygonParams()
     this.checkedTab = tab
     //整个画板元素不可被选中
-    this.canvas.skipTargetFind = this.checkedTab === 4
+    // this.canvas.skipTargetFind = this.checkedTab === 4
     // 多边形特殊处理
     if (this.checkedTab === 3) this.drawPolygon()
     if (this.checkedTab === 0) this.importData()
@@ -850,11 +859,11 @@ export default class Index extends Vue {
     if (activeObj) {
       switch (activeObj.id) {
         case 'img':
-          this.preventImgFromLeaving(activeObj)
+          if (this.checkedTab === 2) this.preventImgFromLeaving(activeObj)
           break
         default:
           // 选中多边形时
-          if (this.checkedTab === 2 && activeObj.name === 'polygon') {
+          if (activeObj.name === 'polygon') {
             polyEdit(activeObj)
           }
           this.preventRectFromLeaving(activeObj)
@@ -863,7 +872,7 @@ export default class Index extends Vue {
     }
     // 绘制多边形
     if (this.checkedTab === 3) {
-      this.canvas.skipTargetFind = false
+      // this.canvas.skipTargetFind = false
       try {
         // 此段为判断是否闭合多边形，点击红点时闭合多边形
         if (this.pointArray.length > 1) {
@@ -873,7 +882,10 @@ export default class Index extends Vue {
           }
         }
         //未点击红点则继续作画
-        if (this.polygonMode) {
+        if (
+          this.polygonMode &&
+          (!activeObj || activeObj.id === 'img' || this.pointArray.length !== 0)
+        ) {
           this.addPoint(xy)
         }
       } catch (error) {
@@ -891,8 +903,10 @@ export default class Index extends Vue {
     this.moveCount = 1
     if (this.checkedTab === 2 || this.checkedTab === 4) {
       this.doDrawing = false
-      this.checkedTab = 2
-      this.canvas.skipTargetFind = false
+      // this.canvas.skipTargetFind = false
+    }
+    if (this.checkedTab === 3 && !this.polygonMode) {
+      this.drawPolygon()
     }
   }
   //鼠标移动过程中已经完成了绘制
@@ -907,7 +921,10 @@ export default class Index extends Vue {
     this.mouseTo.y = xy.y
     // 矩形
     if (this.checkedTab === 4) {
-      this.drawing(e)
+      const active = this.canvas.getActiveObject()
+      if (!active || active.id === 'img') {
+        this.drawing(e)
+      }
     }
     if (this.checkedTab === 3) {
       if (this.activeLine && this.activeLine.class == 'line') {
@@ -935,7 +952,6 @@ export default class Index extends Vue {
     //这里画的多边形，由顶点与线组成
     this.pointArray = new Array() // 顶点集合
     this.lineArray = new Array() //线集合
-    this.canvas.isDrawingMode = false
   }
   addPoint(xy) {
     const random = Math.floor(Math.random() * 10000)
@@ -1048,7 +1064,6 @@ export default class Index extends Vue {
     this.activeShape = null
     this.polygonMode = false
     this.doDrawing = false
-    this.checkedTab = 2
   }
   //绘制矩形
   drawing(e) {
