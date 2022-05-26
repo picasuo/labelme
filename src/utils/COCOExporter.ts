@@ -11,7 +11,7 @@ let top = 0
 let labels = [] as any
 let scale = 1
 let picList = [] as any
-export const exportCOCO = (data, labelList, zoom, changedPic) => {
+export const exportCOCO = (data, labelList, zoom, changedPic, rate) => {
   labels = labelList
   scale = zoom
   picList = changedPic

@@ -499,6 +499,8 @@ export default class Index extends Vue {
       (resolve: (value: any) => void, reject: (value: any) => void) => {
         //!再次加载，导入之前保存的数据
         if (this.objMap[name]?.length > 0) {
+          this.canvas.setWidth([this.objMap[name][0].cvsWidth])
+          this.canvas.setHeight([this.objMap[name][0].cvsHeight])
           this.objMap[name].forEach(v => {
             this.canvas.add(v)
           })
@@ -534,11 +536,10 @@ export default class Index extends Vue {
               cvsHeight: currentHeight,
             })
             this.canvas.add(oImg)
-
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -679,7 +680,8 @@ export default class Index extends Vue {
             deepObjMap,
             this.labelList,
             this.canvas.getZoom(),
-            changedPic
+            changedPic,
+            rate
           )
           break
         case 'RectYOLO':
@@ -765,7 +767,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -785,7 +787,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -799,10 +801,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             break
           //反撤销
@@ -829,7 +831,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      },
+      }
     )
 
     //禁用快捷键
@@ -1141,14 +1143,14 @@ export default class Index extends Vue {
           this.canvas.height -
             boundingRect.height +
             active.top -
-            boundingRect.top,
+            boundingRect.top
         )
         active.left = Math.min(
           active.left,
           this.canvas.width -
             boundingRect.width +
             active.left -
-            boundingRect.left,
+            boundingRect.left
         )
       }
 
@@ -1202,11 +1204,11 @@ export default class Index extends Vue {
       ) {
         obj.top = Math.min(
           obj.top,
-          canvasHeight - boundingRect.height + obj.top - boundingRect.top,
+          canvasHeight - boundingRect.height + obj.top - boundingRect.top
         )
         obj.left = Math.min(
           obj.left,
-          canvasWidth - boundingRect.width + obj.left - boundingRect.left,
+          canvasWidth - boundingRect.width + obj.left - boundingRect.left
         )
       }
     })
