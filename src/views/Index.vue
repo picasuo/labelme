@@ -142,6 +142,7 @@
     <SxExport
       v-if="isExport"
       :type="type"
+      :picNum="changedPic.length"
       @cancel="cancel"
       @exportData="submit"
     />
@@ -192,6 +193,9 @@ export default class Index extends Vue {
   isShown = true
   isExport = false
   isImport = false
+
+  deepObjMap = {} as any
+  changedPic = [] as any
 
   // 区分添加还是初始化
   isAdd = false
@@ -635,7 +639,32 @@ export default class Index extends Vue {
   }
   // 导出框
   exportData() {
-    this.isExport = true
+    this.objMap[this.lastName] = this.canvas.getObjects()
+    this.labelListMap[this.lastName] = this.currentLabelList
+
+    this.changedPic = []
+
+    this.deepObjMap =
+      this.type === 0
+        ? _.cloneDeep(this.labelListMap)
+        : _.cloneDeep(this.objMap)
+    const keys = Object.keys(this.deepObjMap)
+    keys.map(key => {
+      if (
+        (this.type === 0 && this.deepObjMap[key].length === 0) ||
+        (this.type === 1 && this.deepObjMap[key].length <= 1)
+      ) {
+        delete this.deepObjMap[key]
+      } else {
+        const img = this.picList.find(item => item.name === key)
+        this.changedPic.push(img)
+      }
+    })
+    if (Object.keys(this.deepObjMap).length === 0) {
+      this.$SxMessage.error('未标注图片')
+    } else {
+      this.isExport = true
+    }
   }
   // 取消导出
   cancel() {
@@ -648,49 +677,28 @@ export default class Index extends Vue {
   // 导出
   submit(type, rate) {
     this.isExport = false
-    this.objMap[this.lastName] = this.canvas.getObjects()
-
-    const changedPic = [] as any
-
-    const deepObjMap =
-      this.type === 0
-        ? _.cloneDeep(this.labelListMap)
-        : _.cloneDeep(this.objMap)
-    const keys = Object.keys(deepObjMap)
-    keys.map(key => {
-      if (!(deepObjMap[key].length > 1)) {
-        delete deepObjMap[key]
-      } else {
-        const img = this.picList.find(item => item.name === key)
-        changedPic.push(img)
-      }
-    })
-    if (Object.keys(deepObjMap).length === 0) {
-      this.$SxMessage.error('未标注图片')
-    } else {
-      switch (type) {
-        case 'ImgJson':
-          exportImgJson(deepObjMap)
-          break
-        case 'VOC':
-          exportVOC(deepObjMap, this.canvas.getZoom())
-          break
-        case 'COCO':
-          exportCOCO(
-            deepObjMap,
-            this.labelList,
-            this.canvas.getZoom(),
-            changedPic,
-            rate
-          )
-          break
-        case 'RectYOLO':
-          exportYOLO(deepObjMap, this.labelList)
-          break
-        case 'PolyVGG':
-          exportVGG(deepObjMap, this.picList, this.canvas.getZoom())
-          break
-      }
+    switch (type) {
+      case 'ImgJson':
+        exportImgJson(this.deepObjMap, this.changedPic, rate)
+        break
+      case 'VOC':
+        exportVOC(this.deepObjMap, this.canvas.getZoom(), this.changedPic, rate)
+        break
+      case 'COCO':
+        exportCOCO(
+          this.deepObjMap,
+          this.labelList,
+          this.canvas.getZoom(),
+          this.changedPic,
+          rate
+        )
+        break
+      case 'RectYOLO':
+        exportYOLO(this.deepObjMap, this.labelList)
+        break
+      case 'PolyVGG':
+        exportVGG(this.deepObjMap, this.picList, this.canvas.getZoom())
+        break
     }
   }
   // 退出

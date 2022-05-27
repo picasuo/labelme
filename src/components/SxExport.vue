@@ -26,26 +26,16 @@
             >
           </i-radio-group>
           <div class="database">
-            <span>Train:</span>
-            <i-input
-              placeholder="输入占比"
-              type="number"
-              class="rate"
-              v-model="trainRate"
-            />
-            <span>Valid:</span>
-            <i-input
-              placeholder="输入占比"
-              type="number"
-              class="rate"
-              v-model="valRate"
-            />
-            <span>Test:</span>
-            <i-input
-              placeholder="输入占比"
-              type="number"
-              class="rate"
-              v-model="testRate"
+            <div class="number">
+              <span>{{ `Train: ${train}` }}</span>
+              <span>{{ `Valid: ${valid}` }}</span>
+              <span>{{ `Test: ${test}` }}</span>
+            </div>
+            <i-slider
+              v-model="sliderArr"
+              range
+              :max="max"
+              @on-change="sliderChange"
             />
           </div>
         </div>
@@ -62,13 +52,13 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import { Radio, RadioGroup, Input } from 'iview'
+import { Radio, RadioGroup, Slider } from 'iview'
 
 @Component({
   components: {
     iRadioGroup: RadioGroup,
     iRadio: Radio,
-    iInput: Input,
+    iSlider: Slider,
   },
 })
 export default class SxExport extends Vue {
@@ -77,6 +67,27 @@ export default class SxExport extends Vue {
     type: Number,
   })
   type: number
+  @Prop({
+    type: Number,
+  })
+  picNum: number
+
+  checkedTab = 0
+  checked = null as any
+  tabName = '' as any
+  train = 0 as any
+  valid = 0 as any
+  test = 0 as any
+  sliderArr = [0, 0]
+
+  get max() {
+    this.sliderArr = [this.picNum, this.picNum]
+    this.train = this.picNum
+    this.valid = 0
+    this.test = 0
+    return this.picNum
+  }
+
   get tabs() {
     let arr = [] as any
     switch (this.type) {
@@ -89,12 +100,6 @@ export default class SxExport extends Vue {
     }
     return arr
   }
-  checkedTab = 0
-  checked = null as any
-  tabName = '' as any
-  trainRate = 1 as any
-  valRate = 0 as any
-  testRate = 0 as any
   get exportRadio() {
     let arr = [] as any
     switch (this.tabName) {
@@ -127,20 +132,16 @@ export default class SxExport extends Vue {
   cancel() {
     this.$emit('cancel')
   }
+  sliderChange(val) {
+    this.train = val[0]
+    this.valid = val[1] - val[0]
+    this.test = this.max - val[1]
+  }
   exportData() {
-    let sum: number =
-      parseFloat(this.trainRate) +
-      parseFloat(this.testRate) +
-      parseFloat(this.valRate)
-    if (sum === 0) {
-      sum = 0
-      this.trainRate = 1
-      this.testRate = this.valRate = 0
-    }
     const rate = {
-      train: this.trainRate / sum,
-      valid: this.valRate / sum,
-      test: this.testRate / sum,
+      train: this.train,
+      valid: this.valid,
+      test: this.test,
     }
     this.$emit('exportData', this.checked, rate)
   }
@@ -226,11 +227,17 @@ export default class SxExport extends Vue {
     color: #fff;
     font-family: PingFangSC-Regular, PingFang SC;
     .database {
-      margin-top: 20px;
+      width: 70%;
+      margin-top: 30px;
+      .number {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+      }
       span {
+        display: inline-flex;
+        justify-content: center;
         font-size: 16px;
         font-weight: 400;
-        margin: 0 5px 0 15px;
       }
       .rate {
         width: 100px;
@@ -275,5 +282,12 @@ export default class SxExport extends Vue {
 }
 /deep/.ivu-radio-wrapper {
   font-size: 16px;
+}
+
+/deep/.ivu-slider-bar {
+  background: #646464;
+}
+/deep/.ivu-slider-button {
+  border: 2px solid #fff;
 }
 </style>
