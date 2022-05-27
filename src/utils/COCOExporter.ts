@@ -79,7 +79,7 @@ export const getCategoriesComponent = labelArr => {
 }
 export const getAnnotationsComponent = data => {
   // todo
-//   console.log('data', data)
+  //   console.log('data', data)
 
   let id = 0
   const annotations = [] as any

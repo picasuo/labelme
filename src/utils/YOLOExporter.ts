@@ -3,6 +3,7 @@ import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
 import { calculatePoint } from './ExporterUtil'
 import { NumberUtil } from './NumberUtil'
+import { SegmentationImg, SegmentationData } from './SegmentationImg'
 
 let width = 0
 let height = 0
@@ -12,22 +13,33 @@ let widthRate = 0
 let heightRate = 0
 let labels
 
-export const exportYOLO = (data, labelList) => {
-  let keys: any = Object.keys(data)
+export const exportYOLO = (data, labelList, changedPic, rate) => {
   labels = labelList
   const zip = new JSZip()
-  keys.forEach(item => {
-    const fileContent: string = wrapRectLabelsIntoYOLO(data[item])
-    if (fileContent) {
-      const fileName: string = item.replace(/\.[^/.]+$/, '.txt')
-      try {
-        const train: any = zip.folder('train')
-        const labels = train.folder('labels')
-        labels.file(fileName, fileContent)
-      } catch (error) {
-        // TODO
-        throw new Error(error as string)
-      }
+  const segImgs = SegmentationImg(rate, changedPic)
+  const segKeys = Object.keys(segImgs)
+  segKeys.map(item => {
+    if (segImgs[item].length > 0) {
+      const segData = SegmentationData(data, segImgs[item])
+      const keys = Object.keys(segData)
+      const folder: any = zip.folder(item)
+      const labels = folder.folder('labels')
+      const images = folder.folder('images')
+      keys.forEach(key => {
+        const fileContent: string = wrapRectLabelsIntoYOLO(segData[key])
+        if (fileContent) {
+          const fileName: string = key.replace(/\.[^/.]+$/, '.txt')
+          try {
+            labels.file(fileName, fileContent)
+            segImgs[item].map(pic => {
+              images.file(pic.name, pic.url.substring(22), { base64: true })
+            })
+          } catch (error) {
+            // TODO
+            throw new Error(error as string)
+          }
+        }
+      })
     }
   })
   const lablesContent = wrapLabels(labelList)

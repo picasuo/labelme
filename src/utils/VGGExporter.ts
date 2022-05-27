@@ -1,4 +1,7 @@
-import { ExporterUtil, calculatePoint } from './ExporterUtil'
+import JSZip from 'jszip'
+import { saveAs } from 'file-saver'
+import { calculatePoint } from './ExporterUtil'
+import { SegmentationImg, SegmentationData } from './SegmentationImg'
 
 let filename = ''
 let widthRate = 0
@@ -9,19 +12,43 @@ let left = 0
 let top = 0
 let picList = [] as any
 let scale = 1
-export const exportVGG = (data, pics, zoom) => {
+export const exportVGG = (data, pics, zoom, changedPic, rate) => {
   picList = pics
   scale = zoom
-  let keys: any = Object.keys(data)
-  let jsonData: any = {}
-  keys.forEach(item => {
-    filename = item
-    const fileData = mapImagesDataToVGGObject(data[item])
-    jsonData[filename] = fileData
+  const zip = new JSZip()
+  const segImgs = SegmentationImg(rate, changedPic)
+  const segKeys = Object.keys(segImgs)
+  segKeys.map(key => {
+    if (segImgs[key].length > 0) {
+      const segData = SegmentationData(data, segImgs[key])
+      const keys = Object.keys(segData)
+      let jsonData: any = {}
+      keys.forEach(item => {
+        filename = item
+        const fileData = mapImagesDataToVGGObject(segData[item])
+        jsonData[filename] = fileData
+      })
+      const content = JSON.stringify(jsonData)
+      try {
+        zip.file(`${key}.json`, content)
+        const folder: any = zip.folder(key)
+        segImgs[key].map(pic => {
+          folder.file(pic.name, pic.url.substring(22), { base64: true })
+        })
+      } catch (error) {
+        // TODO
+        throw new Error(error as string)
+      }
+    }
   })
-  const content = JSON.stringify(jsonData)
-  const fileName = `VGG-${moment().format('YYYY-MM-DD-hh-mm-ss')}.json`
-  ExporterUtil.saveAs(content, fileName)
+  try {
+    zip.generateAsync({ type: 'blob' }).then((content: Blob) => {
+      saveAs(content, `VGG-${moment().format('YYYY-MM-DD-hh-mm-ss')}.zip`)
+    })
+  } catch (error) {
+    // TODO
+    throw new Error(error as string)
+  }
 }
 
 export const mapImagesDataToVGGObject = imgData => {

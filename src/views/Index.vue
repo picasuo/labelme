@@ -448,7 +448,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId,
+          label => label.id === labelId
         )
 
         if (!labelMap[labelName]) {
@@ -550,7 +550,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -697,14 +697,22 @@ export default class Index extends Vue {
           this.labelList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate,
+          rate
         )
         break
       case 'RectYOLO':
-        exportYOLO(this.deepObjMap, this.labelList)
+        exportYOLO(this.deepObjMap, this.labelList,
+          this.changedPic,
+          rate)
         break
       case 'PolyVGG':
-        exportVGG(this.deepObjMap, this.picList, this.canvas.getZoom())
+        exportVGG(
+          this.deepObjMap,
+          this.picList,
+          this.canvas.getZoom(),
+          this.changedPic,
+          rate
+        )
         break
     }
   }
@@ -784,7 +792,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -804,7 +812,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -818,10 +826,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
             )
             break
           //反撤销
@@ -848,7 +856,7 @@ export default class Index extends Vue {
             this.deleteObj()
             break
         }
-      },
+      }
     )
 
     //禁用快捷键
@@ -1161,14 +1169,14 @@ export default class Index extends Vue {
           this.canvas.height -
             boundingRect.height +
             active.top -
-            boundingRect.top,
+            boundingRect.top
         )
         active.left = Math.min(
           active.left,
           this.canvas.width -
             boundingRect.width +
             active.left -
-            boundingRect.left,
+            boundingRect.left
         )
       }
 
@@ -1222,11 +1230,11 @@ export default class Index extends Vue {
       ) {
         obj.top = Math.min(
           obj.top,
-          canvasHeight - boundingRect.height + obj.top - boundingRect.top,
+          canvasHeight - boundingRect.height + obj.top - boundingRect.top
         )
         obj.left = Math.min(
           obj.left,
-          canvasWidth - boundingRect.width + obj.left - boundingRect.left,
+          canvasWidth - boundingRect.width + obj.left - boundingRect.left
         )
       }
     })
