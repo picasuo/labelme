@@ -16,8 +16,6 @@ export const Colors = {} as Record<string, any>
 
 Colors.names = {
   aqua: '#00ffff',
-  azure: '#f0ffff',
-  beige: '#f5f5dc',
   black: '#000000',
   blue: '#0000ff',
   brown: '#a52a2a',
@@ -39,12 +37,6 @@ Colors.names = {
   green: '#008000',
   indigo: '#4b0082',
   khaki: '#f0e68c',
-  lightblue: '#add8e6',
-  lightcyan: '#e0ffff',
-  lightgreen: '#90ee90',
-  lightgrey: '#d3d3d3',
-  lightpink: '#ffb6c1',
-  lightyellow: '#ffffe0',
   lime: '#00ff00',
   magenta: '#ff00ff',
   maroon: '#800000',
@@ -56,8 +48,6 @@ Colors.names = {
   violet: '#800080',
   red: '#ff0000',
   silver: '#c0c0c0',
-  white: '#ffffff',
-  yellow: '#ffff00',
 }
 
 Colors.random = function () {

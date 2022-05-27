@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { calculatePoint } from './ExporterUtil'
+import { SegmentationImg, SegmentationData } from './SegmentationImg'
 
 let width = 0
 let height = 0
@@ -10,20 +11,32 @@ let widthRate = 0
 let heightRate = 0
 let scale = 1
 
-export const exportVOC = (data, zoom) => {
-  let keys: any = Object.keys(data)
+export const exportVOC = (data, zoom, changedPic, rate) => {
   scale = zoom
   const zip = new JSZip()
-  keys.forEach(item => {
-    const fileContent = wrapImageIntoVOC(data[item], item)
-    if (fileContent) {
-      const fileName: string = item.replace(/\.[^/.]+$/, '.xml')
-      try {
-        zip.file(fileName, fileContent)
-      } catch (error) {
-        // TODO
-        throw new Error(error as string)
-      }
+  const segImgs = SegmentationImg(rate, changedPic)
+  const segKeys = Object.keys(segImgs)
+  console.log(segKeys)
+  segKeys.map(item => {
+    if (segImgs[item].length > 0) {
+      const segData = SegmentationData(data, segImgs[item])
+      const keys = Object.keys(segData)
+      keys.forEach(key => {
+        const fileContent = wrapImageIntoVOC(segData[key], key)
+        if (fileContent) {
+          const folder: any = zip.folder(key)
+          const fileName: string = key.replace(/\.[^/.]+$/, '.xml')
+          try {
+            folder.file(fileName, fileContent)
+            segImgs[key].map(pic => {
+              folder.file(pic.name, pic.url.substring(22), { base64: true })
+            })
+          } catch (error) {
+            // TODO
+            throw new Error(error as string)
+          }
+        }
+      })
     }
   })
   try {
@@ -47,7 +60,6 @@ export const wrapImageIntoVOC = (imgData, filename) => {
   widthRate = width / canvasWidth
   heightRate = height / canvasHeight
   const labelData = imgData.slice(1)
-  console.log('labelData', labelData)
   const labels = wrapAllLabelsIntoVOC(labelData)
   if (labels) {
     return [
