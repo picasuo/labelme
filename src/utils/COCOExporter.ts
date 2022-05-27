@@ -1,6 +1,6 @@
-import { calculatePoint } from './ExporterUtil'
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
+import { calculatePoint } from './ExporterUtil'
 
 let widthRate = 0
 let heightRate = 0
@@ -72,6 +72,9 @@ export const getCategoriesComponent = labelArr => {
   })
 }
 export const getAnnotationsComponent = data => {
+  // todo
+//   console.log('data', data)
+
   let id = 0
   const annotations = [] as any
   let keys: any = Object.keys(data)

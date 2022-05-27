@@ -98,8 +98,7 @@
             <span>图片管理</span>
             <span class="addImg" @click="addImg">继续添加</span>
           </div>
-
-          <!-- :prerender="10"好像没效果 -->
+          <!-- :prerender="10"items必须大于10,否则报错。 -->
           <RecycleScroller
             class="img__list"
             :items="picList"
@@ -564,9 +563,9 @@ export default class Index extends Vue {
           : [
               { icon: 'icon-wenjiandaoru', content: '导入文件' },
               { icon: 'icon-export', content: '导出文件' },
-              { icon: 'icon-icon-', content: '拖拽工具(S)' },
-              { icon: 'icon-pentoolgangbigongju', content: '套索工具(P)' },
-              { icon: 'icon-huajuxing_0', content: '矩形工具(R)' },
+              { icon: 'icon-icon-', content: '拖拽工具(s)' },
+              { icon: 'icon-pentoolgangbigongju', content: '套索工具(p)' },
+              { icon: 'icon-huajuxing_0', content: '矩形工具(r)' },
             ]
     }
 
@@ -581,9 +580,6 @@ export default class Index extends Vue {
 
       this.picList = this.picList.concat(addPicList)
     }
-
-    // todo
-    console.log('picList', this.picList)
 
     if (this.loadPicNum > 0) {
       this.loadExpImg(this.picList[0])
@@ -738,7 +734,7 @@ export default class Index extends Vue {
       event.preventDefault()
 
       //适配chrome
-      event.returnValue = 'message'
+      event.returnValue = ''
       return 'message'
     }
 
@@ -756,6 +752,8 @@ export default class Index extends Vue {
   }
 
   mousewheel(opt) {
+    // // todo
+    // console.log('opt', opt)
     const delta = opt.e.deltaY
     let zoom = this.canvas.getZoom()
     zoom *= 0.99 ** delta
@@ -1361,7 +1359,7 @@ export default class Index extends Vue {
             display: flex;
           }
         }
-        a &::after {
+        &::after {
           content: attr(data-line);
           display: none;
           position: absolute;
@@ -1412,7 +1410,7 @@ export default class Index extends Vue {
         &__main {
           display: flex;
           align-items: center;
-          padding: 10px;
+          padding: 25px;
           justify-content: space-between;
           position: relative;
         }

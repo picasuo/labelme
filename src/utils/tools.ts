@@ -61,8 +61,8 @@ Colors.names = {
 }
 
 Colors.random = function () {
-  var result
-  var count = 0
+  let result
+  let count = 0
 
   //   const randomNum = Math.random()
   if (Object.keys(this.names).length === 0) {
@@ -70,7 +70,7 @@ Colors.random = function () {
     throw new Error('别玩颜色了！就这么点都给你用完了！')
     return
   }
-  for (var prop in this.names) {
+  for (const prop in this.names) {
     if (Math.random() < 1 / ++count) {
       result = prop
       delete this.names[prop]
