@@ -1,6 +1,5 @@
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
-import { ExporterUtil } from './ExporterUtil'
 import { SegmentationImg, SegmentationData } from './SegmentationImg'
 
 export const exportImgJson = (data, changedPic, rate) => {
