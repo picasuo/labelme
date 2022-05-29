@@ -6,6 +6,13 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "1206906",
+      "name": "强制清除",
+      "font_class": "qiangzhiqingchu",
+      "unicode": "e679",
+      "unicode_decimal": 59001
+    },
+    {
       "icon_id": "169942",
       "name": "文件导入",
       "font_class": "wenjiandaoru",
