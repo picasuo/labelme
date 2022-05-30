@@ -412,8 +412,9 @@ export default class Index extends Vue {
       this.lastName = name
 
       this.hasEditedNum = this.computeEditedSession()
+
+      this.updateModifications()
     })
-    this.updateModifications()
   }
 
   //将导入文件添加到画板和标签列表中
@@ -459,7 +460,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId,
+          label => label.id === labelId
         )
 
         if (!labelMap[labelName]) {
@@ -562,7 +563,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -720,7 +721,7 @@ export default class Index extends Vue {
           this.labelList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate,
+          rate
         )
         break
       case 'RectYOLO':
@@ -732,7 +733,7 @@ export default class Index extends Vue {
           this.picList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate,
+          rate
         )
         break
     }
@@ -784,7 +785,7 @@ export default class Index extends Vue {
         // dX.style.left = `${e.pageX + 6}px`
         // dX.style.top = `${e.pageY + 6}px`
       },
-      false,
+      false
     )
   }
 
@@ -847,6 +848,8 @@ export default class Index extends Vue {
     ])
     this.undoStack.push(myjson)
     this.redoStack = []
+
+    console.log('1111', this.undoStack)
   }
 
   initCanvas() {
@@ -889,7 +892,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -909,7 +912,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -922,16 +925,7 @@ export default class Index extends Vue {
         switch (handler.key) {
           //撤销
           case 'command+z':
-<<<<<<< HEAD
             this.undo()
-=======
-            this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
-            )
-            this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
-            )
->>>>>>> 63abedfb95fac6eee84a9ab173fd99c7b7dabde9
             break
           //反撤销
           case 'command+shift+z':
@@ -963,7 +957,7 @@ export default class Index extends Vue {
             this.tabClick(5)
             break
         }
-      },
+      }
     )
 
     //开启快捷键 默认开启
