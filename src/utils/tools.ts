@@ -17,9 +17,9 @@ export const Colors = {} as Record<string, any>
 Colors.names = {
   aqua: '#00ffff',
   black: '#000000',
-  blue: '#0000ff',
+  //   blue: '#0000ff',
   brown: '#a52a2a',
-  cyan: '#00ffff',
+  //   cyan: '#00ffff',
   darkblue: '#00008b',
   darkcyan: '#008b8b',
   darkgrey: '#a9a9a9',
@@ -32,23 +32,24 @@ Colors.names = {
   darkred: '#8b0000',
   darksalmon: '#e9967a',
   darkviolet: '#9400d3',
-  fuchsia: '#ff00ff',
+  //   fuchsia: '#ff00ff',
   gold: '#ffd700',
   green: '#008000',
   indigo: '#4b0082',
   khaki: '#f0e68c',
   lime: '#00ff00',
-  magenta: '#ff00ff',
+  //   magenta: '#ff00ff',
   maroon: '#800000',
   navy: '#000080',
   olive: '#808000',
   orange: '#ffa500',
   pink: '#ffc0cb',
   purple: '#800080',
-  violet: '#800080',
+  //   violet: '#800080',
   red: '#ff0000',
   silver: '#c0c0c0',
 }
+
 
 Colors.random = function () {
   let result
@@ -60,12 +61,10 @@ Colors.random = function () {
     throw new Error('别玩颜色了！就这么点都给你用完了！')
     return
   }
-  for (const prop in this.names) {
-    if (Math.random() < 1 / ++count) {
-      result = prop
-      delete this.names[prop]
-    }
-  }
+
+  const firstName = Object.keys(this.names)[0]
+  result = this.names[firstName]
+  delete this.names[firstName]
 
   return result
 }

@@ -52,7 +52,8 @@
           <div class="label__list" v-if="labelList.length > 0">
             <span
               class="label__item"
-              v-for="item in labelList"
+              v-for="(item, index) in labelList"
+              :data-sign="'快捷键' + (index + 1) + '绑定标签'"
               :style="{
                 backgroundColor: item.color,
                 border: `1px solid  ${item.color}`,
@@ -161,6 +162,12 @@
       @importData="confirmImport"
       @setAnnotation="setAnnotation"
     />
+
+    <!-- 垂直线 -->
+    <div ref="crosshair-h" id="crosshair-h" class="hair"></div>
+    <!-- 水平线 -->
+    <div ref="crosshair-v" id="crosshair-v" class="hair"></div>
+    <!-- <div ref="cursor-d" id="cursor-d" class="dotx"></div> -->
   </div>
 </template>
 
@@ -223,8 +230,8 @@ export default class Index extends Vue {
   mouseTo = {} as any
   canvasObjectIndex = 0
   rectangleLabel = 'warning'
-  drawWidth = 1 //笔触宽度
-  color = '#e2e2e2' //画笔颜色
+  drawWidth = 2 //笔触宽度
+  color = '#C7FC00' //画笔颜色
   drawingObject = null //当前绘制对象
   moveCount = 1 //绘制移动计数器
   doDrawing = false // 绘制状态
@@ -452,7 +459,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -475,6 +482,9 @@ export default class Index extends Vue {
           lockRotation: true,
           name: 'rectangle',
           opacity: 0.5,
+          transparentCorners: false,
+          cornerStrokeColor: '#000',
+          cornerColor: '#fff',
           // stroke:'green',
           // strokeWidth:3,
           //   centeredRotation: true,
@@ -552,12 +562,14 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
   // 0-分类 1-检测
   enterEdit(type, val) {
+    this.addMouseMove()
+
     this.type = type
     if (type !== 2) {
       this.icons =
@@ -572,6 +584,7 @@ export default class Index extends Vue {
               { icon: 'icon-icon-', content: '拖拽工具(s)' },
               { icon: 'icon-pentoolgangbigongju', content: '套索工具(p)' },
               { icon: 'icon-huajuxing_0', content: '矩形工具(r)' },
+              { icon: 'icon-qiangzhiqingchu', content: '清除本图注解(n)' },
             ]
     }
 
@@ -594,6 +607,7 @@ export default class Index extends Vue {
     }
   }
   addImg() {
+    this.removeMouseMove()
     this.isShown = true
     this.isAdd = true
   }
@@ -613,7 +627,7 @@ export default class Index extends Vue {
     this.polygonMode = false
     this.doDrawing = false
   }
-  //0-导入 1-导出 2-移动 3-钢笔 4-矩形
+  //0-导入 1-导出 2-移动 3-钢笔 4-矩形 5-清除
   tabClick(tab) {
     if (this.canvas.getObjects()[0]) {
       switch (tab) {
@@ -629,6 +643,13 @@ export default class Index extends Vue {
           this.canvas
             .getObjects()[0]
             .set({ lockMovementX: false, lockMovementY: false })
+          break
+
+        case 5:
+          this.canvas.getObjects().forEach((item, index) => {
+            if (index !== 0) this.canvas.remove(item)
+          })
+
           break
       }
     }
@@ -699,7 +720,7 @@ export default class Index extends Vue {
           this.labelList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate
+          rate,
         )
         break
       case 'RectYOLO':
@@ -711,7 +732,7 @@ export default class Index extends Vue {
           this.picList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate
+          rate,
         )
         break
     }
@@ -742,6 +763,34 @@ export default class Index extends Vue {
     } else {
       hotkeys.setScope('enable')
     }
+  }
+
+  //添加鼠标指针移动监听
+  addMouseMove() {
+    window.addEventListener(
+      'mousemove',
+      e => {
+        const cH = this.$refs['crosshair-h'] as any
+        const cV = this.$refs['crosshair-v'] as any
+        // const dX = this.$refs['cursor-d'] as any
+
+        cH.style.top = `${e.pageY}px`
+        cV.style.left = `${e.pageX}px`
+        // todo
+        //   console.log('cH', cH.style.top)
+        //const centerx = e.pageX - 20;
+        //const centery = e.pageY - 20;
+
+        // dX.style.left = `${e.pageX + 6}px`
+        // dX.style.top = `${e.pageY + 6}px`
+      },
+      false,
+    )
+  }
+
+  //取消对鼠标指针的监听
+  removeMouseMove() {
+    window.removeEventListener('mousemove', this.addMouseMove, false)
   }
 
   mounted() {
@@ -840,7 +889,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -860,12 +909,12 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
     hotkeys(
-      'backspace,command+z,command+shift+z,p,r,a,d,s',
+      'backspace,command+z,command+shift+z,p,r,a,d,s,n',
       'enable',
       (event, handler) => {
         event.preventDefault()
@@ -873,7 +922,16 @@ export default class Index extends Vue {
         switch (handler.key) {
           //撤销
           case 'command+z':
+<<<<<<< HEAD
             this.undo()
+=======
+            this.redo.push(
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+            )
+            this.canvas.remove(
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
+            )
+>>>>>>> 63abedfb95fac6eee84a9ab173fd99c7b7dabde9
             break
           //反撤销
           case 'command+shift+z':
@@ -894,18 +952,20 @@ export default class Index extends Vue {
           case 'a':
             this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
             break
+
           //删除选定对象
           case 'backspace':
             this.deleteObj()
             break
+
+          //清除
+          case 'n':
+            this.tabClick(5)
+            break
         }
-      }
+      },
     )
 
-    //禁用快捷键
-    // hotkeys(shortCuts, 'disable', (event, handler) => {
-    //   event.preventDefault()
-    // })
     //开启快捷键 默认开启
     hotkeys.setScope('enable')
   }
@@ -1153,6 +1213,8 @@ export default class Index extends Vue {
       objectCaching: false,
       transparentCorners: false,
       opacity: 0.5,
+      cornerStrokeColor: '#000',
+      cornerColor: '#fff',
       // hasBorders: false,
       name: 'polygon',
     })
@@ -1190,11 +1252,19 @@ export default class Index extends Vue {
       //边框
       stroke: this.color,
       strokeWidth: this.drawWidth,
+      //   cornerSize: 20,
+      //   cornerStyle: 'circle',
+      //控制器样式
+      transparentCorners: false,
+      cornerStrokeColor: '#000',
+      cornerColor: '#fff',
       //填充
       fill: 'rgba(255, 255, 255, 0.2)',
       name: 'rectangle',
       opacity: 0.5,
       lockRotation: true,
+      selectionLineWidth: 5,
+      selectionDashArray: [5, 5],
     })
 
     if (canvasObject) {
@@ -1364,7 +1434,7 @@ export default class Index extends Vue {
         right: 45px;
         background: rgba(34, 34, 34, 0.6);
         z-index: 998;
-        font-size: 18px;
+        font-size: 16px;
         font-family: PingFangSC-Regular, PingFang SC;
         color: #fff;
       }
@@ -1399,7 +1469,7 @@ export default class Index extends Vue {
           left: 70px;
           background: rgba(34, 34, 34, 0.6);
           z-index: 998;
-          font-size: 18px;
+          font-size: 16px;
           font-family: PingFangSC-Regular, PingFang SC;
           color: #fff;
         }
@@ -1447,6 +1517,7 @@ export default class Index extends Vue {
         &__btn {
           width: get-v(100px);
           height: 40px;
+          padding: 0 10px;
           background: rgba(255, 255, 255, 0);
           border-radius: 2px;
           border: 1px solid #ffffff;
@@ -1475,6 +1546,25 @@ export default class Index extends Vue {
           height: 47px;
           border-radius: 2px;
           cursor: pointer;
+          position: relative;
+
+          &:hover {
+            &::after {
+              content: attr(data-sign);
+              position: absolute;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 115px;
+              //   padding: 0 5px;
+              top: -20px;
+              background: rgba(34, 34, 34, 0.6);
+              z-index: 998;
+              font-size: 14px;
+              font-family: PingFangSC-Regular, PingFang SC;
+              color: #fff;
+            }
+          }
         }
       }
       .img {
@@ -1615,5 +1705,57 @@ export default class Index extends Vue {
   width: 20px;
   height: 20px;
   cursor: pointer;
+}
+
+#crosshair-h {
+  width: 100%;
+  height: 2px;
+  margin-top: 0;
+  position: absolute;
+  z-index: 6000 !important;
+}
+#crosshair-v {
+  height: 100vh;
+  width: 2px;
+  margin-left: 0;
+  position: fixed;
+  top: 0;
+  z-index: 6001 !important;
+}
+.hair {
+  background-color: #fff;
+  /*box-shadow:0 0 5px rgba(100,100,100, 0.5);*/
+  pointer-events: none;
+  transition: all 0.05s ease;
+  mix-blend-mode: difference;
+  opacity: 0.2;
+}
+
+#cursor-d {
+  position: absolute;
+  /*box-shadow:0 0 5px rgba(100,100,100, 0.5);*/
+  /*background-color:rgba(113,180,110,0.5); */ /* R: 113 G: 180 B: 110 */
+  border: 6px solid rgba(255, 255, 255, 0.1);
+  opacity: 1;
+  pointer-events: none;
+  /*animation: pulse 2s infinite;*/
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  z-index: 6002 !important;
+  margin-top: -16px;
+  margin-left: -16px;
+  transition: all 0.05s ease;
+  background: #fff;
+  mix-blend-mode: difference;
+}
+
+#cursor-d.xhover {
+  animation: pulse 2s infinite;
+  opacity: 1;
+  height: 8em;
+  width: 8em;
+  margin-top: -5em;
+  margin-left: -5em;
 }
 </style>
