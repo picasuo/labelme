@@ -167,7 +167,7 @@
     <div ref="crosshair-h" id="crosshair-h" class="hair"></div>
     <!-- 水平线 -->
     <div ref="crosshair-v" id="crosshair-v" class="hair"></div>
-    <div ref="cursor-d" id="cursor-d" class="dotx"></div>
+    <!-- <div ref="cursor-d" id="cursor-d" class="dotx"></div> -->
   </div>
 </template>
 
@@ -228,8 +228,8 @@ export default class Index extends Vue {
   mouseTo = {} as any
   canvasObjectIndex = 0
   rectangleLabel = 'warning'
-  drawWidth = 1 //笔触宽度
-  color = '#e2e2e2' //画笔颜色
+  drawWidth = 2 //笔触宽度
+  color = '#C7FC00' //画笔颜色
   drawingObject = null //当前绘制对象
   moveCount = 1 //绘制移动计数器
   doDrawing = false // 绘制状态
@@ -455,7 +455,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -478,6 +478,9 @@ export default class Index extends Vue {
           lockRotation: true,
           name: 'rectangle',
           opacity: 0.5,
+          transparentCorners: false,
+          cornerStrokeColor: '#000',
+          cornerColor: '#fff',
           // stroke:'green',
           // strokeWidth:3,
           //   centeredRotation: true,
@@ -557,12 +560,14 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
   // 0-分类 1-检测
   enterEdit(type, val) {
+    this.addMouseMove()
+
     this.type = type
     if (type !== 2) {
       this.icons =
@@ -600,6 +605,7 @@ export default class Index extends Vue {
     }
   }
   addImg() {
+    this.removeMouseMove()
     this.isShown = true
     this.isAdd = true
   }
@@ -712,13 +718,11 @@ export default class Index extends Vue {
           this.labelList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate
+          rate,
         )
         break
       case 'RectYOLO':
-        exportYOLO(this.deepObjMap, this.labelList,
-          this.changedPic,
-          rate)
+        exportYOLO(this.deepObjMap, this.labelList, this.changedPic, rate)
         break
       case 'PolyVGG':
         exportVGG(
@@ -726,7 +730,7 @@ export default class Index extends Vue {
           this.picList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate
+          rate,
         )
         break
     }
@@ -759,28 +763,35 @@ export default class Index extends Vue {
     }
   }
 
-  setCrossHair() {
-    const cH = this.$refs['crosshair-h'] as any
-    const cV = this.$refs['crosshair-v'] as any
-    const dX = this.$refs['cursor-d'] as any
-    window.addEventListener('mousemove', e => {
-      // todo
-      console.log('e', typeof e.pageY)
+  //添加鼠标指针移动监听
+  addMouseMove() {
+    window.addEventListener(
+      'mousemove',
+      e => {
+        const cH = this.$refs['crosshair-h'] as any
+        const cV = this.$refs['crosshair-v'] as any
+        // const dX = this.$refs['cursor-d'] as any
 
-      cH.style.top = `${e.pageY}px`
-      cV.style.left = `${e.pageX}px`
-      // todo
-      console.log('cH', cH.style.top)
-      //var centerx = e.pageX - 20;
-      //var centery = e.pageY - 20;
+        cH.style.top = `${e.pageY}px`
+        cV.style.left = `${e.pageX}px`
+        // todo
+        //   console.log('cH', cH.style.top)
+        //const centerx = e.pageX - 20;
+        //const centery = e.pageY - 20;
 
-      dX.style.left = `${e.pageX + 6}px`
-      dX.style.top = `${e.pageY + 6}px`
-    })
+        // dX.style.left = `${e.pageX + 6}px`
+        // dX.style.top = `${e.pageY + 6}px`
+      },
+      false,
+    )
+  }
+
+  //取消对鼠标指针的监听
+  removeMouseMove() {
+    window.removeEventListener('mousemove', this.addMouseMove, false)
   }
 
   mounted() {
-    this.setCrossHair()
     window.onbeforeunload = event => {
       //适配fireFox
       event.preventDefault()
@@ -828,7 +839,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -848,7 +859,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -862,10 +873,10 @@ export default class Index extends Vue {
           //撤销
           case 'command+z':
             this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
+              this.canvas.getObjects()[this.canvas.getObjects().length - 1],
             )
             break
           //反撤销
@@ -898,13 +909,9 @@ export default class Index extends Vue {
             this.tabClick(5)
             break
         }
-      }
+      },
     )
 
-    //禁用快捷键
-    // hotkeys(shortCuts, 'disable', (event, handler) => {
-    //   event.preventDefault()
-    // })
     //开启快捷键 默认开启
     hotkeys.setScope('enable')
   }
@@ -1125,6 +1132,8 @@ export default class Index extends Vue {
       objectCaching: false,
       transparentCorners: false,
       opacity: 0.5,
+      cornerStrokeColor: '#000',
+      cornerColor: '#fff',
       // hasBorders: false,
       name: 'polygon',
     })
@@ -1161,11 +1170,19 @@ export default class Index extends Vue {
       //边框
       stroke: this.color,
       strokeWidth: this.drawWidth,
+      //   cornerSize: 20,
+      //   cornerStyle: 'circle',
+      //控制器样式
+      transparentCorners: false,
+      cornerStrokeColor: '#000',
+      cornerColor: '#fff',
       //填充
       fill: 'rgba(255, 255, 255, 0.2)',
       name: 'rectangle',
       opacity: 0.5,
       lockRotation: true,
+      selectionLineWidth: 5,
+      selectionDashArray: [5, 5],
     })
 
     if (canvasObject) {
@@ -1211,14 +1228,14 @@ export default class Index extends Vue {
           this.canvas.height -
             boundingRect.height +
             active.top -
-            boundingRect.top
+            boundingRect.top,
         )
         active.left = Math.min(
           active.left,
           this.canvas.width -
             boundingRect.width +
             active.left -
-            boundingRect.left
+            boundingRect.left,
         )
       }
 
@@ -1272,11 +1289,11 @@ export default class Index extends Vue {
       ) {
         obj.top = Math.min(
           obj.top,
-          canvasHeight - boundingRect.height + obj.top - boundingRect.top
+          canvasHeight - boundingRect.height + obj.top - boundingRect.top,
         )
         obj.left = Math.min(
           obj.left,
-          canvasWidth - boundingRect.width + obj.left - boundingRect.left
+          canvasWidth - boundingRect.width + obj.left - boundingRect.left,
         )
       }
     })
@@ -1669,14 +1686,14 @@ export default class Index extends Vue {
 
 #crosshair-h {
   width: 100%;
-  height: 1px;
+  height: 2px;
   margin-top: 0;
   position: absolute;
   z-index: 6000 !important;
 }
 #crosshair-v {
   height: 100vh;
-  width: 1px;
+  width: 2px;
   margin-left: 0;
   position: fixed;
   top: 0;

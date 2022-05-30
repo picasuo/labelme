@@ -72,6 +72,7 @@ export default class SXMask extends Vue {
 
   picUrlList = [] as Array<any>
 
+ 
   uploadImg() {
     const fileList = this!.$refs!.fileInput!['files'] as any
     saveFileList(fileList)
