@@ -11,7 +11,7 @@ export const polyEdit = poly => {
         return fabric.util.transformPoint(
           { x: x, y: y },
           fabric.util.multiplyTransformMatrices(
-            fabricObject.canvas.viewportTransform,
+            fabricObject.canvas?.viewportTransform,
             fabricObject.calcTransformMatrix()
           )
         )

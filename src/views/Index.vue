@@ -212,8 +212,10 @@ export default class Index extends Vue {
   picList = [] as Array<any>
 
   canvas = {} as any
-  // 回退
-  redo = [] as any
+  // 回退状态
+  undoStack = [] as any
+  redoStack = [] as any
+
   x = ''
   y = ''
 
@@ -371,6 +373,9 @@ export default class Index extends Vue {
   }
 
   loadExpImg(item) {
+    //切换图片的时候重置操作栈
+    this.undoStack = []
+    this.redoStack = []
     const { url, name } = item
 
     if (this.lastName) {
@@ -401,6 +406,7 @@ export default class Index extends Vue {
 
       this.hasEditedNum = this.computeEditedSession()
     })
+    this.updateModifications()
   }
 
   //将导入文件添加到画板和标签列表中
@@ -508,8 +514,6 @@ export default class Index extends Vue {
       (resolve: (value: any) => void, reject: (value: any) => void) => {
         //!再次加载，导入之前保存的数据
         if (this.objMap[name]?.length > 0) {
-          // this.canvas.setWidth([this.objMap[name][0].curWidth])
-          // this.canvas.setHeight([this.objMap[name][0].curHeight])
           this.objMap[name].forEach(v => {
             this.canvas.add(v)
           })
@@ -521,21 +525,17 @@ export default class Index extends Vue {
             let currentWidth = (this.height * oImg.width) / oImg.height
             let currentHeight = this.height
             oImg.scaleToWidth(currentWidth)
-            // this.canvas.setWidth([currentWidth])
-            // this.canvas.setHeight([currentHeight])
             if (currentWidth > this.width) {
               oImg.scaleToWidth(this.width)
               currentWidth = this.width
               currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
-              // this.canvas.setWidth([currentWidth])
-              // this.canvas.setHeight([currentHeight])
             }
             //居中
             const left = (this.canvas.width - currentWidth) / 2
             const top = (this.canvas.height - currentHeight) / 2
             oImg.set({
-              id: 'img',
+              name: 'img',
               top,
               left,
               selectable: true,
@@ -544,6 +544,7 @@ export default class Index extends Vue {
               hasRotatingPoint: false,
               lockMovementX: true,
               lockMovementY: true,
+              lockRotation: true,
               curWidth: currentWidth,
               curHeight: currentHeight,
             })
@@ -764,6 +765,11 @@ export default class Index extends Vue {
     this.canvas.hoverCursor = 'crosshair'
     this.canvas.moveCursor = 'crosshair'
 
+    // 操作之后记录下来
+    this.canvas.on('object:modified', () => {
+      this.updateModifications()
+    })
+
     this.canvas.on('mouse:down', this.mousedown)
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
@@ -771,6 +777,27 @@ export default class Index extends Vue {
     this.canvas.on('mouse:wheel', this.mousewheel)
 
     this.setShortCuts()
+  }
+
+  updateModifications() {
+    // 防止json序列化的时候把自定义属性过滤了
+    const myjson = this.canvas.toJSON([
+      'selectable',
+      'hasBorders',
+      'hasControls',
+      'hasRotatingPoint',
+      'lockMovementX',
+      'lockMovementY',
+      'curWidth',
+      'curHeight',
+      'transparentCorners',
+      'objectCaching',
+      'opacity',
+      'lockRotation',
+      'name',
+    ])
+    this.undoStack.push(myjson)
+    this.redoStack = []
   }
 
   initCanvas() {
@@ -846,16 +873,11 @@ export default class Index extends Vue {
         switch (handler.key) {
           //撤销
           case 'command+z':
-            this.redo.push(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
-            )
-            this.canvas.remove(
-              this.canvas.getObjects()[this.canvas.getObjects().length - 1]
-            )
+            this.undo()
             break
           //反撤销
           case 'command+shift+z':
-            if (this.redo.length > 0) this.canvas.add(this.redo.pop())
+            this.redo()
             break
           //钢笔工具
           case 'p':
@@ -889,10 +911,32 @@ export default class Index extends Vue {
   }
 
   deleteObj() {
-    this.canvas.getActiveObjects().map(item => {
-      this.redo.push(item)
-      this.canvas.remove(item)
-    })
+    if (
+      this.canvas.getActiveObject() &&
+      this.canvas.getActiveObject().name !== 'img'
+    ) {
+      this.canvas.remove(this.canvas.getActiveObject())
+      this.updateModifications()
+    }
+  }
+
+  undo() {
+    if (this.undoStack.length > 1) {
+      this.canvas.clear().renderAll()
+      const nowStack = this.undoStack.pop()
+      this.redoStack.push(nowStack)
+      this.canvas.loadFromJSON(this.undoStack[this.undoStack.length - 1])
+      this.canvas.renderAll()
+    }
+  }
+  redo() {
+    if (this.redoStack.length > 0) {
+      this.canvas.clear().renderAll()
+      this.canvas.loadFromJSON(this.redoStack[this.redoStack.length - 1])
+      const lastStack = this.redoStack.pop()
+      this.undoStack.push(lastStack)
+      this.canvas.renderAll()
+    }
   }
 
   // 鼠标按下时触发
@@ -904,7 +948,7 @@ export default class Index extends Vue {
     this.doDrawing = true
     const activeObj = this.canvas.getActiveObject()
     if (activeObj) {
-      switch (activeObj.id) {
+      switch (activeObj.name) {
         case 'img':
           if (this.checkedTab === 2) this.preventImgFromLeaving(activeObj)
           break
@@ -931,7 +975,9 @@ export default class Index extends Vue {
         //未点击红点则继续作画
         if (
           this.polygonMode &&
-          (!activeObj || activeObj.id === 'img' || this.pointArray.length !== 0)
+          (!activeObj ||
+            activeObj.name === 'img' ||
+            this.pointArray.length !== 0)
         ) {
           this.addPoint(xy)
         }
@@ -945,7 +991,10 @@ export default class Index extends Vue {
     const xy = this.canvas.getPointer(e.e)
     this.mouseTo.x = xy.x
     this.mouseTo.y = xy.y
-    if (this.drawingObject) this.canvas.setActiveObject(this.drawingObject)
+    if (this.drawingObject) {
+      this.updateModifications()
+      this.canvas.setActiveObject(this.drawingObject)
+    }
     this.drawingObject = null
     this.moveCount = 1
     if (this.checkedTab === 2 || this.checkedTab === 4) {
@@ -969,7 +1018,7 @@ export default class Index extends Vue {
     // 矩形
     if (this.checkedTab === 4) {
       const active = this.canvas.getActiveObject()
-      if (!active || active.id === 'img') {
+      if (!active || active.name === 'img') {
         this.drawing(e)
       }
     }
