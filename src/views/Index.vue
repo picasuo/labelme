@@ -235,11 +235,9 @@ export default class Index extends Vue {
   activeLine = null as any
   line = {} as any
 
+  //只影响图片缩放
   width = 800
   height = 600
-
-  // 标识移动图片还是框
-  moveFlag = false
 
   currentPicUrl = ''
 
@@ -510,8 +508,8 @@ export default class Index extends Vue {
       (resolve: (value: any) => void, reject: (value: any) => void) => {
         //!再次加载，导入之前保存的数据
         if (this.objMap[name]?.length > 0) {
-          this.canvas.setWidth([this.objMap[name][0].cvsWidth])
-          this.canvas.setHeight([this.objMap[name][0].cvsHeight])
+          // this.canvas.setWidth([this.objMap[name][0].curWidth])
+          // this.canvas.setHeight([this.objMap[name][0].curHeight])
           this.objMap[name].forEach(v => {
             this.canvas.add(v)
           })
@@ -523,28 +521,31 @@ export default class Index extends Vue {
             let currentWidth = (this.height * oImg.width) / oImg.height
             let currentHeight = this.height
             oImg.scaleToWidth(currentWidth)
-            this.canvas.setWidth([currentWidth])
-            this.canvas.setHeight([currentHeight])
+            // this.canvas.setWidth([currentWidth])
+            // this.canvas.setHeight([currentHeight])
             if (currentWidth > this.width) {
               oImg.scaleToWidth(this.width)
               currentWidth = this.width
               currentHeight = (this.width * oImg.height) / oImg.width
               oImg.scaleToHeight(currentHeight)
-              this.canvas.setWidth([currentWidth])
-              this.canvas.setHeight([currentHeight])
+              // this.canvas.setWidth([currentWidth])
+              // this.canvas.setHeight([currentHeight])
             }
+            //居中
+            const left = (this.canvas.width - currentWidth) / 2
+            const top = (this.canvas.height - currentHeight) / 2
             oImg.set({
               id: 'img',
-              top: 0,
-              left: 0,
+              top,
+              left,
               selectable: true,
               hasBorders: false,
               hasControls: false,
               hasRotatingPoint: false,
               lockMovementX: true,
               lockMovementY: true,
-              cvsWidth: currentWidth,
-              cvsHeight: currentHeight,
+              curWidth: currentWidth,
+              curHeight: currentHeight,
             })
             this.canvas.add(oImg)
             resolve('')
@@ -701,9 +702,7 @@ export default class Index extends Vue {
         )
         break
       case 'RectYOLO':
-        exportYOLO(this.deepObjMap, this.labelList,
-          this.changedPic,
-          rate)
+        exportYOLO(this.deepObjMap, this.labelList, this.changedPic, rate)
         break
       case 'PolyVGG':
         exportVGG(
@@ -758,6 +757,13 @@ export default class Index extends Vue {
       preserveObjectStacking: true,
     })
     this.canvas.selectionColor = 'rgba(0,0,0,0.05)'
+    //画板铺满
+    this.initCanvas()
+    //默认光标
+    this.canvas.defaultCuror = 'crosshair'
+    this.canvas.hoverCursor = 'crosshair'
+    this.canvas.moveCursor = 'crosshair'
+
     this.canvas.on('mouse:down', this.mousedown)
     this.canvas.on('mouse:move', this.mousemove)
     this.canvas.on('mouse:up', this.mouseup)
@@ -767,18 +773,33 @@ export default class Index extends Vue {
     this.setShortCuts()
   }
 
+  initCanvas() {
+    const cvsWidth =
+      document.getElementsByClassName('tool_content')[0].clientWidth
+    const cvsHeight =
+      document.getElementsByClassName('tool_content')[0].clientHeight
+    this.canvas.setWidth([cvsWidth])
+    this.canvas.setHeight([cvsHeight])
+  }
+
   mousewheel(opt) {
-    // // todo
-    // console.log('opt', opt)
-    const delta = opt.e.deltaY
-    let zoom = this.canvas.getZoom()
-    zoom *= 0.99 ** delta
-    if (zoom < 1) zoom = 1
-    if (zoom > 5) zoom = 5
-    // this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
-    this.canvas.setZoom(zoom)
     opt.e.preventDefault()
     opt.e.stopPropagation()
+    if (opt.e.ctrlKey) {
+      const delta = opt.e.deltaY
+      let zoom = this.canvas.getZoom()
+      zoom *= 0.99 ** delta
+      if (zoom < 1) zoom = 1
+      if (zoom > 5) zoom = 5
+      this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
+      // this.canvas.setZoom(zoom)
+    } else {
+      const e = opt.e
+      const vpt = this.canvas.viewportTransform
+      vpt[4] += e.deltaX
+      vpt[5] += e.deltaY
+      this.canvas.requestRenderAll()
+    }
   }
 
   //快捷键设置
@@ -1091,6 +1112,7 @@ export default class Index extends Vue {
     this.activeShape = null
     this.polygonMode = false
     this.doDrawing = false
+    this.drawingObject = polygon
   }
   //绘制矩形
   drawing(e) {
@@ -1142,43 +1164,6 @@ export default class Index extends Vue {
 
     active.on('moving', evt => {
       active.setCoords()
-      // SET BOUNDING RECT TO 'active'
-      const boundingRect = active.getBoundingRect()
-      const zoom = this.canvas.getZoom()
-      const viewportMatrix = this.canvas.viewportTransform
-      // scales bounding rect when zoomed
-      boundingRect.top = (boundingRect.top - viewportMatrix[5]) / zoom
-      boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
-      boundingRect.width /= zoom
-      boundingRect.height /= zoom
-      const canvasHeight = this.canvas.height / zoom,
-        canvasWidth = this.canvas.width / zoom,
-        rTop = boundingRect.top + boundingRect.height,
-        rLeft = boundingRect.left + boundingRect.width
-
-      // checks top left
-      if (rTop < canvasHeight || rLeft < canvasWidth) {
-        active.top = Math.max(active.top, canvasHeight - boundingRect.height)
-        active.left = Math.max(active.left, canvasWidth - boundingRect.width)
-      }
-
-      // checks bottom right
-      if (rTop > 0 || rLeft > 0) {
-        active.top = Math.min(
-          active.top,
-          this.canvas.height -
-            boundingRect.height +
-            active.top -
-            boundingRect.top
-        )
-        active.left = Math.min(
-          active.left,
-          this.canvas.width -
-            boundingRect.width +
-            active.left -
-            boundingRect.left
-        )
-      }
 
       let objs = this.canvas.getObjects()
       objs.slice(1).map(item => {
@@ -1200,42 +1185,23 @@ export default class Index extends Vue {
   preventRectFromLeaving(active) {
     active.on('moving', evt => {
       const obj = active
+      const imgObj = this.canvas.getObjects()[0]
+      //img的最右端
+      const imgR = imgObj.left + imgObj.curWidth
+      //最下端
+      const imgB = imgObj.top + imgObj.curHeight
       obj.setCoords()
-
-      const boundingRect = obj.getBoundingRect()
-
-      const zoom = this.canvas.getZoom()
-      const viewportMatrix = this.canvas.viewportTransform
-
-      boundingRect.top = (boundingRect.top - viewportMatrix[5]) / zoom
-      boundingRect.left = (boundingRect.left - viewportMatrix[4]) / zoom
-      boundingRect.width /= zoom
-      boundingRect.height /= zoom
-
-      const canvasWidth = this.canvas.width / zoom
-      const canvasHeight = this.canvas.height / zoom
-
-      // if object is too big ignore
-      if (obj.height > obj.canvas.height || obj.width > this.canvas.width) {
-        return
+      if (obj.left < imgObj.left) {
+        obj.left = imgObj.left
       }
-      if (boundingRect.top < 0 || boundingRect.left < 0) {
-        obj.top = Math.max(obj.top, obj.top - boundingRect.top)
-        obj.left = Math.max(obj.left, obj.left - boundingRect.left)
+      if (obj.left > imgR - obj.width * obj.scaleX) {
+        obj.left = imgR - obj.width * obj.scaleX
       }
-      // bot-right corner
-      if (
-        boundingRect.top + boundingRect.height > canvasHeight ||
-        boundingRect.left + boundingRect.width > canvasWidth
-      ) {
-        obj.top = Math.min(
-          obj.top,
-          canvasHeight - boundingRect.height + obj.top - boundingRect.top
-        )
-        obj.left = Math.min(
-          obj.left,
-          canvasWidth - boundingRect.width + obj.left - boundingRect.left
-        )
+      if (obj.top < imgObj.top) {
+        obj.top = imgObj.top
+      }
+      if (obj.top > imgB - obj.height * obj.scaleY) {
+        obj.top = imgB - obj.height * obj.scaleY
       }
     })
   }
@@ -1402,9 +1368,6 @@ export default class Index extends Vue {
       display: flex;
       align-items: center;
       justify-content: center;
-      #canvas {
-        border: 1px solid #fff;
-      }
 
       > img {
         display: none;
