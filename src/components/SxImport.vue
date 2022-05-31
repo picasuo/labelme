@@ -158,8 +158,8 @@ export default class SxImport extends Vue {
 
   importFile() {
     const fileList = this!.$refs!.fileImport!['files'] as any
-    // todo
-    console.log('fileList', fileList)
+    // // todo
+    // console.log('fileList', fileList)
     if (this.checked === 'COCO' || this.checked === 'ImgJson') {
       loadCocoFile(fileList[0], this.type).then(val => {
         this.$emit('setAnnotation', val)

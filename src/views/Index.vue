@@ -424,6 +424,9 @@ export default class Index extends Vue {
     const imgData = this.imagesData.find(img => img.imgName === prefixName)
 
     if (imgData && !imgData.loadStatus) {
+      //   // todo
+      //   console.log('imgdata', imgData)
+
       //!拿到图片的宽高左右
       const { width, height, aCoords } = this.canvas.getObjects()[0]
       const { bl, br, tl, tr } = aCoords
@@ -499,19 +502,39 @@ export default class Index extends Vue {
         const { name: labelName, color } = this.labelNames.find(
           label => label.id === polygonItem.labelId,
         )
-        // todo
-        console.log('widthRate', widthRate)
-
-        // todo
-        console.log('===', imgWidth, width)
 
         const { segmentation } = polygonItem
         segmentation.map(item => {
           item.x = item.x / widthRate + left
           item.y = item.y / heightRate + top
         })
-        // todo
-        console.log('polygonItem', polygonItem)
+
+        const polygon = new fabric.Polygon(segmentation, {
+          stroke: this.color,
+          strokeWidth: this.drawWidth,
+          fill: color,
+          labelName,
+          objectCaching: false,
+          opacity: 0.5,
+          transparentCorners: false,
+          cornerStrokeColor: '#000',
+          cornerColor: '#fff',
+          //   hasBorders: false,
+          name: 'polygon',
+        })
+        this.canvas.add(polygon)
+
+        if (!labelMap[labelName]) {
+          labelMap[labelName] = {
+            color,
+            name: labelName,
+            count: 1,
+          }
+        } else {
+          labelMap[labelName].count++
+        }
+        // // todo
+        // console.log('canvas', this.canvas)
       })
 
       this.labelListMap[name] = this.labelListMap[name]
@@ -1207,8 +1230,6 @@ export default class Index extends Vue {
     this.canvas.add(circle)
   }
   generatePolygon() {
-    // todo
-    console.log('pointArray', this.pointArray)
     const points = new Array()
     this.pointArray.map((point, index) => {
       points.push({
@@ -1217,9 +1238,6 @@ export default class Index extends Vue {
       })
       this.canvas.remove(point)
     })
-
-    // todo
-    console.log('lineArray', this.lineArray)
 
     this.lineArray.map((line, index) => {
       this.canvas.remove(line)

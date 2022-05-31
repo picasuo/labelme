@@ -108,8 +108,8 @@ export const loadCocoFile = (file, type) => {
           let imagesData = [] as any
           let labelNames = [] as any
           const annotationsObject = deserialize(evt.target.result)
-          // todo
-          console.log('annotationsObject', annotationsObject)
+          //   // todo
+          //   console.log('annotationsObject', annotationsObject)
 
           const { images, categories, annotations } = annotationsObject
 
@@ -135,20 +135,21 @@ export const loadCocoFile = (file, type) => {
             if (!imageDataMap[annotation.image_id] || annotation.iscrowd === 1)
               continue
             //   if (this.labelType.includes(LabelType.RECT)) {
-            imageDataMap[annotation.image_id].labelRects.push({
-              id: uuidv4(),
-              labelId: labelNameMap[annotation.category_id].id,
-              rect: bbox2rect(annotation.bbox),
-              isCreatedByAI: false,
-              status: 'ACCEPTED',
-              suggestedLabel: null,
-            })
 
             if (annotation.segmentation.length > 0) {
               imageDataMap[annotation.image_id].labelPolygons.push({
                 id: uuidv4(),
                 labelId: labelNameMap[annotation.category_id].id,
                 segmentation: getPointPosition(annotation.segmentation[0]),
+                isCreatedByAI: false,
+                status: 'ACCEPTED',
+                suggestedLabel: null,
+              })
+            } else {
+              imageDataMap[annotation.image_id].labelRects.push({
+                id: uuidv4(),
+                labelId: labelNameMap[annotation.category_id].id,
+                rect: bbox2rect(annotation.bbox),
                 isCreatedByAI: false,
                 status: 'ACCEPTED',
                 suggestedLabel: null,
@@ -170,10 +171,10 @@ export const loadCocoFile = (file, type) => {
             imagesData.length === resultImageData.length &&
             labelNames.length === categories.length
           ) {
-            // todo
-            console.log('imagesData', imagesData)
-            // todo
-            console.log('labelNames', labelNames)
+            // // todo
+            // console.log('imagesData', imagesData)
+            // // todo
+            // console.log('labelNames', labelNames)
 
             resolve({
               imagesData,
