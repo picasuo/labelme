@@ -1421,6 +1421,23 @@ export default class Index extends Vue {
         this.canvas.add(item)
       })
     }
+    const imgjson = this.canvas.toJSON([
+      'selectable',
+      'hasBorders',
+      'hasControls',
+      'hasRotatingPoint',
+      'lockMovementX',
+      'lockMovementY',
+      'curWidth',
+      'curHeight',
+      'transparentCorners',
+      'objectCaching',
+      'opacity',
+      'lockRotation',
+      'name',
+    ])
+    this.canvas.clear().renderAll()
+    this.canvas.loadFromJSON(imgjson)
   }
 }
 </script>
