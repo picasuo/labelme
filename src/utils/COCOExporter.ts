@@ -1,6 +1,6 @@
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
-import { calculatePoint } from './ExporterUtil'
+import { calculatePoint, calculatePolyOffset } from './ExporterUtil'
 import { SegmentationImg, SegmentationData } from './SegmentationImg'
 
 let widthRate = 0
@@ -10,11 +10,9 @@ let height = 0
 let left = 0
 let top = 0
 let labels = [] as any
-let scale = 1
-export const exportCOCO = (data, labelList, zoom, changedPic, rate) => {
+export const exportCOCO = (data, labelList, changedPic, rate) => {
   const zip = new JSZip()
   labels = labelList
-  scale = zoom
   const segImgs = SegmentationImg(rate, changedPic)
   const segKeys = Object.keys(segImgs)
   segKeys.map(key => {
@@ -122,15 +120,8 @@ export const getAnnotationsComponent = data => {
     }
     if (polys.length > 0) {
       polys.map(v => {
-        const points = [] as any
-        const keys = Object.keys(v.oCoords)
-        keys.map(key => {
-          // points 缩放拖动之后无效,用oCoords替代
-          points.push({
-            x: v.oCoords[key].x / scale,
-            y: v.oCoords[key].y / scale,
-          })
-        })
+        const pointsObj = v.hasOwnProperty('controls') ? v.oCoords : v.points
+        const points = calculatePolyOffset(pointsObj, v.left, v.top)
         annotations.push({
           id: id++,
           iscrowd: 0,
