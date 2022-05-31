@@ -250,6 +250,8 @@ export default class Index extends Vue {
 
   currentPicUrl = ''
 
+  repeatObjs = [] as any
+
   imagesData = [] as Array<any>
   labelNames = [] as Array<any>
 
@@ -389,6 +391,9 @@ export default class Index extends Vue {
       this.objMap[this.lastName] = this.canvas.getObjects()
       this.labelListMap[this.lastName] = this.currentLabelList
     }
+    // 保存上一个页面的最后状态用于重复框选操作
+    this.saveRepeatState()
+
     this.canvas.clear()
 
     this.currentPicUrl = url
@@ -586,6 +591,9 @@ export default class Index extends Vue {
               { icon: 'icon-pentoolgangbigongju', content: '套索工具(p)' },
               { icon: 'icon-huajuxing_0', content: '矩形工具(r)' },
               { icon: 'icon-qiangzhiqingchu', content: '清除本图注解(n)' },
+              { icon: 'icon-shuaxin', content: '重复上次框选(c)' },
+              { icon: 'icon-chexiao', content: '撤销(cmd+z)' },
+              { icon: 'icon-shuaxin1', content: '重做(cmd+shift+z)' },
             ]
     }
 
@@ -631,37 +639,30 @@ export default class Index extends Vue {
   //0-导入 1-导出 2-移动 3-钢笔 4-矩形 5-清除
   tabClick(tab) {
     if (this.canvas.getObjects()[0]) {
-      switch (tab) {
-        case 0:
-        case 1:
-        case 3:
-        case 4:
-          this.canvas
-            .getObjects()[0]
-            .set({ lockMovementX: true, lockMovementY: true })
-          break
-        case 2:
-          this.canvas
-            .getObjects()[0]
-            .set({ lockMovementX: false, lockMovementY: false })
-          break
-
-        case 5:
-          this.canvas.getObjects().forEach((item, index) => {
-            if (index !== 0) this.canvas.remove(item)
-          })
-
-          break
+      if (tab === 2) {
+        this.canvas
+          .getObjects()[0]
+          .set({ lockMovementX: false, lockMovementY: false })
+      } else {
+        this.canvas
+          .getObjects()[0]
+          .set({ lockMovementX: true, lockMovementY: true })
       }
     }
     this.initPolygonParams()
     this.checkedTab = tab
-    //整个画板元素不可被选中
-    // this.canvas.skipTargetFind = this.checkedTab === 4
-    // 多边形特殊处理
-    if (this.checkedTab === 3) this.drawPolygon()
     if (this.checkedTab === 0) this.importData()
     if (this.checkedTab === 1) this.exportData()
+    // 多边形特殊处理
+    if (this.checkedTab === 3) this.drawPolygon()
+    if (this.checkedTab === 5) {
+      this.canvas.getObjects().forEach((item, index) => {
+        if (index !== 0) this.canvas.remove(item)
+      })
+    }
+    if (this.checkedTab === 6) this.repeatImg()
+    if (this.checkedTab === 7) this.undo()
+    if (this.checkedTab === 8) this.redo()
   }
 
   //输入框
@@ -903,7 +904,7 @@ export default class Index extends Vue {
 
     //画图快捷键
     hotkeys(
-      'backspace,command+z,command+shift+z,p,r,a,d,s,n',
+      'backspace,command+z,command+shift+z,p,r,a,d,s,n,c',
       'enable',
       (event, handler) => {
         event.preventDefault()
@@ -941,6 +942,10 @@ export default class Index extends Vue {
           //清除
           case 'n':
             this.tabClick(5)
+            break
+          //重复
+          case 'c':
+            this.tabClick(6)
             break
         }
       }
@@ -1347,6 +1352,18 @@ export default class Index extends Vue {
     this.setLabelShortCuts()
     this.loadExpImg(picItem)
     this.isImport = false
+  }
+
+  saveRepeatState() {
+    const objs = this.canvas.getObjects().slice(1)
+    this.repeatObjs = objs
+  }
+  repeatImg() {
+    if (this.repeatObjs.length > 0) {
+      this.repeatObjs.map(item => {
+        this.canvas.add(item)
+      })
+    }
   }
 }
 </script>

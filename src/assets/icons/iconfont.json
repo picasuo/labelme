@@ -6,6 +6,41 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "954728",
+      "name": "刷新",
+      "font_class": "shuaxin",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    },
+    {
+      "icon_id": "4686545",
+      "name": "刷新",
+      "font_class": "shuaxin1",
+      "unicode": "ec08",
+      "unicode_decimal": 60424
+    },
+    {
+      "icon_id": "19980539",
+      "name": "撤销",
+      "font_class": "chexiao",
+      "unicode": "e60e",
+      "unicode_decimal": 58894
+    },
+    {
+      "icon_id": "18171128",
+      "name": "撤销,后退,撤退",
+      "font_class": "recall-full",
+      "unicode": "ea12",
+      "unicode_decimal": 59922
+    },
+    {
+      "icon_id": "20286828",
+      "name": "撤销@2x",
+      "font_class": "chexiao2x",
+      "unicode": "e62d",
+      "unicode_decimal": 58925
+    },
+    {
       "icon_id": "1206906",
       "name": "强制清除",
       "font_class": "qiangzhiqingchu",
