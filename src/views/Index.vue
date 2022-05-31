@@ -470,7 +470,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId,
+          label => label.id === labelId
         )
 
         if (!labelMap[labelName]) {
@@ -505,7 +505,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach(polygonItem => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId,
+          label => label.id === polygonItem.labelId
         )
 
         const { segmentation } = polygonItem
@@ -612,7 +612,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -818,7 +818,7 @@ export default class Index extends Vue {
         // dX.style.left = `${e.pageX + 6}px`
         // dX.style.top = `${e.pageY + 6}px`
       },
-      false,
+      false
     )
   }
 
@@ -923,7 +923,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -943,7 +943,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -992,7 +992,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      },
+      }
     )
 
     //开启快捷键 默认开启
@@ -1007,7 +1007,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName,
+        e => e.name === labelName
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
@@ -1412,7 +1412,7 @@ export default class Index extends Vue {
   }
 
   saveRepeatState() {
-    const objs = this.canvas.getObjects().slice(1)
+    const objs = _.cloneDeep(this.canvas.getObjects()).slice(1)
     this.repeatObjs = objs
   }
   repeatImg() {
