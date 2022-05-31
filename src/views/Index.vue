@@ -1136,6 +1136,8 @@ export default class Index extends Vue {
     this.canvas.add(circle)
   }
   generatePolygon() {
+    // todo
+    console.log('pointArray', this.pointArray)
     const points = new Array()
     this.pointArray.map((point, index) => {
       points.push({
@@ -1144,6 +1146,10 @@ export default class Index extends Vue {
       })
       this.canvas.remove(point)
     })
+
+    // todo
+    console.log('lineArray', this.lineArray)
+
     this.lineArray.map((line, index) => {
       this.canvas.remove(line)
     })
@@ -1668,7 +1674,7 @@ export default class Index extends Vue {
   background-color: #fff;
   /*box-shadow:0 0 5px rgba(100,100,100, 0.5);*/
   pointer-events: none;
-  transition: all 0.05s ease;
+  //   transition: all 0.05s ease;
   mix-blend-mode: difference;
   opacity: 0.2;
 }

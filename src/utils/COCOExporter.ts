@@ -1,7 +1,7 @@
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
 import { calculatePoint } from './ExporterUtil'
-import { SegmentationImg, SegmentationData } from './SegmentationImg'
+import { SegmentationData, SegmentationImg } from './SegmentationImg'
 
 let widthRate = 0
 let heightRate = 0
@@ -79,7 +79,7 @@ export const getCategoriesComponent = labelArr => {
 }
 export const getAnnotationsComponent = data => {
   // todo
-  //   console.log('data', data)
+  console.log('data', data)
 
   let id = 0
   const annotations = [] as any
@@ -121,6 +121,9 @@ export const getAnnotationsComponent = data => {
       })
     }
     if (polys.length > 0) {
+      // todo
+      console.log('polys', polys)
+
       polys.map(v => {
         const points = [] as any
         const keys = Object.keys(v.oCoords)
