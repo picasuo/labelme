@@ -86,10 +86,14 @@ const handleImageData = (images, imageDataPartition) => {
 const yaml = require('js-yaml')
 
 const getPointPosition = points => {
-  // todo
-  console.log('_.chunk(points, 2)', _.chunk(points, 2))
-
-  return _.chunk(points, 2)
+  const pointArr = [] as Array<any>
+  _.chunk(points, 2).forEach(point => {
+    pointArr.push({
+      x: point[0],
+      y: point[1],
+    })
+  })
+  return pointArr
 }
 
 export const loadCocoFile = (file, type) => {
@@ -126,13 +130,8 @@ export const loadCocoFile = (file, type) => {
           const labelNameMap = handleLabelMap(categories)
 
           const imageDataMap = handleImageData(images, imageDataPartition)
-          // todo
-          console.log('labelNameMap', labelNameMap)
 
           for (const annotation of annotations) {
-            // todo
-            console.log('annotation', annotation)
-
             if (!imageDataMap[annotation.image_id] || annotation.iscrowd === 1)
               continue
             //   if (this.labelType.includes(LabelType.RECT)) {

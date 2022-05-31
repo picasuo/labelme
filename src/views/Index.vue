@@ -308,6 +308,7 @@ export default class Index extends Vue {
   handleLabelBind({ newName, newColor, index }) {
     const list = [] as Array<any>
     const activeObj = this.canvas.getActiveObject()
+
     if (this.type === 0) {
       let { labelName = [] as any } = activeObj
       if (index === -1) {
@@ -331,7 +332,7 @@ export default class Index extends Vue {
       })
       this.currentLabelList = list
     } else {
-      if (activeObj) {
+      if (activeObj && activeObj.name !== 'img') {
         activeObj.set({
           fill: newColor,
           labelName: newName,
@@ -430,7 +431,12 @@ export default class Index extends Vue {
       const imgWidth = br.x - bl.x
       const imgHeight = bl.y - tl.y
 
-      const { labelRects } = imgData
+      const left = tl.x
+      const top = tl.y
+      const widthRate = width / imgWidth
+      const heightRate = height / imgHeight
+
+      const { labelRects, labelPolygons } = imgData
       //!当前图片labelMap
       let labelMap = {} as Record<string, any>
 
@@ -448,10 +454,6 @@ export default class Index extends Vue {
           rectLeft = bbox[0] * imgWidth - 0.5 * rectWidth
           rectTop = bbox[1] * imgHeight - 0.5 * rectHeight
         } else {
-          const left = tl.x
-          const top = tl.y
-          const widthRate = width / imgWidth
-          const heightRate = height / imgHeight
           const { rect } = rectItem
           rectWidth = rect.width / widthRate
           rectHeight = rect.height / heightRate
@@ -460,7 +462,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -491,6 +493,25 @@ export default class Index extends Vue {
           //   centeredRotation: true,
         })
         this.canvas.add(rectangle)
+      })
+
+      labelPolygons.forEach(polygonItem => {
+        const { name: labelName, color } = this.labelNames.find(
+          label => label.id === polygonItem.labelId,
+        )
+        // todo
+        console.log('widthRate', widthRate)
+
+        // todo
+        console.log('===', imgWidth, width)
+
+        const { segmentation } = polygonItem
+        segmentation.map(item => {
+          item.x = item.x / widthRate + left
+          item.y = item.y / heightRate + top
+        })
+        // todo
+        console.log('polygonItem', polygonItem)
       })
 
       this.labelListMap[name] = this.labelListMap[name]
@@ -563,7 +584,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -721,7 +742,7 @@ export default class Index extends Vue {
           this.labelList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate
+          rate,
         )
         break
       case 'RectYOLO':
@@ -733,7 +754,7 @@ export default class Index extends Vue {
           this.picList,
           this.canvas.getZoom(),
           this.changedPic,
-          rate
+          rate,
         )
         break
     }
@@ -785,7 +806,7 @@ export default class Index extends Vue {
         // dX.style.left = `${e.pageX + 6}px`
         // dX.style.top = `${e.pageY + 6}px`
       },
-      false
+      false,
     )
   }
 
@@ -892,7 +913,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -912,7 +933,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -957,7 +978,7 @@ export default class Index extends Vue {
             this.tabClick(5)
             break
         }
-      }
+      },
     )
 
     //开启快捷键 默认开启
@@ -969,6 +990,18 @@ export default class Index extends Vue {
       this.canvas.getActiveObject() &&
       this.canvas.getActiveObject().name !== 'img'
     ) {
+      //标签栏同步修改
+      const { labelName } = this.canvas.getActiveObject()
+      const labelIndex = this.currentLabelList.findIndex(
+        e => e.name === labelName,
+      )
+      if (labelIndex !== -1) {
+        this.currentLabelList[labelIndex].count--
+        if (this.currentLabelList[labelIndex].count === 0) {
+          this.currentLabelList.splice(labelIndex, 1)
+        }
+      }
+
       this.canvas.remove(this.canvas.getActiveObject())
       this.updateModifications()
     }

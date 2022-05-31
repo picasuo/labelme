@@ -12,6 +12,9 @@ let top = 0
 let labels = [] as any
 let scale = 1
 export const exportCOCO = (data, labelList, zoom, changedPic, rate) => {
+  // todo
+  console.log('labelList', labelList)
+
   const zip = new JSZip()
   labels = labelList
   scale = zoom
