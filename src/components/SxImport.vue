@@ -107,7 +107,7 @@ export default class SxImport extends Vue {
         arr = [{ name: 'Json', label: 'ImgJson' }]
         break
       case '全部导入':
-        arr = [{ name: 'COCOJson', label: 'RectCOCO' }]
+        arr = [{ name: 'COCOJson', label: 'COCO' }]
         break
       case '矩形':
         arr = [{ name: 'YOLO', label: 'RectYOLO' }]
@@ -124,7 +124,7 @@ export default class SxImport extends Vue {
   }
 
   checkInputStatus(val) {
-    if (val === 'RectCOCO' || val === 'ImgJson') {
+    if (val === 'COCO' || val === 'ImgJson') {
       this.fileFormat = 'application/json'
       this.isMultiple = false
       this.isDirectory = false
@@ -158,8 +158,9 @@ export default class SxImport extends Vue {
 
   importFile() {
     const fileList = this!.$refs!.fileImport!['files'] as any
-
-    if (this.checked === 'RectCOCO' || this.checked === 'ImgJson') {
+    // // todo
+    // console.log('fileList', fileList)
+    if (this.checked === 'COCO' || this.checked === 'ImgJson') {
       loadCocoFile(fileList[0], this.type).then(val => {
         this.$emit('setAnnotation', val)
         this.isActive = true

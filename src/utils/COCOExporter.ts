@@ -77,7 +77,7 @@ export const getCategoriesComponent = labelArr => {
 }
 export const getAnnotationsComponent = data => {
   // todo
-  //   console.log('data', data)
+  console.log('data', data)
 
   let id = 0
   const annotations = [] as any
@@ -119,6 +119,9 @@ export const getAnnotationsComponent = data => {
       })
     }
     if (polys.length > 0) {
+      // todo
+      console.log('polys', polys)
+
       polys.map(v => {
         const pointsObj = v.hasOwnProperty('controls') ? v.oCoords : v.points
         const points = calculatePolyOffset(pointsObj, v.left, v.top)

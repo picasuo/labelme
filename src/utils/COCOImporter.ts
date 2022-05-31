@@ -83,6 +83,19 @@ const handleImageData = (images, imageDataPartition) => {
   return imageDataMap
 }
 
+const yaml = require('js-yaml')
+
+const getPointPosition = points => {
+  const pointArr = [] as Array<any>
+  _.chunk(points, 2).forEach(point => {
+    pointArr.push({
+      x: point[0],
+      y: point[1],
+    })
+  })
+  return pointArr
+}
+
 export const loadCocoFile = (file, type) => {
   return new Promise(
     (resolve: (value: any) => void, reject: (value: any) => void) => {
@@ -90,6 +103,7 @@ export const loadCocoFile = (file, type) => {
       reader.readAsText(file)
 
       reader.onloadend = (evt: any) => {
+        //对象标注
         if (type === 1) {
           let imagesData = [] as any
           let labelNames = [] as any
@@ -102,7 +116,6 @@ export const loadCocoFile = (file, type) => {
           //!引入的注解文件包含的图片名称
           const imageNames: string[] = images.map(i => i.file_name)
 
-          //   const inputImagesData = packImageData(fileList)
           const inputImagesData = packImageData(images)
 
           //   // todo
@@ -122,14 +135,26 @@ export const loadCocoFile = (file, type) => {
             if (!imageDataMap[annotation.image_id] || annotation.iscrowd === 1)
               continue
             //   if (this.labelType.includes(LabelType.RECT)) {
-            imageDataMap[annotation.image_id].labelRects.push({
-              id: uuidv4(),
-              labelId: labelNameMap[annotation.category_id].id,
-              rect: bbox2rect(annotation.bbox),
-              isCreatedByAI: false,
-              status: 'ACCEPTED',
-              suggestedLabel: null,
-            })
+
+            if (annotation.segmentation.length > 0) {
+              imageDataMap[annotation.image_id].labelPolygons.push({
+                id: uuidv4(),
+                labelId: labelNameMap[annotation.category_id].id,
+                segmentation: getPointPosition(annotation.segmentation[0]),
+                isCreatedByAI: false,
+                status: 'ACCEPTED',
+                suggestedLabel: null,
+              })
+            } else {
+              imageDataMap[annotation.image_id].labelRects.push({
+                id: uuidv4(),
+                labelId: labelNameMap[annotation.category_id].id,
+                rect: bbox2rect(annotation.bbox),
+                isCreatedByAI: false,
+                status: 'ACCEPTED',
+                suggestedLabel: null,
+              })
+            }
           }
 
           const resultImageData = Object.values(imageDataMap).concat(
@@ -146,12 +171,18 @@ export const loadCocoFile = (file, type) => {
             imagesData.length === resultImageData.length &&
             labelNames.length === categories.length
           ) {
+            // // todo
+            // console.log('imagesData', imagesData)
+            // // todo
+            // console.log('labelNames', labelNames)
+
             resolve({
               imagesData,
               labelNames,
               isYolo: false,
             })
           }
+          //图片分类
         } else {
           const result = JSON.parse(evt.target.result)
 
