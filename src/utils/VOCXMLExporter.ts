@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
-import { calculatePoint } from './ExporterUtil'
+import { calculatePoint, calculatePolyOffset } from './ExporterUtil'
 import { SegmentationImg, SegmentationData } from './SegmentationImg'
 
 let width = 0
@@ -9,10 +9,8 @@ let left = 0
 let top = 0
 let widthRate = 0
 let heightRate = 0
-let scale = 1
 
-export const exportVOC = (data, zoom, changedPic, rate) => {
-  scale = zoom
+export const exportVOC = (data, changedPic, rate) => {
   const zip = new JSZip()
   const segImgs = SegmentationImg(rate, changedPic)
   const segKeys = Object.keys(segImgs)
@@ -130,15 +128,8 @@ export const wrapAllLabelsIntoVOC = labelData => {
 }
 
 export const wrapPolygonLabelsIntoVOC = poly => {
-  const points = [] as any
-  const keys = Object.keys(poly.oCoords)
-  keys.map(key => {
-    // points 缩放拖动之后无效,用oCoords替代
-    points.push({
-      x: poly.oCoords[key].x / scale,
-      y: poly.oCoords[key].y / scale,
-    })
-  })
+  const pointsObj = poly.hasOwnProperty('controls') ? poly.oCoords : poly.points
+  const points = calculatePolyOffset(pointsObj, poly.left, poly.top)
   const polyString = points.map((item, index) => {
     const polyFields = [
       `\t\t\t<x${index + 1}>${calculatePoint(

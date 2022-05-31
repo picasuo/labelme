@@ -1,17 +1,3 @@
-// import { saveAs } from 'file-saver'
-
-// export class ExporterUtil {
-//   public static saveAs(content: string, fileName: string): void {
-//     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-//     try {
-//       saveAs(blob, fileName)
-//     } catch (error) {
-//       // TODO: Implement file save error handling
-//       throw new Error(error as string)
-//     }
-//   }
-// }
-
 export const calculatePoint = (point, offset, rate, normal) => {
   let p = Math.round((point - offset) * rate)
 
@@ -23,6 +9,34 @@ export const calculatePoint = (point, offset, rate, normal) => {
     p = normal
   }
   return p
+}
+
+export const calculatePolyOffset = (oCoords, left, top) => {
+  const xArr = [] as any
+  const yArr = [] as any
+  const oldPoints = [] as any
+  const keys = Object.keys(oCoords)
+  keys.map(key => {
+    // points 缩放拖动之后无效,用oCoords替代
+    oldPoints.push({
+      x: oCoords[key].x,
+      y: oCoords[key].y,
+    })
+    xArr.push(oCoords[key].x)
+    yArr.push(oCoords[key].y)
+  })
+  const xMin = Math.min(...xArr)
+  const yMin = Math.min(...yArr)
+  const xOffset = xMin - left
+  const yOffset = yMin - top
+  const points = [] as any
+  oldPoints.map(point => {
+    points.push({
+      x: point.x - xOffset,
+      y: point.y - yOffset,
+    })
+  })
+  return points
 }
 
 export const imgShuffle = arr => {

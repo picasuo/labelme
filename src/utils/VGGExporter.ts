@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
-import { calculatePoint } from './ExporterUtil'
+import { calculatePoint, calculatePolyOffset } from './ExporterUtil'
 import { SegmentationImg, SegmentationData } from './SegmentationImg'
 
 let filename = ''
@@ -11,10 +11,8 @@ let height = 0
 let left = 0
 let top = 0
 let picList = [] as any
-let scale = 1
-export const exportVGG = (data, pics, zoom, changedPic, rate) => {
+export const exportVGG = (data, pics, changedPic, rate) => {
   picList = pics
-  scale = zoom
   const zip = new JSZip()
   const segImgs = SegmentationImg(rate, changedPic)
   const segKeys = Object.keys(segImgs)
@@ -87,15 +85,10 @@ export const mapImageDataToVGG = polys => {
   const data: any = {}
   polys.map((item, index) => {
     const labelName = item.labelName
-    const points = [] as any
-    const keys = Object.keys(item.oCoords)
-    keys.map(key => {
-      // points 缩放拖动之后无效,用oCoords替代
-      points.push({
-        x: item.oCoords[key].x / scale,
-        y: item.oCoords[key].y / scale,
-      })
-    })
+    const pointsObj = item.hasOwnProperty('controls')
+      ? item.oCoords
+      : item.points
+    const points = calculatePolyOffset(pointsObj, item.left, item.top)
     if (!!labelName) {
       data[index.toString()] = {
         shape_attributes: mapPolygonToVGG(points),

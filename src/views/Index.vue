@@ -734,28 +734,16 @@ export default class Index extends Vue {
         exportImgJson(this.deepObjMap, this.changedPic, rate)
         break
       case 'VOC':
-        exportVOC(this.deepObjMap, this.canvas.getZoom(), this.changedPic, rate)
+        exportVOC(this.deepObjMap, this.changedPic, rate)
         break
       case 'COCO':
-        exportCOCO(
-          this.deepObjMap,
-          this.labelList,
-          this.canvas.getZoom(),
-          this.changedPic,
-          rate,
-        )
+        exportCOCO(this.deepObjMap, this.labelList, this.changedPic, rate)
         break
       case 'RectYOLO':
         exportYOLO(this.deepObjMap, this.labelList, this.changedPic, rate)
         break
       case 'PolyVGG':
-        exportVGG(
-          this.deepObjMap,
-          this.picList,
-          this.canvas.getZoom(),
-          this.changedPic,
-          rate,
-        )
+        exportVGG(this.deepObjMap, this.picList, this.changedPic, rate)
         break
     }
   }
@@ -869,8 +857,6 @@ export default class Index extends Vue {
     ])
     this.undoStack.push(myjson)
     this.redoStack = []
-
-    console.log('1111', this.undoStack)
   }
 
   initCanvas() {
@@ -1332,6 +1318,7 @@ export default class Index extends Vue {
       active.off('moving')
       this.canvas.discardActiveObject().renderAll()
     })
+    console.log(this.canvas.getObjects())
   }
 
   preventRectFromLeaving(active) {
