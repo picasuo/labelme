@@ -499,6 +499,8 @@ export default class Index extends Vue {
           transparentCorners: false,
           cornerStrokeColor: '#000',
           cornerColor: '#fff',
+          stroke: this.color,
+          strokeWidth: this.drawWidth,
           // stroke:'green',
           // strokeWidth:3,
           //   centeredRotation: true,
