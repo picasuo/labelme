@@ -444,7 +444,10 @@ export default class Index extends Vue {
       const widthRate = width / imgWidth
       const heightRate = height / imgHeight
 
-      const { labelRects, labelPolygons } = imgData
+      const {
+        labelRects = [] as Array<any>,
+        labelPolygons = [] as Array<any>,
+      } = imgData
       //!当前图片labelMap
       let labelMap = {} as Record<string, any>
 
@@ -459,8 +462,8 @@ export default class Index extends Vue {
           const { bbox } = rectItem
           rectWidth = bbox[2] * imgWidth
           rectHeight = bbox[3] * imgHeight
-          rectLeft = bbox[0] * imgWidth - 0.5 * rectWidth
-          rectTop = bbox[1] * imgHeight - 0.5 * rectHeight
+          rectLeft = bbox[0] * imgWidth - 0.5 * rectWidth + left
+          rectTop = bbox[1] * imgHeight - 0.5 * rectHeight + top
         } else {
           const { rect } = rectItem
           rectWidth = rect.width / widthRate
@@ -470,7 +473,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -505,7 +508,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach(polygonItem => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId
+          label => label.id === polygonItem.labelId,
         )
 
         const { segmentation } = polygonItem
@@ -612,7 +615,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -818,7 +821,7 @@ export default class Index extends Vue {
         // dX.style.left = `${e.pageX + 6}px`
         // dX.style.top = `${e.pageY + 6}px`
       },
-      false
+      false,
     )
   }
 
@@ -923,7 +926,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -943,7 +946,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -992,7 +995,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      }
+      },
     )
 
     //开启快捷键 默认开启
@@ -1007,7 +1010,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName
+        e => e.name === labelName,
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
@@ -1398,6 +1401,8 @@ export default class Index extends Vue {
       this.isYolo = val.isYolo
       this.imagesData = val.imagesData
       this.labelNames = val.labelNames
+      //   // todo
+      //   console.log('val', val)
     }
   }
 

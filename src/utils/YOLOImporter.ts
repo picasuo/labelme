@@ -1,7 +1,6 @@
+const yaml = require('js-yaml')
 import { v4 as uuidv4 } from 'uuid'
 import { Colors } from './tools'
-
-const yaml = require('js-yaml')
 
 export const loadYoloFile = fileList => {
   return new Promise(
@@ -13,12 +12,15 @@ export const loadYoloFile = fileList => {
       const imagesData = [] as Array<any>
       Array.prototype.forEach.call(fileList, (file: File, index) => {
         const { type, name } = file
+
         if (type) {
           const reader = new FileReader()
           reader.readAsText(file)
           if (type === 'application/x-yaml') {
             reader.onloadend = (evt: any) => {
               yamlResult = yaml.load(evt.target.result)
+              //   // todo
+              //   console.log('yamlResult', yamlResult)
             }
           }
           if (type === 'text/plain') {
@@ -28,9 +30,10 @@ export const loadYoloFile = fileList => {
               const labelRects = [] as Array<any>
 
               evt.target.result.split('\n').forEach(item => {
-                const itemData = item.split(' ')
+                const itemData = item.split(' ').map(i => Number(i))
+
                 labelRects.push({
-                  labelIndex: Number(itemData[0]),
+                  labelIndex: itemData[0],
                   bbox: itemData.slice(1),
                 })
               })
@@ -39,7 +42,7 @@ export const loadYoloFile = fileList => {
                 labelRects,
               })
 
-              if (imagesData.length === fileList.length - 3) {
+              if (imagesData.length === fileList.length - 4) {
                 setTimeout(() => {
                   //   // todo
                   //   console.log('imagesdata', imagesData)
@@ -72,6 +75,7 @@ export const loadYoloFile = fileList => {
                       loadStatus: false,
                     })
                   })
+
                   resolve({ labelNames, imagesData: list, isYolo: true })
                 }, 1000)
               }
