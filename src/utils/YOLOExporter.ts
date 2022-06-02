@@ -3,7 +3,7 @@ import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
 import { calculatePoint } from './ExporterUtil'
 import { NumberUtil } from './NumberUtil'
-import { SegmentationImg, SegmentationData } from './SegmentationImg'
+import { SegmentationData, SegmentationImg } from './SegmentationImg'
 
 let width = 0
 let height = 0
@@ -106,6 +106,7 @@ export const wrapRectLabelIntoYOLO = data => {
     NumberUtil.snapValueToRange(value, 0, 1).toFixed(6)
 
   const classIdx = _.findIndex(labels, { name: data.labelName }).toString()
+
   const rectCenter = getCenter(data)
   const rectSize = getSize(data)
   const rawBBox: number[] = [
@@ -117,10 +118,10 @@ export const wrapRectLabelIntoYOLO = data => {
     rectSize.height / height,
   ]
   let [x, y, rwidth, rheight] = rawBBox.map((value: number) =>
-    parseFloat(snapAndFix(value))
+    parseFloat(snapAndFix(value)),
   )
   const processedBBox = [x, y, rwidth, rheight].map((value: number) =>
-    snapAndFix(value)
+    snapAndFix(value),
   )
   return [classIdx, ...processedBBox].join(' ')
 }
