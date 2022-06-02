@@ -30,20 +30,48 @@
               >{{ item.name }}</i-radio
             >
           </i-radio-group>
-          <p v-if="checked">点击此处上传文件</p>
-          <!-- <p>
-            <span> 上传yaml文件 </span>
-            <span>上传txt文件</span>
-          </p> -->
-          <input
-            v-if="checked"
-            ref="fileImport"
-            type="file"
-            :multiple="isMultiple"
-            :accept="fileFormat"
-            @change="importFile"
-            :webkitdirectory="isDirectory"
-          />
+          <p class="innerbox" v-if="checked && checked !== 'RectYOLO'">
+            <span>点击此处上传文件</span>
+            <input
+              class="input-class"
+              v-if="checked"
+              ref="cocoImport"
+              type="file"
+              :multiple="isMultiple"
+              :accept="fileFormat"
+              @change="importFile('cocoImport')"
+              :webkitdirectory="isDirectory"
+            />
+          </p>
+
+          <div class="innerbox" v-if="checked && checked === 'RectYOLO'">
+            <p class="innerbox__item">
+              <span>上传yaml文件</span>
+              <sx-icon v-if="isYamlLoaded" type="icon-wancheng" />
+              <input
+                v-if="checked"
+                class="input-class"
+                ref="yamlImport"
+                type="file"
+                :multiple="true"
+                accept="application/x-yaml"
+                @change="importFile('yamlImport')"
+              />
+            </p>
+            <p class="innerbox__item">
+              <span>上传txt文件</span>
+              <sx-icon v-if="isTxtLoaded" type="icon-wancheng" />
+              <input
+                v-if="checked"
+                class="input-class"
+                ref="txtImport"
+                type="file"
+                :multiple="true"
+                accept="text/plain"
+                @change="importFile('txtImport')"
+              />
+            </p>
+          </div>
         </div>
       </div>
       <div class="btn">
@@ -58,7 +86,7 @@
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Radio, RadioGroup } from 'iview'
 import { loadCocoFile } from 'utils/COCOImporter'
-import { loadYoloFile } from 'utils/YOLOImporter'
+import { loadYamlFile, loadTxtFile, loadYoloFile } from 'utils/YOLOImporter'
 
 @Component({
   components: {
@@ -78,12 +106,26 @@ export default class SxImport extends Vue {
   })
   imagesData: Array<any>
 
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isYamlLoaded: boolean
+
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isTxtLoaded: boolean
+
   tabName = '' as any
   checked = null as any
   checkedTab = 0
   isMultiple = false
   isDirectory = false
   fileFormat = ''
+  //   isYamlLoaded = false
+  //   isTxtLoaded = false
 
   isActive = false
 
@@ -129,10 +171,10 @@ export default class SxImport extends Vue {
       this.isMultiple = false
       this.isDirectory = false
     } else if (val === 'RectYOLO') {
-      //   this.fileFormat = 'text/plain,application/x-yaml'
-      this.fileFormat = 'file'
+      this.fileFormat = 'text/plain,application/x-yaml'
+      //   this.fileFormat = 'file'
       this.isMultiple = true
-      this.isDirectory = true
+      this.isDirectory = false
     }
   }
 
@@ -156,18 +198,27 @@ export default class SxImport extends Vue {
     this.$emit('cancelImport')
   }
 
-  importFile() {
-    const fileList = this!.$refs!.fileImport!['files'] as any
-    // // todo
-    // console.log('fileList', fileList)
+  importFile(refString) {
+    const fileList = this!.$refs![refString]!['files'] as any
     if (this.checked === 'COCO' || this.checked === 'ImgJson') {
       loadCocoFile(fileList[0], this.type).then(val => {
         this.$emit('setAnnotation', val)
         this.isActive = true
       })
-    } else if (this.checked === 'RectYOLO') {
-      loadYoloFile(fileList).then(val => {
+    }
+    if (refString === 'yamlImport') {
+      loadYamlFile(fileList[0]).then(val => {
         this.$emit('setAnnotation', val)
+        this.$emit('uploadStatus', { isYamlLoaded: true })
+
+        this.isActive = true
+      })
+    }
+    if (refString === 'txtImport') {
+      loadTxtFile(fileList).then(val => {
+        this.$emit('setAnnotation', val)
+        this.$emit('uploadStatus', { isTxtLoaded: true })
+        // this.isTxtLoaded = true
         this.isActive = true
       })
     }
@@ -253,22 +304,39 @@ export default class SxImport extends Vue {
     color: #fff;
     font-family: PingFangSC-Regular, PingFang SC;
     position: relative;
+  }
+}
 
-    > p {
-      font-size: 20px;
-    }
+.innerbox {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
 
-    > input {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      opacity: 0;
-      cursor: pointer;
-      z-index: 2;
+  &__item {
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    > span {
+      margin-right: 10px;
     }
   }
+}
+
+.input-class {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
 }
 
 .btn {

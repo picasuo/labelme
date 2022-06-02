@@ -19,9 +19,12 @@
           :data-line="item.content"
           @click="tabClick(index)"
         >
-          <sx-icon :type="item.icon" />
+          <sx-icon :type="item.icon" color="#ffffff" />
         </div>
       </div>
+
+      <SxExplanation v-if="isExplanation" />
+
       <div class="tool_content" id="tool_content">
         <canvas id="canvas" :width="width" :height="height"></canvas>
 
@@ -158,7 +161,10 @@
     <SxImport
       v-if="isImport"
       :type="type"
+      :isTxtLoaded="isTxtLoaded"
+      :isYamlLoaded="isYamlLoaded"
       @cancelImport="cancelImport"
+      @uploadStatus="uploadStatus"
       @importData="confirmImport"
       @setAnnotation="setAnnotation"
     />
@@ -175,6 +181,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import SxMask from 'components/SxMask.vue'
 import SxExport from 'components/SxExport.vue'
+import SxExplanation from 'components/SxExplanation.vue'
 import {
   handlePicName,
   Colors,
@@ -197,6 +204,7 @@ import Sortable from 'sortablejs'
     SxMask,
     SxExport,
     SxImport,
+    SxExplanation,
   },
 })
 export default class Index extends Vue {
@@ -208,6 +216,8 @@ export default class Index extends Vue {
   isShown = true
   isExport = false
   isImport = false
+
+  isExplanation = false
 
   deepObjMap = {} as any
   changedPic = [] as any
@@ -473,8 +483,13 @@ export default class Index extends Vue {
           rectTop = rect.y / heightRate + top
         }
 
+<<<<<<< HEAD
         const { name: labelName, color } = this.labelNames.find(
           label => label.id === labelId
+=======
+        const { name: labelName, color } = this.labelList.find(
+          label => label.id === labelId,
+>>>>>>> be2f49a7199db8cc4c23a7a3eedfde82786148bd
         )
 
         if (!labelMap[labelName]) {
@@ -631,6 +646,7 @@ export default class Index extends Vue {
           ? [
               { icon: 'icon-wenjiandaoru', content: '导入文件' },
               { icon: 'icon-export', content: '导出文件' },
+              { icon: 'icon-wenhao', content: '说明' },
             ]
           : [
               { icon: 'icon-wenjiandaoru', content: '导入文件' },
@@ -642,6 +658,7 @@ export default class Index extends Vue {
               { icon: 'icon-shuaxin', content: '重复上次框选(c)' },
               { icon: 'icon-chexiao', content: '撤销(cmd+z)' },
               { icon: 'icon-shuaxin1', content: '重做(cmd+shift+z)' },
+              { icon: 'icon-wenhao', content: '说明' },
             ]
     }
 
@@ -689,6 +706,7 @@ export default class Index extends Vue {
   }
   //0-导入 1-导出 2-移动 3-钢笔 4-矩形 5-清除
   tabClick(tab) {
+    this.isExplanation = false
     if (this.canvas.getObjects()[0]) {
       if (tab === 2) {
         this.canvas
@@ -714,6 +732,10 @@ export default class Index extends Vue {
     if (this.checkedTab === 6) this.repeatImg()
     if (this.checkedTab === 7) this.undo()
     if (this.checkedTab === 8) this.redo()
+
+    if (this.checkedTab === 9 || (this.checkedTab === 2 && this.type === 0))
+      this.isExplanation = true
+    this.redo()
   }
 
   //输入框
@@ -753,9 +775,21 @@ export default class Index extends Vue {
   cancel() {
     this.isExport = false
   }
+
+  isYamlLoaded = false
+  isTxtLoaded = false
   //取消导入
   cancelImport() {
     this.isImport = false
+  }
+
+  uploadStatus(val) {
+    if (val.isTxtLoaded) {
+      this.isTxtLoaded = val.isTxtLoaded
+    }
+    if (val.isYamlLoaded) {
+      this.isYamlLoaded = val.isYamlLoaded
+    }
   }
   // 导出
   submit(type, rate) {
@@ -1418,10 +1452,13 @@ export default class Index extends Vue {
       //   this.setLabelShortCuts()
     } else {
       this.isYolo = val.isYolo
-      this.imagesData = val.imagesData
-      this.labelNames = val.labelNames
-      //   // todo
-      //   console.log('val', val)
+      if (val.imagesData) {
+        this.imagesData = val.imagesData
+      }
+
+      if (val.labelNames) {
+        this.labelNames = val.labelNames
+      }
     }
   }
 
@@ -1429,7 +1466,16 @@ export default class Index extends Vue {
 
   confirmImport() {
     const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
-    this.labelList = this.labelList.concat(this.labelNames)
+    this.labelNames.forEach(labelItem => {
+      if (!this.labelList.find(i => i.name === labelItem.name)) {
+        this.labelList.push(labelItem)
+      }
+    })
+
+    // // todo
+    // console.log('labelList', this.labelList)
+
+    // this.labelList = this.labelList.concat(this.labelNames)
     this.setLabelShortCuts()
     this.loadExpImg(picItem)
     this.isImport = false
@@ -1539,6 +1585,7 @@ export default class Index extends Vue {
   .tool {
     height: calc(100vh - 40px);
     display: grid;
+    position: relative;
     grid-template-columns: get-vw(60px) 1fr get-vw(400px);
     background: #535353;
     flex: 1;
