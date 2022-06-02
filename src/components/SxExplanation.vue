@@ -9,9 +9,9 @@
     <sx-table :columns="column1" :data="data1" />
     <sx-header title="目前支持的导出格式" />
     <sx-table :columns="column2" :data="data2" />
-    <p>✓ - 已支持格式</p>
-    <p>☐ - 暂时不支持</p>
-    <p>✗ - 格式对于给定的标签类型没有意义</p>
+    <p class="info">✓ - 已支持格式</p>
+    <p class="info">☐ - 暂时不支持</p>
+    <p class="info">✗ - 格式对于给定的标签类型没有意义</p>
   </div>
 </template>
 
@@ -174,18 +174,18 @@ export default class SxExplanation extends Vue {
   font-size: 22px;
 }
 .explanation {
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
+  background-color: rgba(0, 0, 0, 1);
+  //   display: flex;
   padding: 20px;
   position: absolute;
-  //   left: 0;
+  left: get-vw(60px);
   //   right: 0;
   //   top: 0;
   //   bottom: 0;
   z-index: 1;
-  flex-direction: column;
+
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   color: #fff;
   font-size: 16px;
   overflow-y: scroll;
@@ -193,5 +193,8 @@ export default class SxExplanation extends Vue {
   //   &__main {
   //     width: get-vw(688px);
   //   }
+}
+.info {
+  margin-top: 10px;
 }
 </style>

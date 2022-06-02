@@ -22,6 +22,9 @@
           <sx-icon :type="item.icon" color="#ffffff" />
         </div>
       </div>
+
+      <SxExplanation v-if="isExplanation" />
+
       <div class="tool_content" id="tool_content">
         <canvas id="canvas" :width="width" :height="height"></canvas>
 
@@ -165,8 +168,6 @@
       @importData="confirmImport"
       @setAnnotation="setAnnotation"
     />
-
-    <SxExplanation v-if="isExplanation" />
 
     <!-- 垂直线 -->
     <div ref="crosshair-h" id="crosshair-h" class="hair"></div>
@@ -698,6 +699,7 @@ export default class Index extends Vue {
   }
   //0-导入 1-导出 2-移动 3-钢笔 4-矩形 5-清除
   tabClick(tab) {
+    this.isExplanation = false
     if (this.canvas.getObjects()[0]) {
       if (tab === 2) {
         this.canvas
@@ -723,6 +725,10 @@ export default class Index extends Vue {
     if (this.checkedTab === 6) this.repeatImg()
     if (this.checkedTab === 7) this.undo()
     if (this.checkedTab === 8) this.redo()
+
+    if (this.checkedTab === 9 || (this.checkedTab === 2 && this.type === 0))
+      this.isExplanation = true
+    this.redo()
   }
 
   //输入框
@@ -1559,6 +1565,7 @@ export default class Index extends Vue {
   .tool {
     height: calc(100vh - 40px);
     display: grid;
+    position: relative;
     grid-template-columns: get-vw(60px) 1fr get-vw(400px);
     background: #535353;
     flex: 1;
