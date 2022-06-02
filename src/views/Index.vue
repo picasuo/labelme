@@ -648,7 +648,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -869,7 +869,7 @@ export default class Index extends Vue {
 
           console.log(
             dragged.style.transform.translateY,
-            related.style.transform.translateY
+            related.style.transform.translateY,
           )
         },
       })
@@ -888,7 +888,7 @@ export default class Index extends Vue {
         cH.style.top = `${e.pageY}px`
         cV.style.left = `${e.pageX}px`
       },
-      false
+      false,
     )
   }
 
@@ -994,7 +994,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -1014,7 +1014,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -1063,7 +1063,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      }
+      },
     )
 
     //开启快捷键 默认开启
@@ -1078,7 +1078,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName
+        e => e.name === labelName,
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
