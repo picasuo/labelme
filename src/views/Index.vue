@@ -441,6 +441,24 @@ export default class Index extends Vue {
     if (imgData && !imgData.loadStatus) {
       //   // todo
       //   console.log('imgdata', imgData)
+      //再次导入yaml文件，删除之前的注解canvas对象
+      this.canvas.getObjects().forEach((canvasObj, index) => {
+        if (canvasObj.isAnnoation) {
+          this.canvas.remove(canvasObj)
+          this.objMap[name].splice(index, 1)
+        }
+      })
+
+      //再次导入yaml文件，删除之前的注解label
+      if (this.labelListMap[name] && this.labelListMap[name].length > 0) {
+        const labels = [] as any
+        this.labelListMap[name].forEach(label => {
+          if (!label.isAnnoation) {
+            labels.push(label)
+          }
+        })
+        this.labelListMap[name] = labels
+      }
 
       //!拿到图片的宽高左右
       const { width, height, aCoords } = this.canvas.getObjects()[0]
@@ -482,7 +500,7 @@ export default class Index extends Vue {
           rectTop = rect.y / heightRate + top
         }
 
-        const { name: labelName, color } = this.labelList.find(
+        const { name: labelName, color } = this.labelNames.find(
           label => label.id === labelId,
         )
 
@@ -491,6 +509,7 @@ export default class Index extends Vue {
             color,
             name: labelName,
             count: 1,
+            isAnnoation: true,
           }
         } else {
           labelMap[labelName].count++
@@ -511,6 +530,7 @@ export default class Index extends Vue {
           cornerColor: '#fff',
           stroke: this.color,
           strokeWidth: this.drawWidth,
+          isAnnoation: true,
           // stroke:'green',
           // strokeWidth:3,
           //   centeredRotation: true,
@@ -519,7 +539,7 @@ export default class Index extends Vue {
       })
 
       labelPolygons.forEach(polygonItem => {
-        const { name: labelName, color } = this.labelList.find(
+        const { name: labelName, color } = this.labelNames.find(
           label => label.id === polygonItem.labelId,
         )
 
@@ -1405,6 +1425,9 @@ export default class Index extends Vue {
   }
 
   setAnnotation(val) {
+    // todo
+    console.log('val', val)
+
     if (this.type === 0) {
       //   // todo
       //   console.log('val', val)
@@ -1439,6 +1462,8 @@ export default class Index extends Vue {
       if (val.labelNames) {
         this.labelNames = val.labelNames
       }
+
+      this.imagesData.map(item => (item.loadStatus = false))
     }
   }
 
