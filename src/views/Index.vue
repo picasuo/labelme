@@ -22,7 +22,7 @@
           <sx-icon :type="item.icon" />
         </div>
       </div>
-      <div class="tool_content">
+      <div class="tool_content" id="tool_content">
         <canvas id="canvas" :width="width" :height="height"></canvas>
 
         <img id="img" :src="currentPicUrl" />
@@ -801,7 +801,8 @@ export default class Index extends Vue {
 
   //添加鼠标指针移动监听
   addMouseMove() {
-    window.addEventListener(
+    const box: any = document.querySelector('#tool_content')
+    box.addEventListener(
       'mousemove',
       e => {
         const cH = this.$refs['crosshair-h'] as any
@@ -824,7 +825,8 @@ export default class Index extends Vue {
 
   //取消对鼠标指针的监听
   removeMouseMove() {
-    window.removeEventListener('mousemove', this.addMouseMove, false)
+    const box: any = document.querySelector('#tool_content')
+    box.removeEventListener('mousemove', this.addMouseMove, false)
   }
 
   mounted() {
