@@ -483,13 +483,8 @@ export default class Index extends Vue {
           rectTop = rect.y / heightRate + top
         }
 
-<<<<<<< HEAD
         const { name: labelName, color } = this.labelNames.find(
           label => label.id === labelId
-=======
-        const { name: labelName, color } = this.labelList.find(
-          label => label.id === labelId,
->>>>>>> be2f49a7199db8cc4c23a7a3eedfde82786148bd
         )
 
         if (!labelMap[labelName]) {
