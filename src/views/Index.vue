@@ -190,6 +190,7 @@ import { exportVOC } from 'utils/VOCXMLExporter'
 import { exportYOLO } from 'utils/YOLOExporter'
 import { exportImgJson } from 'utils/ImgJsonExport'
 import SxImport from 'components/SxImport.vue'
+import Sortable from 'sortablejs'
 
 @Component({
   components: {
@@ -473,7 +474,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId,
+          label => label.id === labelId
         )
 
         if (!labelMap[labelName]) {
@@ -510,7 +511,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach(polygonItem => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId,
+          label => label.id === polygonItem.labelId
         )
 
         const { segmentation } = polygonItem
@@ -617,14 +618,12 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
   // 0-分类 1-检测
   enterEdit(type, val) {
-    this.addMouseMove()
-
     this.type = type
     if (type !== 2) {
       this.icons =
@@ -663,6 +662,9 @@ export default class Index extends Vue {
       this.isShown = false
       this.isAdd = false
     }
+
+    this.addMouseMove()
+    // this.sortPic()
   }
   addImg() {
     this.removeMouseMove()
@@ -804,6 +806,27 @@ export default class Index extends Vue {
     }
   }
 
+  //drag drop  图片
+  sortPic() {
+    this.$nextTick(() => {
+      const el = document.querySelector('.img__list>div')
+      const sortable = new Sortable(el, {
+        animation: 150,
+        onStart: evt => {
+          console.log(evt)
+        },
+        onMove: evt => {
+          const { dragged, related } = evt
+
+          console.log(
+            dragged.style.transform.translateY,
+            related.style.transform.translateY
+          )
+        },
+      })
+    })
+  }
+
   //添加鼠标指针移动监听
   addMouseMove() {
     const box: any = document.querySelector('#tool_content')
@@ -812,19 +835,11 @@ export default class Index extends Vue {
       e => {
         const cH = this.$refs['crosshair-h'] as any
         const cV = this.$refs['crosshair-v'] as any
-        // const dX = this.$refs['cursor-d'] as any
 
         cH.style.top = `${e.pageY}px`
         cV.style.left = `${e.pageX}px`
-        // todo
-        //   console.log('cH', cH.style.top)
-        //const centerx = e.pageX - 20;
-        //const centery = e.pageY - 20;
-
-        // dX.style.left = `${e.pageX + 6}px`
-        // dX.style.top = `${e.pageY + 6}px`
       },
-      false,
+      false
     )
   }
 
@@ -930,7 +945,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -950,7 +965,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -999,7 +1014,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      },
+      }
     )
 
     //开启快捷键 默认开启
@@ -1014,7 +1029,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName,
+        e => e.name === labelName
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
