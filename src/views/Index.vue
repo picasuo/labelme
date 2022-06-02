@@ -19,7 +19,7 @@
           :data-line="item.content"
           @click="tabClick(index)"
         >
-          <sx-icon :type="item.icon" />
+          <sx-icon :type="item.icon" color="#ffffff" />
         </div>
       </div>
       <div class="tool_content">
@@ -158,10 +158,15 @@
     <SxImport
       v-if="isImport"
       :type="type"
+      :isTxtLoaded="isTxtLoaded"
+      :isYamlLoaded="isYamlLoaded"
       @cancelImport="cancelImport"
+      @uploadStatus="uploadStatus"
       @importData="confirmImport"
       @setAnnotation="setAnnotation"
     />
+
+    <SxExplanation v-if="isExplanation" />
 
     <!-- 垂直线 -->
     <div ref="crosshair-h" id="crosshair-h" class="hair"></div>
@@ -175,6 +180,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import SxMask from 'components/SxMask.vue'
 import SxExport from 'components/SxExport.vue'
+import SxExplanation from 'components/SxExplanation.vue'
 import {
   handlePicName,
   Colors,
@@ -196,6 +202,7 @@ import SxImport from 'components/SxImport.vue'
     SxMask,
     SxExport,
     SxImport,
+    SxExplanation,
   },
 })
 export default class Index extends Vue {
@@ -207,6 +214,8 @@ export default class Index extends Vue {
   isShown = true
   isExport = false
   isImport = false
+
+  isExplanation = false
 
   deepObjMap = {} as any
   changedPic = [] as any
@@ -472,7 +481,7 @@ export default class Index extends Vue {
           rectTop = rect.y / heightRate + top
         }
 
-        const { name: labelName, color } = this.labelNames.find(
+        const { name: labelName, color } = this.labelList.find(
           label => label.id === labelId,
         )
 
@@ -509,7 +518,7 @@ export default class Index extends Vue {
       })
 
       labelPolygons.forEach(polygonItem => {
-        const { name: labelName, color } = this.labelNames.find(
+        const { name: labelName, color } = this.labelList.find(
           label => label.id === polygonItem.labelId,
         )
 
@@ -632,6 +641,7 @@ export default class Index extends Vue {
           ? [
               { icon: 'icon-wenjiandaoru', content: '导入文件' },
               { icon: 'icon-export', content: '导出文件' },
+              { icon: 'icon-wenhao', content: '说明' },
             ]
           : [
               { icon: 'icon-wenjiandaoru', content: '导入文件' },
@@ -643,6 +653,7 @@ export default class Index extends Vue {
               { icon: 'icon-shuaxin', content: '重复上次框选(c)' },
               { icon: 'icon-chexiao', content: '撤销(cmd+z)' },
               { icon: 'icon-shuaxin1', content: '重做(cmd+shift+z)' },
+              { icon: 'icon-wenhao', content: '说明' },
             ]
     }
 
@@ -751,9 +762,21 @@ export default class Index extends Vue {
   cancel() {
     this.isExport = false
   }
+
+  isYamlLoaded = false
+  isTxtLoaded = false
   //取消导入
   cancelImport() {
     this.isImport = false
+  }
+
+  uploadStatus(val) {
+    if (val.isTxtLoaded) {
+      this.isTxtLoaded = val.isTxtLoaded
+    }
+    if (val.isYamlLoaded) {
+      this.isYamlLoaded = val.isYamlLoaded
+    }
   }
   // 导出
   submit(type, rate) {
@@ -1401,10 +1424,13 @@ export default class Index extends Vue {
       //   this.setLabelShortCuts()
     } else {
       this.isYolo = val.isYolo
-      this.imagesData = val.imagesData
-      this.labelNames = val.labelNames
-      //   // todo
-      //   console.log('val', val)
+      if (val.imagesData) {
+        this.imagesData = val.imagesData
+      }
+
+      if (val.labelNames) {
+        this.labelNames = val.labelNames
+      }
     }
   }
 
@@ -1412,7 +1438,16 @@ export default class Index extends Vue {
 
   confirmImport() {
     const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
-    this.labelList = this.labelList.concat(this.labelNames)
+    this.labelNames.forEach(labelItem => {
+      if (!this.labelList.find(i => i.name === labelItem.name)) {
+        this.labelList.push(labelItem)
+      }
+    })
+
+    // // todo
+    // console.log('labelList', this.labelList)
+
+    // this.labelList = this.labelList.concat(this.labelNames)
     this.setLabelShortCuts()
     this.loadExpImg(picItem)
     this.isImport = false
