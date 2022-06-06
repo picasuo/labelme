@@ -1,4 +1,4 @@
-# label-me
+# labelme
 
 ## Project setup
 

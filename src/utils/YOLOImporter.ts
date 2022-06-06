@@ -3,18 +3,21 @@ import { v4 as uuidv4 } from 'uuid'
 import { Colors } from './tools'
 let yamlResult = {} as Record<string, any>
 const imagesData = [] as Array<any>
+let labelNames = [] as Array<any>
 
+let imagesNum = 0
 export const loadYoloFile = () => {
-  // todo
-  console.log('imagesdata', imagesData)
-
-  let labelNames = [] as Array<any>
   if (yamlResult.names) {
-    labelNames = yamlResult.names.map(name => {
-      return {
-        name,
-        id: uuidv4(),
-        color: Colors.random(),
+    yamlResult.names.map((name, index) => {
+      const labelIndex = labelNames.findIndex(o => o.labelIndex === index)
+      if (labelIndex !== -1) {
+        labelNames[labelIndex].name = name
+      } else {
+        labelNames.push({
+          name,
+          id: uuidv4(),
+          color: Colors.random(),
+        })
       }
     })
   } else {
@@ -90,11 +93,16 @@ export const loadYamlFile = file => {
 
         reader.onload = (evt: any) => {
           yamlResult = yaml.load(evt.target.result)
-          const labelNames = yamlResult.names.map(name => {
-            return {
-              name,
-              id: uuidv4(),
-              color: Colors.random(),
+          yamlResult.names.map((name, index) => {
+            const labelIndex = labelNames.findIndex(o => o.labelIndex === index)
+            if (labelIndex !== -1) {
+              labelNames[labelIndex].name = name
+            } else {
+              labelNames.push({
+                name,
+                id: uuidv4(),
+                color: Colors.random(),
+              })
             }
           })
           //   loadYoloFile()
@@ -117,35 +125,39 @@ export const loadTxtFile = fileList => {
       resolve: (value: Record<string, any>) => void,
       reject: (value: any) => void,
     ) => {
+      let fileNum = 0
       Array.prototype.forEach.call(fileList, (file: File, index) => {
         const { type, name } = file
+        const keyName = name.split('.')[0]
 
-        if (type) {
-          const reader = new FileReader()
-          reader.readAsText(file)
+        if (!imagesData.find(image => image.imgName === keyName)) {
+          fileNum++
+          if (type) {
+            const reader = new FileReader()
+            reader.readAsText(file)
 
-          reader.onload = (evt: any) => {
-            const keyName = name.split('.')[0]
-            //   rectData[keyName] = evt.target.result.split(' ')
-            const labelRects = [] as Array<any>
+            reader.onload = (evt: any) => {
+              //   rectData[keyName] = evt.target.result.split(' ')
+              const labelRects = [] as Array<any>
 
-            evt.target.result.split('\n').forEach(item => {
-              const itemData = item.split(' ').map(i => Number(i))
+              evt.target.result.split('\n').forEach(item => {
+                const itemData = item.split(' ').map(i => Number(i))
 
-              labelRects.push({
-                labelIndex: itemData[0],
-                bbox: itemData.slice(1),
+                labelRects.push({
+                  labelIndex: itemData[0],
+                  bbox: itemData.slice(1),
+                })
               })
-            })
-            imagesData.push({
-              imgName: keyName,
-              labelRects,
-            })
+              imagesData.push({
+                imgName: keyName,
+                labelRects,
+              })
 
-            if (imagesData.length === fileList.length) {
-              const obj = loadYoloFile() as any
-
-              resolve(obj)
+              if (imagesData.length === fileNum + imagesNum) {
+                const obj = loadYoloFile() as any
+                imagesNum = imagesData.length
+                resolve(obj)
+              }
             }
           }
         }

@@ -442,6 +442,24 @@ export default class Index extends Vue {
     if (imgData && !imgData.loadStatus) {
       //   // todo
       //   console.log('imgdata', imgData)
+      //再次导入yaml文件，删除之前的注解canvas对象
+      this.canvas.getObjects().forEach((canvasObj, index) => {
+        if (canvasObj.isAnnoation) {
+          this.canvas.remove(canvasObj)
+          this.objMap[name].splice(index, 1)
+        }
+      })
+
+      //再次导入yaml文件，删除之前的注解label
+      if (this.labelListMap[name] && this.labelListMap[name].length > 0) {
+        const labels = [] as any
+        this.labelListMap[name].forEach(label => {
+          if (!label.isAnnoation) {
+            labels.push(label)
+          }
+        })
+        this.labelListMap[name] = labels
+      }
 
       //!拿到图片的宽高左右
       const { width, height, aCoords } = this.canvas.getObjects()[0]
@@ -484,7 +502,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -492,6 +510,7 @@ export default class Index extends Vue {
             color,
             name: labelName,
             count: 1,
+            isAnnoation: true,
           }
         } else {
           labelMap[labelName].count++
@@ -512,6 +531,7 @@ export default class Index extends Vue {
           cornerColor: '#fff',
           stroke: this.color,
           strokeWidth: this.drawWidth,
+          isAnnoation: true,
           // stroke:'green',
           // strokeWidth:3,
           //   centeredRotation: true,
@@ -521,7 +541,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach(polygonItem => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId
+          label => label.id === polygonItem.labelId,
         )
 
         const { segmentation } = polygonItem
@@ -628,7 +648,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -849,7 +869,7 @@ export default class Index extends Vue {
 
           console.log(
             dragged.style.transform.translateY,
-            related.style.transform.translateY
+            related.style.transform.translateY,
           )
         },
       })
@@ -868,7 +888,7 @@ export default class Index extends Vue {
         cH.style.top = `${e.pageY}px`
         cV.style.left = `${e.pageX}px`
       },
-      false
+      false,
     )
   }
 
@@ -974,7 +994,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicUrl) {
           let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.url === this.currentPicUrl,
           )
           switch (handler.key) {
             //上一张
@@ -994,7 +1014,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -1043,7 +1063,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      }
+      },
     )
 
     //开启快捷键 默认开启
@@ -1058,7 +1078,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName
+        e => e.name === labelName,
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
@@ -1420,6 +1440,9 @@ export default class Index extends Vue {
   }
 
   setAnnotation(val) {
+    // todo
+    console.log('val', val)
+
     if (this.type === 0) {
       //   // todo
       //   console.log('val', val)
@@ -1454,6 +1477,8 @@ export default class Index extends Vue {
       if (val.labelNames) {
         this.labelNames = val.labelNames
       }
+
+      this.imagesData.map(item => (item.loadStatus = false))
     }
   }
 
