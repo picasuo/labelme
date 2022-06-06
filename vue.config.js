@@ -72,17 +72,17 @@ module.exports = {
      * 若某些模块多次引用则 分块到 chunk-commons
      */
     config.optimization
-      .minimizer('css')
-      .use(OptimizeCssAssetsWebpackPlugin, [
-        {
-          assetNameRegExp: /\.css$/g,
-          cssProcessor: require('cssnano'),
-          cssProcessorPluginOptions: {
-            preset: ['default', { discardComments: { removeAll: true } }],
-          },
-        },
-      ])
-      .end()
+      // .minimizer('css')
+      // .use(OptimizeCssAssetsWebpackPlugin, [
+      //   {
+      //     assetNameRegExp: /\.css$/g,
+      //     cssProcessor: require('cssnano'),
+      //     cssProcessorPluginOptions: {
+      //       preset: ['default', { discardComments: { removeAll: true } }],
+      //     },
+      //   },
+      // ])
+      // .end()
       .minimizer('terser')
       .tap(args => {
         const { terserOptions } = args[0]

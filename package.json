@@ -4,16 +4,18 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "webpack": "webpack --version"
   },
   "dependencies": {
     "axios": "^0.27.2",
-    "core-js": "^3.6.5",
+    "core-js": "^3.22.8",
     "element-ui": "^2.15.8",
     "fabric": "^5.2.1",
     "file-saver": "^2.0.5",
     "hotkeys-js": "^3.9.3",
     "iview": "^3.5.4",
+    "js-yaml": "^3.14.1",
     "json2yaml": "^1.1.0",
     "jszip": "^3.9.1",
     "moment": "^2.29.3",
@@ -26,19 +28,20 @@
     "vue-property-decorator": "^9.1.2",
     "vue-router": "^3.2.0",
     "vue-virtual-scroll-list": "^2.3.3",
-    "vue-virtual-scroller": "^1.0.10",
-    "js-yaml": "^3.14.1"
+    "vue-virtual-scroller": "^1.0.10"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.13",
     "@vue/cli-plugin-router": "~4.5.13",
     "@vue/cli-plugin-typescript": "~4.5.13",
     "@vue/cli-service": "~4.5.13",
-    "typescript": "~4.1.5",
-    "vue-template-compiler": "^2.6.11",
-    "optimize-css-assets-webpack-plugin": "^6.0.1",
+    "cssnano": "^5.1.11",
     "hard-source-webpack-plugin": "^0.13.1",
-    "node-sass": "^4.14.1",
-    "sass-loader": "^8.0.2"
+    "node-sass": "^4.13.0",
+    "optimize-css-assets-webpack-plugin": "^6.0.1",
+    "postcss": "^8.2.15",
+    "sass-loader": "^8.0.2",
+    "typescript": "~4.1.5",
+    "vue-template-compiler": "^2.6.11"
   }
 }
