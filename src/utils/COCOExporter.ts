@@ -1,7 +1,7 @@
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
 import { calculatePoint, calculatePolyOffset } from './ExporterUtil'
-import { SegmentationImg, SegmentationData } from './SegmentationImg'
+import { SegmentationData, SegmentationImg } from './SegmentationImg'
 
 let widthRate = 0
 let heightRate = 0
