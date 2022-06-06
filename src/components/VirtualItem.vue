@@ -33,6 +33,7 @@ import { handlePicName } from '../utils/tools'
 @Component({
   components: {},
 })
+// 虚拟list暂时停用
 export default class VirtualItem extends Vue {
   @Prop({
     type: Object,
