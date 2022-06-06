@@ -9,9 +9,66 @@
     <sx-table :columns="column1" :data="data1" />
     <sx-header title="目前支持的导出格式" />
     <sx-table :columns="column2" :data="data2" />
-    <p class="info">✓ - 已支持格式</p>
-    <p class="info">☐ - 暂时不支持</p>
-    <p class="info">✗ - 格式对于给定的标签类型没有意义</p>
+    <div class="info">
+      <p class="info__item">✓ - 已支持格式</p>
+      <p class="info__item">☐ - 暂时不支持</p>
+      <p class="info__item">✗ - 格式对于给定的标签类型没有意义</p>
+    </div>
+
+    <sx-header title="数据集格式规范" />
+
+    <sx-header title="COCO" level="secondary" />
+
+    <ul>
+      <li class="format" v-for="(item, index) in cocoData" :key="index">
+        <header class="format__header">{{ item.keyName }}</header>
+        <p class="format__describe">
+          {{ item.describe }}
+        </p>
+
+        <el-descriptions
+          class="descriptions"
+          v-if="item.more"
+          title=""
+          direction="vertical"
+          :column="3"
+          border
+        >
+          <el-descriptions-item
+            v-for="el in item.more"
+            :key="el.value"
+            :label="el.key"
+            >{{ el.value }}</el-descriptions-item
+          >
+        </el-descriptions>
+      </li>
+    </ul>
+
+    <sx-header title="YOLO" level="secondary" />
+
+    <ul>
+      <li class="format" v-for="(item, index) in yoloData" :key="index">
+        <header class="format__header">{{ item.keyName }}</header>
+        <p class="format__describe">
+          {{ item.describe }}
+        </p>
+
+        <!-- <el-descriptions
+          v-if="item.more"
+          title="垂直带边框列表"
+          direction="vertical"
+          :column="4"
+          border
+        >
+          <el-descriptions-item
+            v-for="el in item.more"
+            :key="el.value"
+            :label="el.key"
+            >{{ el.value }}</el-descriptions-item
+          >
+        </el-descriptions> -->
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -165,6 +222,74 @@ export default class SxExplanation extends Vue {
       PIXEL: '✗',
     },
   ]
+
+  cocoData = [
+    {
+      keyName: 'info',
+      describe:
+        'json文件字段，包含多个image实例的数组，每个image实例包含id、width、height、file_name，分别表示图片id、图片宽、高、图片名称。',
+    },
+    {
+      keyName: 'images',
+      describe:
+        'json文件字段，包含多个image实例的数组，每个image实例包含id、width、height、file_name，分别表示图片id、图片宽、高、图片名称。',
+    },
+    {
+      keyName: 'annotations',
+      describe:
+        '包含多个注解框实例的数组，每个框实例包含id、iscrowd、image_id、catefroy_id、segmentation、bbox、area这些属性。',
+      more: [
+        {
+          key: 'id',
+          value: '表示该实例id',
+        },
+        {
+          key: 'iscrowd',
+          value: '用于区分该注解框属于多边形还是矩形，0表示多边形，1表示矩形',
+        },
+        {
+          key: 'image_id',
+          value: '表示该框对应的类别id',
+        },
+        {
+          key: 'segmentation',
+          value: '表示多边形框所有锚点的坐标相对于原图原点的距离的集合',
+        },
+        {
+          key: 'bbox',
+          value: '存储了矩形框相对于原图原点的位置坐标以及宽高',
+        },
+        {
+          key: 'area',
+          value: '表示多边形框在原图中所占的面积',
+        },
+      ] as any,
+    },
+    {
+      keyName: 'categories',
+      describe:
+        'json文件字段，包含所有注解标签实例的数组。每个标签实例都包含id、name两个属性。',
+    },
+  ] as any
+
+  yoloData = [
+    {
+      keyName: 'data.yaml',
+      describe: '包含标签名称数组',
+      more: [],
+    },
+    {
+      keyName: 'xxx.txt',
+      describe:
+        '包含在labels文件夹中，以图片名称命名的txt文件，包含该图片所有注解框的信息',
+      more: [],
+    },
+    {
+      keyName: 'xxx.jpg/jpeg/png',
+      describe: '包含在images文件夹中，图片格式',
+      more: [],
+    },
+  ]
 }
 </script>
 
@@ -183,6 +308,7 @@ export default class SxExplanation extends Vue {
   //   top: 0;
   //   bottom: 0;
   z-index: 1;
+  //   z-index: 999999;
 
   //   width: 100vw;
   height: 100%;
@@ -195,6 +321,27 @@ export default class SxExplanation extends Vue {
   //   }
 }
 .info {
-  margin-top: 10px;
+  &__item {
+    margin: 20px;
+  }
+}
+
+.format {
+  padding: 0 20px 10px;
+  &__header {
+    font-size: 18px;
+  }
+
+  &__describe {
+    padding: 5px 0 0 10px;
+  }
+}
+
+.descriptions {
+  margin: 20px;
+}
+
+/deep/.el-descriptions__table {
+  width: 100%;
 }
 </style>

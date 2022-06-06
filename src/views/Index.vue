@@ -170,9 +170,17 @@
     />
 
     <!-- 垂直线 -->
-    <div ref="crosshair-h" id="crosshair-h" class="hair"></div>
+    <div
+      ref="crosshair-h"
+      id="crosshair-h"
+      :class="isExplanation ? 'hide-hair' : 'hair'"
+    ></div>
     <!-- 水平线 -->
-    <div ref="crosshair-v" id="crosshair-v" class="hair"></div>
+    <div
+      ref="crosshair-v"
+      id="crosshair-v"
+      :class="isExplanation ? 'hide-hair' : 'hair'"
+    ></div>
     <!-- <div ref="cursor-d" id="cursor-d" class="dotx"></div> -->
   </div>
 </template>
@@ -1896,6 +1904,10 @@ export default class Index extends Vue {
   position: fixed;
   top: 0;
   z-index: 6001 !important;
+}
+
+.hide-hair {
+  display: none;
 }
 .hair {
   background-color: #fff;
