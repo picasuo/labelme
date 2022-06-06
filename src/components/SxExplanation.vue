@@ -237,7 +237,7 @@ export default class SxExplanation extends Vue {
     {
       keyName: 'annotations',
       describe:
-        '包含多个注解框实例的数组，每个框实例包含id、iscrowd、image_id、catefroy_id、segmentation、bbox、area这些属性。',
+        'json文件字段，包含多个注解框实例的数组，每个框实例包含id、iscrowd、image_id、catefroy_id、segmentation、bbox、area这些属性。',
       more: [
         {
           key: 'id',
