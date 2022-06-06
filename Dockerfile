@@ -11,7 +11,7 @@ RUN npm set canvas_binary_host_mirror https://registry.npmmirror.com/-/binary/ca
 
 RUN mkdir -p /opt/node/js \
     && cd /opt/node \
-    && npm i -g canvas
+    && npm i canvas
 
 
 WORKDIR  /workspace
