@@ -171,23 +171,23 @@ export default class SxExplanation extends Vue {
 <style lang="scss" scoped>
 .sui-header-title {
   color: #fff;
-  font-size: 22px;
+  font-size: 18px;
 }
 .explanation {
   background-color: rgba(0, 0, 0, 1);
   //   display: flex;
-  padding: 20px;
+  padding: 20px 40px;
   position: absolute;
   left: get-vw(60px);
-  //   right: 0;
+  right: 0;
   //   top: 0;
   //   bottom: 0;
   z-index: 1;
 
-  width: 100vw;
+  //   width: 100vw;
   height: 100%;
   color: #fff;
-  font-size: 16px;
+  font-size: 14px;
   overflow-y: scroll;
 
   //   &__main {
