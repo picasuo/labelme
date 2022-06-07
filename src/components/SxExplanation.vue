@@ -294,6 +294,9 @@ export default class SxExplanation extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.sui-header {
+  padding-left: 0;
+}
 .sui-header-title {
   color: #fff;
   font-size: 18px;
@@ -323,25 +326,28 @@ export default class SxExplanation extends Vue {
 .info {
   &__item {
     margin: 20px;
+    margin-left: 0;
   }
 }
 
 .format {
-  padding: 0 20px 10px;
+  padding: 0 20px 10px 0;
   &__header {
     font-size: 18px;
   }
 
   &__describe {
-    padding: 5px 0 0 10px;
+    padding: 5px 0 0 0;
   }
 }
 
 .descriptions {
   margin: 20px;
+  margin-left: 0;
 }
 
 /deep/.el-descriptions__table {
   width: 100%;
+  height: 200px;
 }
 </style>

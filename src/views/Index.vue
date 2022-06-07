@@ -173,13 +173,13 @@
     <div
       ref="crosshair-h"
       id="crosshair-h"
-      :class="isExplanation ? 'hide-hair' : 'hair'"
+      :class="isLineShown ? 'hide-hair' : 'hair'"
     ></div>
     <!-- 水平线 -->
     <div
       ref="crosshair-v"
       id="crosshair-v"
-      :class="isExplanation ? 'hide-hair' : 'hair'"
+      :class="isLineShown ? 'hide-hair' : 'hair'"
     ></div>
     <!-- <div ref="cursor-d" id="cursor-d" class="dotx"></div> -->
   </div>
@@ -220,12 +220,22 @@ export default class Index extends Vue {
 
   checkedTab = 0
   // 区分分类以及对象识别
-  iconShow = false
+  //   iconShow = false
   isShown = true
   isExport = false
   isImport = false
 
   isExplanation = false
+
+  get isLineShown() {
+    return this.isImport ||
+      this.isExport ||
+      this.isExplanation ||
+      this.isShown ||
+      this.inputModalVisiable
+      ? true
+      : false
+  }
 
   deepObjMap = {} as any
   changedPic = [] as any
