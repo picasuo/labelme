@@ -102,43 +102,34 @@
             <span>图片管理</span>
             <span class="addImg" @click="addImg">继续添加</span>
           </div>
-          <!-- :prerender="10"items必须大于10,否则报错。 -->
-          <RecycleScroller
-            class="img__list"
-            :items="picList"
-            :item-size="70"
-            key-field="name"
-            v-if="!isShown && picList.length > 0"
-          >
-            <template v-slot="{ item }">
-              <li
-                class="img__item"
-                :class="currentPicUrl === item.url ? 'img-active' : ''"
-                @click="loadExpImg(item)"
-              >
-                <div
-                  class="img__background"
-                  :style="{ backgroundImage: `url(${item.url})` }"
-                ></div>
-
-                <div class="img__info">
-                  <p class="img__name" :title="item.name">
-                    {{ handlePicName(item.name, 5) }}
-                  </p>
-                  <p>{{ item.format }}</p>
-                  <sx-icon
-                    v-if="
-                      (labelListMap[item.name] &&
-                        labelListMap[item.name].length > 0) ||
-                      (objMap[item.name] && objMap[item.name].length > 1)
-                    "
-                    size="small"
-                    type="icon-yiwancheng"
-                  />
-                </div>
-              </li>
-            </template>
-          </RecycleScroller>
+          <ul class="img__list">
+            <li
+              v-for="(item, index) in picList"
+              :key="index"
+              class="img__item"
+              :class="currentPicUrl === item.url ? 'img-active' : ''"
+              @click="loadExpImg(item)"
+            >
+              <div class="img__mini">
+                <img v-lazy="item.url" />
+              </div>
+              <div class="img__info">
+                <p class="img__name" :title="item.name">
+                  {{ handlePicName(item.name, 5) }}
+                </p>
+                <p>{{ item.format }}</p>
+                <sx-icon
+                  v-if="
+                    (labelListMap[item.name] &&
+                      labelListMap[item.name].length > 0) ||
+                    (objMap[item.name] && objMap[item.name].length > 1)
+                  "
+                  size="small"
+                  type="icon-yiwancheng"
+                />
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -228,6 +219,7 @@ export default class Index extends Vue {
   type = 0
 
   picList = [] as Array<any>
+  clonePicList = [] as Array<any>
 
   canvas = {} as any
   // 回退状态
@@ -502,7 +494,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId,
+          label => label.id === labelId
         )
 
         if (!labelMap[labelName]) {
@@ -541,7 +533,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach(polygonItem => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId,
+          label => label.id === polygonItem.labelId
         )
 
         const { segmentation } = polygonItem
@@ -648,7 +640,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -696,7 +688,7 @@ export default class Index extends Vue {
     }
 
     this.addMouseMove()
-    // this.sortPic()
+    this.sortPic()
   }
   addImg() {
     this.removeMouseMove()
@@ -857,20 +849,15 @@ export default class Index extends Vue {
 
   //drag drop  图片
   sortPic() {
+    this.clonePicList = _.cloneDeep(this.picList)
     this.$nextTick(() => {
-      const el = document.querySelector('.img__list>div')
+      const el = document.querySelector('.img__list')
       const sortable = new Sortable(el, {
         animation: 150,
-        onStart: evt => {
-          console.log(evt)
-        },
-        onMove: evt => {
-          const { dragged, related } = evt
-
-          console.log(
-            dragged.style.transform.translateY,
-            related.style.transform.translateY,
-          )
+        onEnd: evt => {
+          const { oldIndex, newIndex } = evt
+          const changedPic = this.clonePicList.splice(oldIndex, 1)[0]
+          this.clonePicList.splice(newIndex, 0, changedPic)
         },
       })
     })
@@ -888,7 +875,7 @@ export default class Index extends Vue {
         cH.style.top = `${e.pageY}px`
         cV.style.left = `${e.pageX}px`
       },
-      false,
+      false
     )
   }
 
@@ -993,8 +980,8 @@ export default class Index extends Vue {
       (event, handler) => {
         event.preventDefault()
         if (this.currentPicUrl) {
-          let currentIndex = this.picList.findIndex(
-            item => item?.url === this.currentPicUrl,
+          let currentIndex = this.clonePicList.findIndex(
+            item => item?.url === this.currentPicUrl
           )
           switch (handler.key) {
             //上一张
@@ -1010,11 +997,11 @@ export default class Index extends Vue {
                 currentIndex === this.loadPicNum - 1 ? 0 : currentIndex + 1
               break
           }
-          this.loadExpImg(this.picList[currentIndex])
+          this.loadExpImg(this.clonePicList[currentIndex])
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -1063,7 +1050,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      },
+      }
     )
 
     //开启快捷键 默认开启
@@ -1078,7 +1065,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName,
+        e => e.name === labelName
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
@@ -1412,7 +1399,6 @@ export default class Index extends Vue {
       active.off('moving')
       this.canvas.discardActiveObject().renderAll()
     })
-    console.log(this.canvas.getObjects())
   }
 
   preventRectFromLeaving(active) {
@@ -1440,9 +1426,6 @@ export default class Index extends Vue {
   }
 
   setAnnotation(val) {
-    // todo
-    console.log('val', val)
-
     if (this.type === 0) {
       //   // todo
       //   console.log('val', val)
@@ -1743,7 +1726,7 @@ export default class Index extends Vue {
 
         &__list {
           flex: 1;
-          //   overflow-y: scroll;
+          overflow-y: scroll;
         }
 
         &__item {
@@ -1760,13 +1743,19 @@ export default class Index extends Vue {
           border: 2px solid #488feb;
         }
 
-        &__background {
+        &__mini {
           width: 54px;
           height: 54px;
-          background: center;
-          background-repeat: no-repeat;
-          background-size: contain;
           margin-right: 10px;
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+          img {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+          }
         }
 
         &__info {

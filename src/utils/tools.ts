@@ -12,6 +12,19 @@ export const handlePicName = (string, length) => {
   return `${frontName}.${strArr[1]}`
 }
 
+//对象数组去重复
+export const unique = (arr, key) => {
+  if (!arr) return arr
+  if (key === undefined) return [...new Set(arr)]
+  const map = {
+    string: e => e[key],
+    function: e => key(e),
+  }
+  const fn = map[typeof key]
+  const obj = arr.reduce((o, e) => ((o[fn(e)] = e), o), {})
+  return Object.values(obj)
+}
+
 export const Colors = {} as Record<string, any>
 
 Colors.names = {
@@ -49,7 +62,6 @@ Colors.names = {
   red: '#ff0000',
   silver: '#c0c0c0',
 }
-
 
 Colors.random = function () {
   let result

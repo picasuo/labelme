@@ -34,7 +34,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { saveFileList } from 'utils/COCOImporter'
-import { getPicResolution } from 'utils/tools'
+import { unique } from 'utils/tools'
 
 @Component({
   components: {},
@@ -72,7 +72,6 @@ export default class SXMask extends Vue {
 
   picUrlList = [] as Array<any>
 
- 
   uploadImg() {
     const fileList = this!.$refs!.fileInput!['files'] as any
     saveFileList(fileList)
@@ -94,9 +93,9 @@ export default class SXMask extends Vue {
     return new Promise(
       (
         resolve: (value: Array<string>) => void,
-        reject: (value: string) => void,
+        reject: (value: string) => void
       ) => {
-        const picUrlList = [] as Array<any>
+        let picUrlList = [] as Array<any>
         Array.prototype.forEach.call(fileList, (file, index) => {
           const { type, name, size } = file
 
@@ -119,12 +118,13 @@ export default class SXMask extends Vue {
                 size,
               })
               if (picUrlList.length === fileList.length) {
+                picUrlList = unique(picUrlList, 'url')
                 resolve(picUrlList)
               }
             }
           }
         })
-      },
+      }
     )
   }
 
