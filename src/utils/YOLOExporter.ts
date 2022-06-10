@@ -118,10 +118,10 @@ export const wrapRectLabelIntoYOLO = data => {
     rectSize.height / height,
   ]
   let [x, y, rwidth, rheight] = rawBBox.map((value: number) =>
-    parseFloat(snapAndFix(value))
+    parseFloat(snapAndFix(value)),
   )
   const processedBBox = [x, y, rwidth, rheight].map((value: number) =>
-    snapAndFix(value)
+    snapAndFix(value),
   )
   return [classIdx, ...processedBBox].join(' ')
 }

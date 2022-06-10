@@ -161,9 +161,17 @@
     />
 
     <!-- 垂直线 -->
-    <div ref="crosshair-h" id="crosshair-h" class="hair"></div>
+    <div
+      ref="crosshair-h"
+      id="crosshair-h"
+      :class="isLineShown ? 'hide-hair' : 'hair'"
+    ></div>
     <!-- 水平线 -->
-    <div ref="crosshair-v" id="crosshair-v" class="hair"></div>
+    <div
+      ref="crosshair-v"
+      id="crosshair-v"
+      :class="isLineShown ? 'hide-hair' : 'hair'"
+    ></div>
     <!-- <div ref="cursor-d" id="cursor-d" class="dotx"></div> -->
   </div>
 </template>
@@ -203,12 +211,22 @@ export default class Index extends Vue {
 
   checkedTab = 0
   // 区分分类以及对象识别
-  iconShow = false
+  //   iconShow = false
   isShown = true
   isExport = false
   isImport = false
 
   isExplanation = false
+
+  get isLineShown() {
+    return this.isImport ||
+      this.isExport ||
+      this.isExplanation ||
+      this.isShown ||
+      this.inputModalVisiable
+      ? true
+      : false
+  }
 
   deepObjMap = {} as any
   changedPic = [] as any
@@ -428,12 +446,12 @@ export default class Index extends Vue {
 
   //将导入文件添加到画板和标签列表中
   addAnnotationToCanvas(name) {
-    const prefixName = this.isYolo ? name.slice(0, name.lastIndexOf('.')) : name
+    const prefixName = name.slice(0, name.lastIndexOf('.'))
     const imgData = this.imagesData.find(img => img.imgName === prefixName)
 
     if (imgData && !imgData.loadStatus) {
       //   // todo
-      //   console.log('imgdata', imgData)
+      //   console.log('imgdata', imgData, name)
       //再次导入yaml文件，删除之前的注解canvas对象
       this.canvas.getObjects().forEach((canvasObj, index) => {
         if (canvasObj.isAnnoation) {
@@ -479,7 +497,7 @@ export default class Index extends Vue {
         let rectTop = 0
         const { labelId } = rectItem
 
-        if (this.isYolo) {
+        if (imgData.isYolo) {
           const { bbox } = rectItem
           rectWidth = bbox[2] * imgWidth
           rectHeight = bbox[3] * imgHeight
@@ -531,18 +549,24 @@ export default class Index extends Vue {
         this.canvas.add(rectangle)
       })
 
-      labelPolygons.forEach(polygonItem => {
+      labelPolygons.forEach((polygonItem, index) => {
         const { name: labelName, color } = this.labelNames.find(
           label => label.id === polygonItem.labelId
         )
 
         const { segmentation } = polygonItem
-        segmentation.map(item => {
-          item.x = item.x / widthRate + left
-          item.y = item.y / heightRate + top
+        const points = [] as Array<any>
+        segmentation.forEach(item => {
+          //   item.x = item.x / widthRate + left
+          //   item.y = item.y / heightRate + top
+
+          points.push({
+            x: item.x / widthRate + left,
+            y: item.y / heightRate + top,
+          })
         })
 
-        const polygon = new fabric.Polygon(segmentation, {
+        const polygon = new fabric.Polygon(points, {
           stroke: this.color,
           strokeWidth: this.drawWidth,
           fill: color,
@@ -554,7 +578,9 @@ export default class Index extends Vue {
           cornerColor: '#fff',
           //   hasBorders: false,
           name: 'polygon',
+          isAnnoation: true,
         })
+
         this.canvas.add(polygon)
 
         if (!labelMap[labelName]) {
@@ -562,6 +588,7 @@ export default class Index extends Vue {
             color,
             name: labelName,
             count: 1,
+            isAnnoation: true,
           }
         } else {
           labelMap[labelName].count++
@@ -1452,20 +1479,23 @@ export default class Index extends Vue {
 
       //   this.setLabelShortCuts()
     } else {
-      this.isYolo = val.isYolo
       if (val.imagesData) {
-        this.imagesData = val.imagesData
+        this.imagesData = this.imagesData.concat(val.imagesData)
       }
 
       if (val.labelNames) {
-        this.labelNames = val.labelNames
+        this.labelNames = this.labelNames.concat(val.labelNames)
       }
+
+      //   // todo
+      //   console.log('imagesData', this.imagesData)
+
+      //   // todo
+      //   console.log('labelNames', this.labelNames)
 
       this.imagesData.map(item => (item.loadStatus = false))
     }
   }
-
-  isYolo = false
 
   confirmImport() {
     const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
@@ -1873,6 +1903,10 @@ export default class Index extends Vue {
   position: fixed;
   top: 0;
   z-index: 6001 !important;
+}
+
+.hide-hair {
+  display: none;
 }
 .hair {
   background-color: #fff;

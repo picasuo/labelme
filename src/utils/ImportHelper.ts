@@ -1,7 +1,5 @@
-import { COCOObject } from './type_interface'
-import { v4 as uuidv4 } from 'uuid';
-
-import { ImageData } from './type_interface'
+import { v4 as uuidv4 } from 'uuid'
+import { COCOObject, ImageData } from './type_interface'
 
 export const deserialize = (text: string): COCOObject => {
   try {

@@ -29,7 +29,8 @@ const packImageData = fileList => {
     return {
       id: uuidv4(),
       //   fileData: file,
-      imgName: file.file_name,
+      imgName: file.file_name.slice(0, file.file_name.lastIndexOf('.')),
+      fullName: file.file_name,
       loadStatus: false,
       labelRects: [],
       labelPoints: [],
@@ -38,6 +39,7 @@ const packImageData = fileList => {
       labelNameIds: [],
       isVisitedByObjectDetector: false,
       isVisitedByPoseDetector: false,
+      isYolo: false,
     }
   })
 }
@@ -46,7 +48,7 @@ const packImageData = fileList => {
 const partitionImageData = (inputImagesData, imageNames) => {
   const imageDataPartition = { pass: [], fail: [] } as Record<string, any>
   inputImagesData.forEach((item: any) => {
-    if (imageNames.includes(item.imgName)) {
+    if (imageNames.includes(item.fullName)) {
       imageDataPartition.pass.push(item)
     } else {
       imageDataPartition.fail.push(item)
@@ -74,7 +76,7 @@ const handleImageData = (images, imageDataPartition) => {
   images.forEach(image => {
     const { id, file_name } = image
     const passItem = imageDataPartition.pass.find(
-      img => img.imgName === file_name,
+      img => img.fullName === file_name,
     )
     if (passItem) {
       imageDataMap[id] = passItem
@@ -118,8 +120,8 @@ export const loadCocoFile = (file, type) => {
 
           const inputImagesData = packImageData(images)
 
-          //   // todo
-          //   console.log('inputImagesData', inputImagesData)
+        //   // todo
+        //   console.log('inputImagesData', inputImagesData)
 
           //!对目前存在的图片进行分类 pass-包含在注解文件中  fail-不包含
           const imageDataPartition = partitionImageData(

@@ -62,12 +62,12 @@ export const loadYoloFile = () => {
       imgName,
       labelRects: rectList,
       loadStatus: false,
+      isYolo: true,
     })
   })
 
   const obj = {
     labelNames,
-    isYolo: true,
   }
 
   if (list.length > 0) {
@@ -128,7 +128,7 @@ export const loadTxtFile = fileList => {
       let fileNum = 0
       Array.prototype.forEach.call(fileList, (file: File, index) => {
         const { type, name } = file
-        const keyName = name.split('.')[0]
+        const keyName = name.slice(0, name.lastIndexOf('.'))
 
         if (!imagesData.find(image => image.imgName === keyName)) {
           fileNum++
