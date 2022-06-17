@@ -420,7 +420,8 @@ export default class Index extends Vue {
     this.undoStack = []
     this.redoStack = []
     const { url, name } = item
-
+    // console.log('lastName:', this.lastName)
+    // console.log('currentLabelList:', this.currentLabelList)
     if (this.lastName) {
       this.objMap[this.lastName] = this.canvas.getObjects()
       this.labelListMap[this.lastName] = this.currentLabelList
@@ -1581,18 +1582,19 @@ export default class Index extends Vue {
     const objs = _.cloneDeep(this.canvas.getObjects()).slice(1)
     // 获取上次图片
     const oldObj = this.canvas.getObjects()[0]
+
     if (oldObj) {
       // 将框选的图案添加边距百分比
       objs.map(item => {
         item.leftPercent = (item.left - oldObj.left) / oldObj.width
         item.topPercent = (item.top - oldObj.top) / oldObj.height
+        item.labelList = this.currentLabelList
       })
     }
     this.repeatObjs = objs
   }
   repeatImg() {
     // 添加上一次操作的标签列表
-    this.currentLabelList = this.labelList
     // 获取当前图片
     const obj = this.canvas.getObjects()[0]
     // 根据图片位置重绘上次状态
@@ -1600,6 +1602,7 @@ export default class Index extends Vue {
       this.repeatObjs.map(item => {
         item.left = obj.left + obj.width * item.leftPercent
         item.top = obj.top + obj.height * item.topPercent
+        this.currentLabelList = item.labelList
         this.canvas.add(item)
       })
     }
