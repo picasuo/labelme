@@ -690,8 +690,11 @@ export default class Index extends Vue {
               { icon: 'icon-huajuxing_0', content: '矩形工具(r)' },
               { icon: 'icon-qiangzhiqingchu', content: '清除本图注解(n)' },
               { icon: 'icon-shuaxin', content: '重复上次框选(c)' },
-              { icon: 'icon-chexiao', content: '撤销(cmd+z)' },
-              { icon: 'icon-shuaxin1', content: '重做(cmd+shift+z)' },
+              { icon: 'icon-chexiao', content: '撤销(cmd+z/ctrl+z)' },
+              {
+                icon: 'icon-shuaxin1',
+                content: '重做(cmd+shift+z/ctrl+shift+z)',
+              },
               { icon: 'icon-wenhao', content: '说明' },
             ]
     }
@@ -769,7 +772,6 @@ export default class Index extends Vue {
 
     if (this.checkedTab === 9 || (this.checkedTab === 2 && this.type === 0))
       this.isExplanation = true
-    this.redo()
   }
 
   //输入框
@@ -1034,7 +1036,7 @@ export default class Index extends Vue {
 
     //画图快捷键
     hotkeys(
-      'backspace,command+z,command+shift+z,p,r,a,d,s,n,c',
+      'backspace,ctrl+z,command+z,command+shift+z,ctrl+shift+z,p,r,a,d,s,n,c',
       'enable',
       (event, handler) => {
         event.preventDefault()
@@ -1042,10 +1044,12 @@ export default class Index extends Vue {
         switch (handler.key) {
           //撤销
           case 'command+z':
+          case 'ctrl+z':
             this.undo()
             break
           //反撤销
           case 'command+shift+z':
+          case 'ctrl+shift+z':
             this.redo()
             break
           //钢笔工具
