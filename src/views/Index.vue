@@ -1112,7 +1112,6 @@ export default class Index extends Vue {
       this.canvas.clear().renderAll()
       const nowStack = this.undoStack.pop()
       this.redoStack.push(nowStack)
-      console.log('undo')
       this.canvas.loadFromJSON(this.undoStack[this.undoStack.length - 1])
       this.canvas.renderAll()
     }
@@ -1120,7 +1119,6 @@ export default class Index extends Vue {
   redo() {
     if (this.redoStack.length > 0) {
       this.canvas.clear().renderAll()
-      console.log('redo')
       this.canvas.loadFromJSON(this.redoStack[this.redoStack.length - 1])
       const lastStack = this.redoStack.pop()
       this.undoStack.push(lastStack)
