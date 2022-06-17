@@ -5,12 +5,10 @@ import 'assets/icons/iconfont.css'
 import 'scss/main'
 import SUI from 'sx-sui-design'
 import Vue from 'vue'
-import VueLazyload from 'vue-lazyload'
 import App from './App.vue'
 import router from './router'
 
 Vue.use(SUI)
-Vue.use(VueLazyload)
 
 Vue.config.productionTip = false
 

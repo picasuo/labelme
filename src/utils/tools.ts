@@ -1,3 +1,5 @@
+import { file } from 'jszip'
+
 //处理字符串显示长度
 export const handleStringLength = (string, length) => {
   return string.length > length ? `${string.slice(0, length)}...` : string
@@ -99,3 +101,22 @@ export const getPicResolution = url => {
 
 export const shortCuts =
   'backspace,command+z,command+shift+z,p,r,a,d,0,1,2,3,4,5,6,7,8,9'
+
+export const getPic = file => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader() as any
+    reader.readAsDataURL(file)
+    reader.onload = () => {
+      const img = new Image()
+      img.src = reader.result
+      // 获取图片宽高
+      img.onload = function () {
+        resolve({
+          name: file.name,
+          url: reader.result,
+          format: `${img.width}*${img.height}`,
+        })
+      }
+    }
+  })
+}

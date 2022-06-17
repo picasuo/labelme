@@ -107,11 +107,11 @@
               v-for="(item, index) in picList"
               :key="index"
               class="img__item"
-              :class="currentPicUrl === item.url ? 'img-active' : ''"
-              @click="loadExpImg(item)"
+              :class="currentPicName === item.name ? 'img-active' : ''"
+              @click="getPic(item)"
             >
               <div class="img__mini">
-                <img v-lazy="item.url" />
+                <img :dataSrc="item.name" alt="加载中" />
               </div>
               <div class="img__info">
                 <p class="img__name" :title="item.name">
@@ -197,6 +197,7 @@ import { exportYOLO } from 'utils/YOLOExporter'
 import { exportImgJson } from 'utils/ImgJsonExport'
 import SxImport from 'components/SxImport.vue'
 import Sortable from 'sortablejs'
+import { getPic } from 'utils/tools'
 
 @Component({
   components: {
@@ -270,6 +271,7 @@ export default class Index extends Vue {
   height = 600
 
   currentPicUrl = ''
+  currentPicName = ''
 
   repeatObjs = [] as any
 
@@ -403,6 +405,16 @@ export default class Index extends Vue {
     this.handleLabelBind({ newName: '', newColor: '', index })
   }
 
+  getPic(item) {
+    getPic(item)
+      .then(val => {
+        this.loadExpImg(val)
+      })
+      .catch(err => {
+        this.$SxMessage.error(err)
+      })
+  }
+
   loadExpImg(item) {
     //切换图片的时候重置操作栈
     this.undoStack = []
@@ -419,8 +431,9 @@ export default class Index extends Vue {
     this.canvas.clear()
 
     this.currentPicUrl = url
+    this.currentPicName = name
 
-    this.addImgToCanvas(url, name).then(() => {
+    this.addImgToCanvas(name).then(() => {
       //将导入文件添加到画板和标签列表中
       this.addAnnotationToCanvas(name)
 
@@ -624,7 +637,7 @@ export default class Index extends Vue {
   }
 
   //将图片加载到画布中
-  addImgToCanvas(url, name) {
+  addImgToCanvas(name) {
     return new Promise(
       (resolve: (value: any) => void, reject: (value: any) => void) => {
         //!再次加载，导入之前保存的数据
@@ -709,13 +722,16 @@ export default class Index extends Vue {
     }
 
     if (this.loadPicNum > 0) {
-      this.loadExpImg(this.picList[0])
+      this.getPic(this.picList[0])
       this.isShown = false
       this.isAdd = false
     }
 
     this.addMouseMove()
+    // 拖动图片
     this.sortPic()
+    // 懒加载
+    this.initLazyLoad()
   }
   addImg() {
     this.removeMouseMove()
@@ -945,6 +961,43 @@ export default class Index extends Vue {
     this.canvas.on('mouse:wheel', this.mousewheel)
 
     this.setShortCuts()
+
+    //图片list scroll监听
+    document
+      .getElementsByClassName('img__list')[0]
+      .addEventListener('scroll', _.debounce(this.initLazyLoad, 1000))
+
+    window.addEventListener('resize', _.debounce(this.initLazyLoad, 1000))
+  }
+
+  initLazyLoad() {
+    this.$nextTick(() => {
+      const imgbox: any = document.getElementsByClassName('img__list')[0]
+      const viewPortHeight =
+        imgbox.clientHeight + imgbox.getBoundingClientRect().top
+      const imgList = document.querySelectorAll('.img__item')
+      imgList.forEach(item => {
+        const elTop = item.getBoundingClientRect().top
+
+        const img: any = item.childNodes[0].childNodes[0]
+        const imgSize: any = item.childNodes[1].childNodes[1]
+        const format = imgSize.innerText
+
+        if (viewPortHeight > elTop && elTop > imgbox.clientHeight) {
+          if (format === '') {
+            const imgName = img.getAttribute('dataSrc')
+            const imgFile = this.picList.find(item => item.name === imgName)
+            getPic(imgFile).then((val: any) => {
+              img.src = val.url
+              imgSize.innerText = val.format
+            })
+          }
+        } else {
+          img.src = ''
+          imgSize.innerText = ''
+        }
+      })
+    })
   }
 
   updateModifications() {
@@ -985,7 +1038,7 @@ export default class Index extends Vue {
       let zoom = this.canvas.getZoom()
       zoom *= 0.99 ** delta
       if (zoom < 1) zoom = 1
-      if (zoom > 5) zoom = 5
+      if (zoom > 8) zoom = 8
       this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
       // this.canvas.setZoom(zoom)
     } else {
@@ -1006,9 +1059,9 @@ export default class Index extends Vue {
       //   { element: document.getElementById('tool') },
       (event, handler) => {
         event.preventDefault()
-        if (this.currentPicUrl) {
+        if (this.currentPicName) {
           let currentIndex = this.clonePicList.findIndex(
-            item => item?.url === this.currentPicUrl
+            item => item?.name === this.currentPicName
           )
           switch (handler.key) {
             //上一张
@@ -1024,7 +1077,8 @@ export default class Index extends Vue {
                 currentIndex === this.loadPicNum - 1 ? 0 : currentIndex + 1
               break
           }
-          this.loadExpImg(this.clonePicList[currentIndex])
+          this.getPic(this.clonePicList[currentIndex])
+          // this.loadExpImg(this.clonePicList[currentIndex])
         } else {
           return
         }
@@ -1498,7 +1552,9 @@ export default class Index extends Vue {
   }
 
   confirmImport() {
-    const picItem = this.picList.find(item => item?.url === this.currentPicUrl)
+    const picItem = this.picList.find(
+      item => item?.name === this.currentPicName
+    )
     this.labelNames.forEach(labelItem => {
       if (!this.labelList.find(i => i.name === labelItem.name)) {
         this.labelList.push(labelItem)
