@@ -1112,6 +1112,7 @@ export default class Index extends Vue {
       this.canvas.clear().renderAll()
       const nowStack = this.undoStack.pop()
       this.redoStack.push(nowStack)
+      console.log('undo')
       this.canvas.loadFromJSON(this.undoStack[this.undoStack.length - 1])
       this.canvas.renderAll()
     }
@@ -1119,6 +1120,7 @@ export default class Index extends Vue {
   redo() {
     if (this.redoStack.length > 0) {
       this.canvas.clear().renderAll()
+      console.log('redo')
       this.canvas.loadFromJSON(this.redoStack[this.redoStack.length - 1])
       const lastStack = this.redoStack.pop()
       this.undoStack.push(lastStack)
@@ -1516,32 +1518,31 @@ export default class Index extends Vue {
   }
 
   saveRepeatState() {
+    // 框选的图案
     const objs = _.cloneDeep(this.canvas.getObjects()).slice(1)
+    // 获取上次图片
+    const oldObj = this.canvas.getObjects()[0]
+    if (oldObj) {
+      // 将框选的图案添加边距百分比
+      objs.map(item => {
+        item.leftPercent = (item.left - oldObj.left) / oldObj.width
+        item.topPercent = (item.top - oldObj.top) / oldObj.height
+      })
+    }
     this.repeatObjs = objs
   }
   repeatImg() {
+    // 获取当前图片
+    const obj = this.canvas.getObjects()[0]
+    // 根据图片位置重绘上次状态
     if (this.repeatObjs.length > 0) {
       this.repeatObjs.map(item => {
+        item.left = obj.left + obj.width * item.leftPercent
+        item.top = obj.top + obj.height * item.topPercent
         this.canvas.add(item)
       })
     }
-    const imgjson = this.canvas.toJSON([
-      'selectable',
-      'hasBorders',
-      'hasControls',
-      'hasRotatingPoint',
-      'lockMovementX',
-      'lockMovementY',
-      'curWidth',
-      'curHeight',
-      'transparentCorners',
-      'objectCaching',
-      'opacity',
-      'lockRotation',
-      'name',
-    ])
-    this.canvas.clear().renderAll()
-    this.canvas.loadFromJSON(imgjson)
+    this.canvas.renderAll()
   }
 }
 </script>
