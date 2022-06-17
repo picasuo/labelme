@@ -812,7 +812,9 @@ export default class Index extends Vue {
         delete this.deepObjMap[key]
       } else {
         const img = this.picList.find(item => item.name === key)
-        this.changedPic.push(img)
+        getPic(img).then((val: any) => {
+          this.changedPic.push(val)
+        })
       }
     })
     if (Object.keys(this.deepObjMap).length === 0) {
