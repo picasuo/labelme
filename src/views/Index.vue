@@ -526,7 +526,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId,
+          label => label.id === labelId
         )
 
         if (!labelMap[labelName]) {
@@ -565,7 +565,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach((polygonItem, index) => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId,
+          label => label.id === polygonItem.labelId
         )
 
         const { segmentation } = polygonItem
@@ -681,7 +681,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      },
+      }
     )
   }
 
@@ -923,7 +923,7 @@ export default class Index extends Vue {
         cH.style.top = `${e.pageY}px`
         cV.style.left = `${e.pageX}px`
       },
-      false,
+      false
     )
   }
 
@@ -1066,7 +1066,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicName) {
           let currentIndex = this.clonePicList.findIndex(
-            item => item?.name === this.currentPicName,
+            item => item?.name === this.currentPicName
           )
           switch (handler.key) {
             //上一张
@@ -1087,7 +1087,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      },
+      }
     )
 
     //画图快捷键
@@ -1138,7 +1138,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      },
+      }
     )
 
     //开启快捷键 默认开启
@@ -1153,7 +1153,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName,
+        e => e.name === labelName
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
@@ -1560,7 +1560,7 @@ export default class Index extends Vue {
 
   confirmImport() {
     const picItem = this.picList.find(
-      item => item?.name === this.currentPicName,
+      item => item?.name === this.currentPicName
     )
     this.labelNames.forEach(labelItem => {
       if (!this.labelList.find(i => i.name === labelItem.name)) {
