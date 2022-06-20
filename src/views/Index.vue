@@ -301,9 +301,6 @@ export default class Index extends Vue {
   //当前图片绑定的label
   currentLabelList = [] as Array<any>
 
-  //存储repeat标签
-  repeatLabelList = [] as Array<any>
-
   getLabel() {
     if (!this.label) return
     if (this.labelList.find(label => label.name === this.label)) {
@@ -1592,15 +1589,13 @@ export default class Index extends Vue {
       objs.map(item => {
         item.leftPercent = (item.left - oldObj.left) / oldObj.width
         item.topPercent = (item.top - oldObj.top) / oldObj.height
+        item.labelList = this.currentLabelList
       })
-
-      this.repeatLabelList = _.cloneDeep(this.currentLabelList)
     }
     this.repeatObjs = objs
   }
   repeatImg() {
     // 添加上一次操作的标签列表
-    this.currentLabelList = this.repeatLabelList
     // 获取当前图片
     const obj = this.canvas.getObjects()[0]
     // 根据图片位置重绘上次状态
@@ -1608,6 +1603,7 @@ export default class Index extends Vue {
       this.repeatObjs.map(item => {
         item.left = obj.left + obj.width * item.leftPercent
         item.top = obj.top + obj.height * item.topPercent
+        this.currentLabelList = item.labelList
         this.canvas.add(item)
       })
     }
