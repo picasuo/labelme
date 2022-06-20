@@ -312,11 +312,27 @@ export default class Index extends Vue {
     this.labelList.push({ name: this.label, color: Colors.random() })
     this.label = ''
     //设置label快捷键
-    this.setLabelShortCuts()
+    this.setLabelShortCut(
+      this.labelList[this.labelList.length - 1],
+      this.labelList.length
+    )
   }
 
-  //设置label快捷键
-  setLabelShortCuts() {
+  //新增label，绑定快捷键,防止，遍历一个按键多次绑定快捷键
+  setLabelShortCut(lable, num) {
+    hotkeys(num.toString(), (event, handler) => {
+      event.preventDefault()
+      const { name, color } = lable
+      this.handleLabelBind({
+        newName: name,
+        newColor: color,
+        index: -1,
+      })
+    })
+  }
+
+  //设置labels快捷键
+  setLabelsShortCuts() {
     this.labelList.forEach((item, index) => {
       hotkeys((index + 1).toString(), (event, handler) => {
         event.preventDefault()
@@ -366,8 +382,8 @@ export default class Index extends Vue {
           labelName: newName,
           //   borderColor: color
         })
-
         this.canvas.renderAll()
+        this.updateModifications()
         this.labelList.forEach(label => {
           const { name, color } = label
           let count = 0
@@ -1166,6 +1182,7 @@ export default class Index extends Vue {
       }
 
       this.canvas.remove(this.canvas.getActiveObject())
+
       this.updateModifications()
     }
   }
@@ -1540,8 +1557,6 @@ export default class Index extends Vue {
 
         this.labelListMap[image] = list
       })
-
-      //   this.setLabelShortCuts()
     } else {
       if (val.imagesData) {
         this.imagesData = this.imagesData.concat(val.imagesData)
@@ -1575,7 +1590,7 @@ export default class Index extends Vue {
     // console.log('labelList', this.labelList)
 
     // this.labelList = this.labelList.concat(this.labelNames)
-    this.setLabelShortCuts()
+    this.setLabelsShortCuts()
     this.loadExpImg(picItem)
     this.isImport = false
   }
