@@ -85,6 +85,7 @@
                 <sx-icon
                   type="icon-shanchu"
                   size="small"
+                  v-if="type === 0"
                   @click="delLabel(i)"
                 />
                 <span
@@ -299,9 +300,6 @@ export default class Index extends Vue {
   hasEditedNum = 0
   //当前图片绑定的label
   currentLabelList = [] as Array<any>
-
-  //存储repeat标签
-  repeatLabelList = [] as Array<any>
 
   getLabel() {
     if (!this.label) return
@@ -545,7 +543,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -584,7 +582,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach((polygonItem, index) => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId
+          label => label.id === polygonItem.labelId,
         )
 
         const { segmentation } = polygonItem
@@ -700,7 +698,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -942,7 +940,7 @@ export default class Index extends Vue {
         cH.style.top = `${e.pageY}px`
         cV.style.left = `${e.pageX}px`
       },
-      false
+      false,
     )
   }
 
@@ -1085,7 +1083,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicName) {
           let currentIndex = this.clonePicList.findIndex(
-            item => item?.name === this.currentPicName
+            item => item?.name === this.currentPicName,
           )
           switch (handler.key) {
             //上一张
@@ -1106,7 +1104,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -1157,7 +1155,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      }
+      },
     )
 
     //开启快捷键 默认开启
@@ -1172,7 +1170,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName
+        e => e.name === labelName,
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
@@ -1578,7 +1576,7 @@ export default class Index extends Vue {
 
   confirmImport() {
     const picItem = this.picList.find(
-      item => item?.name === this.currentPicName
+      item => item?.name === this.currentPicName,
     )
     this.labelNames.forEach(labelItem => {
       if (!this.labelList.find(i => i.name === labelItem.name)) {
@@ -1606,15 +1604,13 @@ export default class Index extends Vue {
       objs.map(item => {
         item.leftPercent = (item.left - oldObj.left) / oldObj.width
         item.topPercent = (item.top - oldObj.top) / oldObj.height
+        item.labelList = this.currentLabelList
       })
-
-      this.repeatLabelList = _.cloneDeep(this.currentLabelList)
     }
     this.repeatObjs = objs
   }
   repeatImg() {
     // 添加上一次操作的标签列表
-    this.currentLabelList = this.repeatLabelList
     // 获取当前图片
     const obj = this.canvas.getObjects()[0]
     // 根据图片位置重绘上次状态
@@ -1622,6 +1618,7 @@ export default class Index extends Vue {
       this.repeatObjs.map(item => {
         item.left = obj.left + obj.width * item.leftPercent
         item.top = obj.top + obj.height * item.topPercent
+        this.currentLabelList = item.labelList
         this.canvas.add(item)
       })
     }
