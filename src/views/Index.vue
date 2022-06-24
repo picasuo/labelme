@@ -1046,12 +1046,6 @@ export default class Index extends Vue {
       if (zoom > 8) zoom = 8
       this.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom)
       // this.canvas.setZoom(zoom)
-    } else {
-      const e = opt.e
-      const vpt = this.canvas.viewportTransform
-      vpt[4] += e.deltaX
-      vpt[5] += e.deltaY
-      this.canvas.requestRenderAll()
     }
   }
 
