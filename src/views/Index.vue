@@ -85,6 +85,7 @@
                 <sx-icon
                   type="icon-shanchu"
                   size="small"
+                  v-if="type === 0"
                   @click="delLabel(i)"
                 />
                 <span
@@ -309,11 +310,27 @@ export default class Index extends Vue {
     this.labelList.push({ name: this.label, color: Colors.random() })
     this.label = ''
     //设置label快捷键
-    this.setLabelShortCuts()
+    this.setLabelShortCut(
+      this.labelList[this.labelList.length - 1],
+      this.labelList.length
+    )
   }
 
-  //设置label快捷键
-  setLabelShortCuts() {
+  //新增label，绑定快捷键,防止，遍历一个按键多次绑定快捷键
+  setLabelShortCut(lable, num) {
+    hotkeys(num.toString(), (event, handler) => {
+      event.preventDefault()
+      const { name, color } = lable
+      this.handleLabelBind({
+        newName: name,
+        newColor: color,
+        index: -1,
+      })
+    })
+  }
+
+  //设置labels快捷键
+  setLabelsShortCuts() {
     this.labelList.forEach((item, index) => {
       hotkeys((index + 1).toString(), (event, handler) => {
         event.preventDefault()
@@ -363,8 +380,8 @@ export default class Index extends Vue {
           labelName: newName,
           //   borderColor: color
         })
-
         this.canvas.renderAll()
+        this.updateModifications()
         this.labelList.forEach(label => {
           const { name, color } = label
           let count = 0
@@ -526,7 +543,7 @@ export default class Index extends Vue {
         }
 
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === labelId
+          label => label.id === labelId,
         )
 
         if (!labelMap[labelName]) {
@@ -565,7 +582,7 @@ export default class Index extends Vue {
 
       labelPolygons.forEach((polygonItem, index) => {
         const { name: labelName, color } = this.labelNames.find(
-          label => label.id === polygonItem.labelId
+          label => label.id === polygonItem.labelId,
         )
 
         const { segmentation } = polygonItem
@@ -681,7 +698,7 @@ export default class Index extends Vue {
             resolve('')
           })
         }
-      }
+      },
     )
   }
 
@@ -923,7 +940,7 @@ export default class Index extends Vue {
         cH.style.top = `${e.pageY}px`
         cV.style.left = `${e.pageX}px`
       },
-      false
+      false,
     )
   }
 
@@ -1060,7 +1077,7 @@ export default class Index extends Vue {
         event.preventDefault()
         if (this.currentPicName) {
           let currentIndex = this.clonePicList.findIndex(
-            item => item?.name === this.currentPicName
+            item => item?.name === this.currentPicName,
           )
           switch (handler.key) {
             //上一张
@@ -1081,7 +1098,7 @@ export default class Index extends Vue {
         } else {
           return
         }
-      }
+      },
     )
 
     //画图快捷键
@@ -1132,7 +1149,7 @@ export default class Index extends Vue {
             this.tabClick(6)
             break
         }
-      }
+      },
     )
 
     //开启快捷键 默认开启
@@ -1147,7 +1164,7 @@ export default class Index extends Vue {
       //标签栏同步修改
       const { labelName } = this.canvas.getActiveObject()
       const labelIndex = this.currentLabelList.findIndex(
-        e => e.name === labelName
+        e => e.name === labelName,
       )
       if (labelIndex !== -1) {
         this.currentLabelList[labelIndex].count--
@@ -1157,6 +1174,7 @@ export default class Index extends Vue {
       }
 
       this.canvas.remove(this.canvas.getActiveObject())
+
       this.updateModifications()
     }
   }
@@ -1531,8 +1549,6 @@ export default class Index extends Vue {
 
         this.labelListMap[image] = list
       })
-
-      //   this.setLabelShortCuts()
     } else {
       if (val.imagesData) {
         this.imagesData = this.imagesData.concat(val.imagesData)
@@ -1554,7 +1570,7 @@ export default class Index extends Vue {
 
   confirmImport() {
     const picItem = this.picList.find(
-      item => item?.name === this.currentPicName
+      item => item?.name === this.currentPicName,
     )
     this.labelNames.forEach(labelItem => {
       if (!this.labelList.find(i => i.name === labelItem.name)) {
@@ -1566,7 +1582,7 @@ export default class Index extends Vue {
     // console.log('labelList', this.labelList)
 
     // this.labelList = this.labelList.concat(this.labelNames)
-    this.setLabelShortCuts()
+    this.setLabelsShortCuts()
     this.loadExpImg(picItem)
     this.isImport = false
   }
