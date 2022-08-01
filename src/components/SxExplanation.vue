@@ -136,12 +136,12 @@ export default class SxExplanation extends Vue {
     {
       info: '撤销',
       area: '工具栏 + 图片标注区',
-      keyboard: '⌘ + z',
+      keyboard: '⌘ + z 或者 ctrl + z',
     },
     {
       info: '重做',
       area: '工具栏 + 图片标注区',
-      keyboard: '⌘ + shift + z',
+      keyboard: '⌘ + shift + z 或者 ctrl + shift + z',
     },
     {
       info: '删除选中对象',

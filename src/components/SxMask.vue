@@ -59,11 +59,6 @@ export default class SXMask extends Vue {
 
   get loadContext() {
     let picNum = this.picUrlList.length + this.loadPicNum
-    // if (this.isAdd) {
-
-    // } else {
-    //   picNum = this.loadPicNum
-    // }
 
     return picNum === 0
       ? '点击上传本次标图任务所需的图片'
@@ -76,56 +71,11 @@ export default class SXMask extends Vue {
     const fileList = this!.$refs!.fileInput!['files'] as any
     saveFileList(fileList)
 
-    this.getUrlList(fileList)
-      .then(val => {
-        this.picUrlList = val
-        this.isActive = true
-      })
-      .catch(err => {
-        this.isActive = false
-        this.$SxMessage.error(err)
-      })
-
-    // this.$emit('uploadImg', fileList)
-  }
-
-  getUrlList(fileList) {
-    return new Promise(
-      (
-        resolve: (value: Array<string>) => void,
-        reject: (value: string) => void
-      ) => {
-        let picUrlList = [] as Array<any>
-        Array.prototype.forEach.call(fileList, (file, index) => {
-          const { type, name, size } = file
-
-          if (!/image\/(png|jp(e)g)$/.test(type)) {
-            reject('请上传正确格式的图片')
-            return
-          }
-
-          const reader = new FileReader() as any
-          reader.readAsDataURL(file)
-          reader.onload = () => {
-            const img = new Image()
-            img.src = reader.result
-            // 获取图片宽高
-            img.onload = function () {
-              picUrlList.push({
-                name,
-                url: reader.result,
-                format: `${img.width}*${img.height}`,
-                size,
-              })
-              if (picUrlList.length === fileList.length) {
-                picUrlList = unique(picUrlList, 'url')
-                resolve(picUrlList)
-              }
-            }
-          }
-        })
-      }
-    )
+    Array.from(fileList).forEach((file: any) => {
+      this.picUrlList.push(file)
+    })
+    this.picUrlList = unique(this.picUrlList, 'name')
+    this.isActive = true
   }
 
   enterEdit(type) {
