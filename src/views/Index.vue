@@ -197,6 +197,7 @@ import { exportVOC } from 'utils/VOCXMLExporter'
 import { exportYOLO } from 'utils/YOLOExporter'
 import { exportImgJson } from 'utils/ImgJsonExport'
 import SxImport from 'components/SxImport.vue'
+//列表拖拽工具
 import Sortable from 'sortablejs'
 import { getPic } from 'utils/tools'
 
@@ -312,7 +313,7 @@ export default class Index extends Vue {
     //设置label快捷键
     this.setLabelShortCut(
       this.labelList[this.labelList.length - 1],
-      this.labelList.length
+      this.labelList.length,
     )
   }
 
@@ -740,6 +741,9 @@ export default class Index extends Vue {
       })
 
       this.picList = this.picList.concat(addPicList)
+
+      // todo
+      console.log('picList', this.picList)
     }
 
     if (this.loadPicNum > 0) {
@@ -995,16 +999,24 @@ export default class Index extends Vue {
   initLazyLoad() {
     this.$nextTick(() => {
       const imgbox: any = document.getElementsByClassName('img__list')[0]
+
+      // todo
+      console.log('clientHeight', imgbox.clientHeight)
+
+      //!计算出可视区域的高度 列表的高度+列表相对于视窗的top值
+      //!其它方式 window.innerHeight || document.documentElement.clientHeight
       const viewPortHeight =
         imgbox.clientHeight + imgbox.getBoundingClientRect().top
       const imgList = document.querySelectorAll('.img__item')
-      imgList.forEach(item => {
+      imgList.forEach((item, index) => {
         const elTop = item.getBoundingClientRect().top
 
         const img: any = item.childNodes[0].childNodes[0]
         const imgSize: any = item.childNodes[1].childNodes[1]
         const format = imgSize.innerText
-
+        if (index <= 1) console.log('eltop', elTop)
+        //!判断条件为item的top值小于视窗高度（即在视窗可视范围内），并且要大于列表的高度。
+        //后面的条件可以理解为,列表向下滚动一段距离，元素的top值会相应变小，当小于列表高度值时，该元素内的图片
         if (viewPortHeight > elTop && elTop > imgbox.clientHeight) {
           if (format === '') {
             const imgName = img.getAttribute('dataSrc')
