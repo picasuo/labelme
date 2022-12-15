@@ -22,9 +22,9 @@
         >
       </div>
       <div v-else class="btn" :class="loadContext ? 'btn-active' : ''">
-        <span :class="isActive ? 'active' : ''" @click="enterEdit(type)"
-          >确定</span
-        >
+        <span :class="isActive ? 'active' : ''" @click="enterEdit(type)">
+          确定
+        </span>
         <span class="active" @click="enterEdit(2)">取消</span>
       </div>
     </div>
