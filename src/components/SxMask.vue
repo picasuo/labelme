@@ -95,6 +95,7 @@ export default class SXMask extends Vue {
 .mask {
   //   width: 100%;
   //   height: 100%;
+
   //   background: #535353;
   background-color: rgba(0, 0, 0, 0.7);
   display: flex;
