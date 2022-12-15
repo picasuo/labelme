@@ -32,9 +32,9 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { saveFileList } from 'utils/COCOImporter'
 import { unique } from 'utils/tools'
+import { Component, Prop, Vue } from 'vue-property-decorator'
 
 @Component({
   components: {},
